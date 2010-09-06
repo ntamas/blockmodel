@@ -80,17 +80,6 @@ public:
     /*************/
     /* Operators */
     /*************/
-
-    /*****************/
-    /* Private stuff */
-    /*****************/
-
-private:
-    /// Copy constructor (intentionally unimplemented)
-    EdgeSelector(const EdgeSelector&);
-
-    /// Assignment operator (intentionally unimplemented)
-    EdgeSelector& operator=(const EdgeSelector&);
 };
 
 }       // end of namespaces

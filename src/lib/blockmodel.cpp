@@ -29,6 +29,8 @@ double UndirectedBlockmodel::getLogLikelihood() const {
                 continue;
 
             if (i == j) {
+				if (count2 == 1)
+					continue;
                 prob = m_edgeCounts(i, i) / count1 / (count2 - 1);
                 result += count1 * (count2 - 1) * binary_entropy(prob);
             } else {
@@ -88,11 +90,12 @@ void UndirectedBlockmodel::recountEdges() {
     Vector edgelist = m_pGraph->getEdgelist();
     Vector::const_iterator it = edgelist.begin();
 
-    m_typeCounts.fill(0);
+    m_typeCounts.null();
     for (long i = 0; i < n; i++) {
         m_typeCounts[m_types[i]]++;
     }
 
+	m_edgeCounts.null();
     while (it != edgelist.end()) {
         long type1 = m_types[*(it++)];
         long type2 = m_types[*(it++)];

@@ -18,6 +18,11 @@ int main(int argc, char** argv) {
 
 	clog << "Stochastic blockmodeling\n\n";
 
+    if (args.numGroups < 1) {
+        // TODO: autodetect
+        args.numGroups = 2;
+    }
+
     UndirectedBlockmodel model(&graph, args.numGroups);
     model.randomize();
 
@@ -26,11 +31,9 @@ int main(int argc, char** argv) {
 
     while (1) {
         clog << '[' << setw(6) << mcmc.getStepCount() << "] "
-             << setw(15) << setprecision(2) << model.getLogLikelihood() << '\n';
-        model.getTypes().print();
-        if (isnan(model.getLogLikelihood())) {
-            return 1;
-        }
+             << setw(15) << model.getLogLikelihood() << '\n';
+        if (model.getLogLikelihood() == 0)
+            return 2;
         mcmc.step();
     }
 

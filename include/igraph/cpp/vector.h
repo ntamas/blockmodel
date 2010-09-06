@@ -107,6 +107,11 @@ public:
         return igraph_vector_maxdifference(&m_vector, &other.m_vector);
     }
 
+    /// Sets all the elements in the vector to zero
+    void null() {
+        igraph_vector_null(&m_vector);
+    }
+
     /// Prints the vector to the standard output
     void print() const {
         igraph_vector_print(&m_vector);
