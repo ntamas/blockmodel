@@ -3,6 +3,8 @@
 #ifndef IGRAPHPP_TYPES_H
 #define IGRAPHPP_TYPES_H
 
+#include <stdexcept>
+
 namespace igraph {
 
 #define IGRAPH_TRY(call) {\

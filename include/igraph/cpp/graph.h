@@ -7,6 +7,7 @@
 #include <igraph/igraph_constructors.h>
 #include <igraph/igraph_datatype.h>
 #include <igraph/igraph_interface.h>
+#include <igraph/cpp/edge_selector.h>
 #include <stdexcept>
 #include <vector>
 
@@ -72,6 +73,10 @@ public:
     static Graph GRG(integer_t nodes, real_t radius, bool torus=false,
             Vector* x=0, Vector* y=0);
 
+    /// Constructs a ring graph
+    static Graph Ring(integer_t n, bool directed=false, bool mutual=true,
+            bool circular=true);
+
     /********************/
     /* Instance methods */
     /********************/
@@ -87,6 +92,11 @@ public:
 
     /// Adds the given number of vertices to the graph
     void addVertices(long numVertices);
+
+    /// Deletes some edges from the graph
+    void deleteEdges(const EdgeSelector& es) {
+        IGRAPH_TRY(igraph_delete_edges(m_pGraph, *es.c_es()));
+    }
 
     /// Returns the number of edges in the graph
     integer_t ecount() {

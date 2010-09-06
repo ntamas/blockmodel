@@ -3,6 +3,7 @@
 #ifndef IGRAPHPP_MATRIX_H
 #define IGRAPHPP_MATRIX_H
 
+#include <igraph/igraph_blas.h>
 #include <igraph/cpp/types.h>
 
 namespace igraph {
@@ -134,6 +135,44 @@ public:
     /// Returns the element with the given row and column indices (const variant)
     igraph_real_t& operator()(long int ri, long int ci) const {
         return MATRIX(m_matrix, ri, ci);
+    }
+
+    /// Multiplication by vector from right
+    Vector operator*(const Vector& v) const {
+        Vector result(v.size());
+        igraph_blas_dgemv(0, 1, &m_matrix, v.c_vector(),
+                0, result.c_vector());
+        return result;
+    }
+
+    /// In-place addition with constant
+    Matrix& operator+=(igraph_real_t plus) {
+        igraph_matrix_add_constant(&m_matrix, plus);
+        return *this;
+    }
+
+    /// In-place addition with matrix
+    Matrix& operator+=(const Matrix& other) {
+        IGRAPH_TRY(igraph_matrix_add(&m_matrix, &other.m_matrix));
+        return *this;
+    }
+
+    /// In-place subtraction
+    Matrix& operator-=(const Matrix& other) {
+        IGRAPH_TRY(igraph_matrix_sub(&m_matrix, &other.m_matrix));
+        return *this;
+    }
+
+    /// In-place scaling
+    Matrix& operator*=(igraph_real_t by) {
+        igraph_matrix_scale(&m_matrix, by);
+        return *this;
+    }
+
+    /// In-place division
+    Matrix& operator/=(igraph_real_t by) {
+        igraph_matrix_scale(&m_matrix, 1.0/by);
+        return *this;
     }
 };
 

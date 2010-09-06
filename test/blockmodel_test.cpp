@@ -6,11 +6,9 @@
 #include <igraph/cpp/graph.h>
 #include <block/blockmodel.h>
 
-#define CHECK(func) {     \
-    int _retval = func(); \
-    if (_retval)          \
-        return _retval;   \
-}
+#include "test_common.cpp"
+
+using namespace igraph;
 
 int test_setType() {
     Graph graph = Graph::GRG(100, 0.2);

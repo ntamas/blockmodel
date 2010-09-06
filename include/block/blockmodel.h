@@ -7,33 +7,31 @@
 #include <igraph/cpp/matrix.h>
 #include <igraph/cpp/vector.h>
 
-using namespace igraph;
-
 /// Class representing an undirected blockmodel
 class UndirectedBlockmodel {
 private:
     /// Pointer to a graph to which this model will be fitted
-    Graph* m_pGraph;
+    igraph::Graph* m_pGraph;
 
     /// The number of types in the model
     int m_numTypes;
 
     /// Vector storing the vertex types
-    Vector m_types;
+    igraph::Vector m_types;
 
     /// Vector storing the number of vertices of a given type
-    Vector m_typeCounts;
+    igraph::Vector m_typeCounts;
 
     /// Matrix storing the number of edges between pairs of vertex types
     /**
      * Due to some optimizations, the diagonal of the matrix actually stores
      * twice the number of edges going between vertices of the same type.
      */
-    Matrix m_edgeCounts;
+    igraph::Matrix m_edgeCounts;
 
 public:
     /// Constructs a new undirected blockmodel to be fitted to the given graph
-    UndirectedBlockmodel(Graph* graph, int numTypes)
+    UndirectedBlockmodel(igraph::Graph* graph, int numTypes)
         : m_pGraph(graph), m_numTypes(numTypes), m_types(graph->vcount()),
           m_typeCounts(numTypes), m_edgeCounts(numTypes, numTypes) {
         m_typeCounts[0] = m_pGraph->vcount();
@@ -46,12 +44,22 @@ public:
     }
 
     /// Returns the whole edge count matrix
-    Matrix getEdgeCounts() const {
+    igraph::Matrix getEdgeCounts() const {
         return m_edgeCounts;
+    }
+
+    /// Returns a pointer to the graph associated to the model
+    igraph::Graph* getGraph() {
+        return m_pGraph;
     }
 
     /// Returns the log-likelihood of the model
     double getLogLikelihood() const;
+
+    /// Returns the number of types in this model
+    int getNumTypes() const {
+        return m_numTypes;
+    }
 
     /// Returns the estimated probability between the two given types
     double getProbability(int type1, int type2) const {
@@ -67,10 +75,15 @@ public:
     }
 
     /// Returns the estimated probability matrix
-    Matrix getProbabilities() const;
+    igraph::Matrix getProbabilities() const;
 
     /// Returns the estimated probability matrix
-    void getProbabilities(Matrix& result) const;
+    void getProbabilities(igraph::Matrix& result) const;
+
+    /// Returns the type of the given vertex
+    int getType(long index) const {
+        return m_types[index];
+    }
 
     /// Returns how many vertices have the given type
     long getTypeCount(long index) const {
@@ -78,20 +91,20 @@ public:
     }
 
     /// Returns the whole type count vector
-    Vector getTypeCounts() const {
+    igraph::Vector getTypeCounts() const {
         return m_typeCounts;
     }
 
     /// Returns the whole type vector
-    Vector getTypes() const {
+    igraph::Vector getTypes() const {
         return m_types;
     }
 
     /// Sets the type of a single vertex
-    void setType(long index, long newType);
+    void setType(long index, int newType);
 
     /// Sets the types of multiple vertices
-    void setTypes(const Vector& types);
+    void setTypes(const igraph::Vector& types);
 
 private:
     /// Recounts the edges and updates m_typeCounts and m_edgeCounts

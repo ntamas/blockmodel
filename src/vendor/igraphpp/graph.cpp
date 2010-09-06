@@ -32,6 +32,12 @@ Graph Graph::GRG(integer_t nodes, real_t radius, bool torus,
     return Graph(result.release());
 }
 
+Graph Graph::Ring(integer_t n, bool directed, bool mutual, bool circular) {
+    std::auto_ptr<igraph_t> result(new igraph_t);
+    IGRAPH_TRY(igraph_ring(result.get(), n, directed, mutual, circular));
+    return Graph(result.release());
+}
+
 /********************/
 /* Instance methods */
 /********************/

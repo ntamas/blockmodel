@@ -1,4 +1,5 @@
 set(TEST_CASES blockmodel
+               greedy_strategy
 )
 
 foreach(test ${TEST_CASES})

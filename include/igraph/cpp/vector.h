@@ -7,6 +7,8 @@
 
 namespace igraph {
 
+class Matrix;
+
 /// C++-style wrapper around an igraph_vector_t
 class Vector {
 public:
@@ -27,6 +29,14 @@ public:
         IGRAPH_TRY(igraph_vector_init(&m_vector, length));
     }
 
+    /// Constructs a wrapper that wraps the given igraph_vector_t instance
+    /**
+     * The ownership of the wrapped instance is stolen by the wrapper.
+     * The caller should not destroy the graph on its own, ever;
+     * the wrapper should be destroyed instead.
+     */
+    Vector(igraph_vector_t vector) : m_vector(vector) {}
+
     /// Copy constructor
     Vector(const Vector& other) {
         IGRAPH_TRY(igraph_vector_copy(&m_vector, &other.m_vector));
@@ -35,6 +45,17 @@ public:
     /// Destroys the vector
     ~Vector() {
         igraph_vector_destroy(&m_vector);
+    }
+
+    /******************/
+    /* Static methods */
+    /******************/
+
+    /// Constructs a vector containing a sequence
+    Vector Seq(igraph_real_t from, igraph_real_t to) {
+        igraph_vector_t vec;
+        IGRAPH_TRY(igraph_vector_init_seq(&vec, from, to));
+        return Vector(vec);
     }
 
     /********************/
@@ -101,6 +122,11 @@ public:
         return igraph_vector_is_equal(&m_vector, &other.m_vector);
     }
 
+    /// Nonequality check: returns true if the two vectors are not equal
+    bool operator!=(const Vector& other) const {
+        return !((*this) == other);
+    }
+
     /// Returns the element with the given index
     igraph_real_t& operator[](long int index) {
         return VECTOR(m_vector)[index];
@@ -110,6 +136,9 @@ public:
     igraph_real_t operator[](long int index) const {
         return VECTOR(m_vector)[index];
     }
+
+    /// Matrix-vector product
+    Vector operator*(const Matrix& matrix);
 };
 
 }       // end of namespaces

@@ -1,1 +1,2 @@
-add_library(block STATIC blockmodel)
+add_library(block STATIC blockmodel
+                         optimization)

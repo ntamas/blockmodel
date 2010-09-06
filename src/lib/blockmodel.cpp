@@ -3,6 +3,8 @@
 #include <cmath>
 #include <block/blockmodel.h>
 
+using namespace igraph;
+
 namespace {
     double binary_entropy(double prob) {
         if (prob <= 0 || prob >= 1)
@@ -66,9 +68,9 @@ void UndirectedBlockmodel::getProbabilities(Matrix& result) const {
     }
 }
 
-void UndirectedBlockmodel::setType(long index, long newType) {
+void UndirectedBlockmodel::setType(long index, int newType) {
     // Save the old type
-    long oldType = m_types[index];
+    int oldType = m_types[index];
     // Get the neighbors of the affected vertex
     Vector neighbors = m_pGraph->neighbors(index);
     // Adjust the edge counts and the type counts
