@@ -75,6 +75,15 @@ int test_getProbabilities() {
             if (model.getProbability(i, j) != expected(i, j))
                 return 100 + 10 * i + j;
 
+    /* Pathological case: no edge between vertices of type 1 */
+    for (int i = 0; i < 10; i++)
+        model.setType(i, (i == 3) ? 1 : 0);
+
+    expected(0, 0) = expected(0, 1) = expected(1, 0) = 4/9.0;
+    expected(1, 1) = 0;
+    if (model.getProbabilities().maxdifference(expected) > 1e-8)
+        return 2;
+
     return 0;
 }
 

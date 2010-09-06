@@ -15,18 +15,20 @@ int test_two_rings() {
     Vector types(10);
     GreedyStrategy greedy;
 
+    greedy.setModel(&model);
+
     /* First, set up the optimal configuration and see if we stay there */
     for (int i = 0; i < 10; i++)
         types[i] = i/5;
     model.setTypes(types);
 
-    greedy.optimize(model);
+    greedy.optimize();
     if (model.getTypes() != types)
         return 1;
 
     /* Change one element and see if we converge back */
     model.setType(0, 1);
-    greedy.optimize(model);
+    greedy.optimize();
     if (model.getTypes() != types)
         return 2;
 
@@ -40,6 +42,8 @@ int test_four_almost_cliques() {
     Vector types(16);
     GreedyStrategy greedy;
 
+    greedy.setModel(&model);
+
     /* Remove one edge from each clique */
     Vector edges(8);
     edges[0] =  0; edges[1] =  1; edges[2] =  5; edges[3] =  6;
@@ -52,7 +56,7 @@ int test_four_almost_cliques() {
     model.setTypes(types);
 
     /* Check if we stay in this configuration */
-    greedy.optimize(model);
+    greedy.optimize();
     if (model.getTypes() != types)
         return 1;
 
@@ -62,7 +66,7 @@ int test_four_almost_cliques() {
     model.setTypes(types);
 
     /* Check if we stay in this configuration */
-    greedy.optimize(model);
+    greedy.optimize();
     if (model.getTypes() != types) {
         model.getTypes().print();
         return 2;

@@ -6,6 +6,7 @@
 #include <igraph/cpp/graph.h>
 #include <igraph/cpp/matrix.h>
 #include <igraph/cpp/vector.h>
+#include <mtwister/mt.h>
 
 /// Class representing an undirected blockmodel
 class UndirectedBlockmodel {
@@ -99,6 +100,15 @@ public:
     igraph::Vector getTypes() const {
         return m_types;
     }
+
+    /// Randomizes the current configuration of the model
+    void randomize() {
+        MersenneTwister mt;
+        randomize(mt);
+    }
+
+    /// Randomizes the current configuration of the model using the given RNG
+    void randomize(MersenneTwister& rng);
 
     /// Sets the type of a single vertex
     void setType(long index, int newType);

@@ -25,6 +25,10 @@ public:
     ~MersenneTwister(void);
 
     double random(void) { return genrand_real1(); }
+	int randint(int max) { return genrand_real1()*max; }
+	int randint(int min, int max) {
+		return min + genrand_real1()*(max-min);
+	}
     void print(void);
 
     void init_genrand(unsigned long s);

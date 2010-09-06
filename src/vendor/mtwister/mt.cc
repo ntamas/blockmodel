@@ -50,7 +50,7 @@
 #include <iostream>
 #include <cassert>
 
-#include <mt/mt.h>
+#include <mtwister/mt.h>
 
 /**
  * Constructor

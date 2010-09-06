@@ -52,19 +52,52 @@ void UndirectedBlockmodel::getProbabilities(Matrix& result) const {
 
     for (int i = 0; i < m_numTypes; i++) {
         int count1 = m_typeCounts[i];
-        if (count1 == 0)
+
+        if (count1 == 0) {
+            /* numerator is strongly zero */
+            for (int j = 0; j < m_numTypes; j++)
+                result(i, j) = 0;
             continue;
+        }
 
         for (int j = 0; j < m_numTypes; j++) {
             int count2 = m_typeCounts[j];
-            if (count2 == 0)
-                continue;
 
-            if (i == j)
-                result(i, j) = ((double)m_edgeCounts(i, j)) / count1 / (count2-1);
-            else
+            if (count2 == 0) {
+                /* numerator is strongly zero */
+                result(i, j) = 0;
+                continue;
+            } else if (i == j) {
+                result(i, j) = (count2 == 1) ? 0 :
+                               ((double)m_edgeCounts(i, j)) / count1 / (count2-1);
+            } else {
                 result(i, j) = ((double)m_edgeCounts(i, j)) / count1 / count2;
+            }
         }
+    }
+}
+
+void UndirectedBlockmodel::randomize(MersenneTwister& rng) {
+    for (Vector::iterator it = m_types.begin(); it != m_types.end(); it++)
+        *it = rng.randint(m_numTypes);
+    recountEdges();
+}
+
+void UndirectedBlockmodel::recountEdges() {
+    long n = m_pGraph->vcount();
+    Vector edgelist = m_pGraph->getEdgelist();
+    Vector::const_iterator it = edgelist.begin();
+
+    m_typeCounts.fill(0);
+    for (long i = 0; i < n; i++) {
+        m_typeCounts[m_types[i]]++;
+    }
+
+    while (it != edgelist.end()) {
+        long type1 = m_types[*(it++)];
+        long type2 = m_types[*(it++)];
+        m_edgeCounts(type1,type2) += 1;
+        m_edgeCounts(type2,type1) += 1;
     }
 }
 
@@ -91,22 +124,4 @@ void UndirectedBlockmodel::setType(long index, int newType) {
 void UndirectedBlockmodel::setTypes(const Vector& types) {
     m_types = types;
     recountEdges();
-}
-
-void UndirectedBlockmodel::recountEdges() {
-    long n = m_pGraph->vcount();
-    Vector edgelist = m_pGraph->getEdgelist();
-    Vector::const_iterator it = edgelist.begin();
-
-    m_typeCounts.fill(0);
-    for (long i = 0; i < n; i++) {
-        m_typeCounts[m_types[i]]++;
-    }
-
-    while (it != edgelist.end()) {
-        long type1 = m_types[*(it++)];
-        long type2 = m_types[*(it++)];
-        m_edgeCounts(type1,type2) += 1;
-        m_edgeCounts(type2,type1) += 1;
-    }
 }

@@ -97,6 +97,16 @@ public:
         igraph_vector_fill(&m_vector, element);
     }
 
+    /// Returns the maximum element of the vector
+    igraph_real_t max() const {
+        return igraph_vector_max(&m_vector);
+    }
+
+    /// Returns the maximum absolute difference between two vectors
+    igraph_real_t maxdifference(const Vector& other) const {
+        return igraph_vector_maxdifference(&m_vector, &other.m_vector);
+    }
+
     /// Prints the vector to the standard output
     void print() const {
         igraph_vector_print(&m_vector);

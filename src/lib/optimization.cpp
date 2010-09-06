@@ -1,6 +1,7 @@
 /* vim:set ts=4 sw=4 sts=4 et: */
 
 #include <algorithm>
+#include <cmath>
 #include <block/optimization.h>
 #include <igraph/cpp/graph.h>
 
@@ -12,14 +13,16 @@ namespace {
     }
 }
 
-bool GreedyStrategy::step(UndirectedBlockmodel& model) {
-    Graph* graph = model.getGraph();
+/*************************************************************************/
+
+bool GreedyStrategy::step() {
+    Graph* graph = m_pModel->getGraph();
     long int i, n = graph->vcount();
-    int k = model.getNumTypes();
+    int k = m_pModel->getNumTypes();
     Vector newTypes(n);
 
     // Calculate logP and log(1-P)
-    Matrix logP = model.getProbabilities();
+    Matrix logP = m_pModel->getProbabilities();
     Matrix log1P(logP);
     std::transform(logP.begin(), logP.end(), log1P.begin(), log_1_minus_x);
     std::transform(logP.begin(), logP.end(), logP.begin(), log);
@@ -43,7 +46,7 @@ bool GreedyStrategy::step(UndirectedBlockmodel& model) {
         Vector neiCountByType(k);
         Vector neis = graph->neighbors(i);
         for (Vector::iterator it = neis.begin(); it != neis.end(); it++) {
-            neiCountByType[model.getType(*it)]++;
+            neiCountByType[m_pModel->getType(*it)]++;
         }
 
         // We already have logP - log1P, so all we need is a matrix-vector
@@ -57,15 +60,37 @@ bool GreedyStrategy::step(UndirectedBlockmodel& model) {
 
     // TODO: rewrite the above to use a single matrix-matrix multiplication,
     // maybe that's faster?
-    if (newTypes != model.getTypes()) {
-        model.setTypes(newTypes);
+    if (newTypes != m_pModel->getTypes()) {
+        m_pModel->setTypes(newTypes);
         return true;
     }
 
     return false;
 }
 
-void GreedyStrategy::optimize(UndirectedBlockmodel& model) {
-    while (step(model));
+/*************************************************************************/
+
+bool MCMCStrategy::step() {
+    Graph* graph = m_pModel->getGraph();
+    int i = m_rng.randint(graph->vcount());
+    int oldType = m_pModel->getType(i);
+    int newType = m_rng.randint(m_pModel->getNumTypes());
+    double logL = m_pModel->getLogLikelihood();
+
+    m_pModel->setType(i, newType);
+    double newLogL = m_pModel->getLogLikelihood();
+
+    m_stepCount++;
+
+    if (newLogL > logL)
+        return true;
+
+    double p = std::exp(newLogL - logL);
+    if (m_rng.random() > p) {
+        /* reset the state */
+        m_pModel->setType(i, oldType);
+    }
+
+    return true;
 }
 

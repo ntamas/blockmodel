@@ -77,6 +77,16 @@ public:
         igraph_matrix_fill(&m_matrix, element);
     }
 
+    /// Returns the maximum element of the matrix
+    igraph_real_t max() const {
+        return igraph_matrix_max(&m_matrix);
+    }
+
+    /// Returns the maximum absolute difference between two matrices
+    igraph_real_t maxdifference(const Matrix& other) const {
+        return igraph_matrix_maxdifference(&m_matrix, &other.m_matrix);
+    }
+
     /// Returns the number of columns of the matrix
     size_t ncol() const {
         return igraph_matrix_ncol(&m_matrix);
