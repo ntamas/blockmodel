@@ -3,8 +3,9 @@
 #ifndef BLOCKMODEL_BLOCKMODEL_H
 #define BLOCKMODEL_BLOCKMODEL_H
 
-#include <block/matrix.hpp>
 #include <igraph/cpp/graph.h>
+#include <igraph/cpp/matrix.h>
+#include <igraph/cpp/vector.h>
 
 using namespace igraph;
 
@@ -28,7 +29,7 @@ private:
      * Due to some optimizations, the diagonal of the matrix actually stores
      * twice the number of edges going between vertices of the same type.
      */
-    Matrix<long> m_edgeCounts;
+    Matrix m_edgeCounts;
 
 public:
     /// Constructs a new undirected blockmodel to be fitted to the given graph
@@ -45,7 +46,7 @@ public:
     }
 
     /// Returns the whole edge count matrix
-    Matrix<long> getEdgeCounts() const {
+    Matrix getEdgeCounts() const {
         return m_edgeCounts;
     }
 
@@ -66,10 +67,10 @@ public:
     }
 
     /// Returns the estimated probability matrix
-    Matrix<double> getProbabilities() const;
+    Matrix getProbabilities() const;
 
     /// Returns the estimated probability matrix
-    void getProbabilities(Matrix<double>& result) const;
+    void getProbabilities(Matrix& result) const;
 
     /// Returns how many vertices have the given type
     long getTypeCount(long index) const {

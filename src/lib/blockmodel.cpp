@@ -39,13 +39,13 @@ double UndirectedBlockmodel::getLogLikelihood() const {
     return result;
 }
 
-Matrix<double> UndirectedBlockmodel::getProbabilities() const {
-    Matrix<double> result(m_numTypes, m_numTypes);
+Matrix UndirectedBlockmodel::getProbabilities() const {
+    Matrix result(m_numTypes, m_numTypes);
     getProbabilities(result);
     return result;
 }
 
-void UndirectedBlockmodel::getProbabilities(Matrix<double>& result) const {
+void UndirectedBlockmodel::getProbabilities(Matrix& result) const {
     result.resize(m_numTypes, m_numTypes);
 
     for (int i = 0; i < m_numTypes; i++) {

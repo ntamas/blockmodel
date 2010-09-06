@@ -18,7 +18,7 @@ int test_setType() {
 
     Vector types;
     Vector typeCounts;
-    Matrix<long> edgeCounts;
+    Matrix edgeCounts;
 
     /* Set a few types randomly */
     for (int i = 0; i < 10000; i++) {
@@ -66,7 +66,7 @@ int test_getProbabilities() {
     for (int i = 0; i < 10; i++)
         model.setType(i, i / 5);
 
-    Matrix<double> expected(2, 2);
+    Matrix expected(2, 2);
     expected(0, 0) = expected(1, 1) = 1.0;
 
     if (model.getProbabilities() != expected)
