@@ -48,21 +48,36 @@
 */
 
 #include <iostream>
-#include <cassert>
+#include <ctime>
 
 #include <mtwister/mt.h>
 
 /**
  * Constructor
  */
-MersenneTwister::MersenneTwister(void):
-    mt_(new unsigned long[N]), mti_(N+1),
-    init_key_(NULL), key_length_(0), s_(0),
-    seeded_by_array_(false), seeded_by_int_(false)
-{
-    unsigned long init[4] = { 0x123, 0x234, 0x345, 0x456 };
-    unsigned long length = 4;
-    init_by_array(init, length);
+MersenneTwister::MersenneTwister(void) {
+    initialize();
+    init_genrand(time(0));
+}
+
+/**
+ * Constructor with predefined seed
+ */
+MersenneTwister::MersenneTwister(unsigned long seed) {
+    initialize();
+    init_genrand(seed);
+}
+
+/**
+ * Common initializer for constructors
+ */
+void MersenneTwister::initialize() {
+    mt_ = new unsigned long[N];
+    mti_ = N+1;
+    init_key_ = NULL;
+    key_length_ = 0;
+    s_ = 0;
+    seeded_by_int_ = false;
 }
 
 /**
@@ -70,13 +85,15 @@ MersenneTwister::MersenneTwister(void):
  */
 MersenneTwister::~MersenneTwister(void)
 {
-    assert(mt_ != NULL);
-    delete[] mt_;
-    mt_ = NULL;
+    if (mt_ != NULL); {
+        delete[] mt_;
+        mt_ = NULL;
+    }
 
-    assert(init_key_ != NULL);
-    delete[] init_key_;
-    init_key_ = NULL;
+    if (init_key_ != NULL) {
+        delete[] init_key_;
+        init_key_ = NULL;
+    }
 }
 
 /**
@@ -99,7 +116,6 @@ void MersenneTwister::init_genrand(unsigned long s)
     }
     // Store the seed
     s_ = s;
-    seeded_by_array_ = false;
     seeded_by_int_ = true;
 }
 
@@ -144,7 +160,6 @@ void MersenneTwister::init_by_array(unsigned long* init_key, int key_length)
     }
     key_length_ = key_length;
     seeded_by_int_ = false;
-    seeded_by_array_ = true;
 }
 
 /**

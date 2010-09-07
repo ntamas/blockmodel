@@ -25,12 +25,17 @@ int main(int argc, char** argv) {
     mcmc.setModel(&model);
 
     while (1) {
+        double logL = model.getLogLikelihood();
+
         clog << '[' << setw(6) << mcmc.getStepCount() << "] "
-             << setw(15) << setprecision(2) << model.getLogLikelihood() << '\n';
-        model.getTypes().print();
-        if (isnan(model.getLogLikelihood())) {
+             << setw(12) << logL
+             <<  setw(8) << mcmc.getAcceptanceRatio() << '\n';
+
+        if (logL == 0.0)
+            break;
+        if (isnan(logL))
             return 1;
-        }
+
         mcmc.step();
     }
 

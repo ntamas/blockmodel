@@ -9,7 +9,7 @@ namespace {
     double binary_entropy(double prob) {
         if (prob <= 0 || prob >= 1)
             return 0.0;
-        return prob * std::log(prob) + (1 - prob) * std::log(prob);
+        return prob * std::log(prob) + (1 - prob) * std::log(1 - prob);
     }
 }
 
@@ -29,6 +29,8 @@ double UndirectedBlockmodel::getLogLikelihood() const {
                 continue;
 
             if (i == j) {
+                if (count2 == 1)
+                    continue;
                 prob = m_edgeCounts(i, i) / count1 / (count2 - 1);
                 result += count1 * (count2 - 1) * binary_entropy(prob);
             } else {
@@ -93,6 +95,7 @@ void UndirectedBlockmodel::recountEdges() {
         m_typeCounts[m_types[i]]++;
     }
 
+    m_edgeCounts.fill(0);
     while (it != edgelist.end()) {
         long type1 = m_types[*(it++)];
         long type2 = m_types[*(it++)];

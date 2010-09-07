@@ -32,7 +32,7 @@ public:
         m_next(m_data.begin()), m_end(m_data.end()), m_sum() {}
 
     /// Adds a new entry to the internal storage
-    void push_back(T& value) {
+    void push_back(T value) {
         m_sum += (value - *m_next);
         *m_next = value;
         m_next++;

@@ -82,14 +82,17 @@ bool MCMCStrategy::step() {
 
     m_stepCount++;
 
-    if (newLogL > logL)
-        return true;
-
-    double p = std::exp(newLogL - logL);
-    if (m_rng.random() > p) {
-        /* reset the state */
-        m_pModel->setType(i, oldType);
+    if (newLogL < logL) {
+        double p = std::exp(newLogL - logL);
+        if (m_rng.random() > p) {
+            /* reject the proposal, reset the state */
+            m_pModel->setType(i, oldType);
+            m_acceptanceRatio.push_back(false);
+            return true;
+        }
     }
 
+    /* accept the proposal */
+    m_acceptanceRatio.push_back(true);
     return true;
 }

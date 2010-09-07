@@ -21,7 +21,8 @@
 class MersenneTwister
 {
 public:
-    MersenneTwister(void);
+    MersenneTwister();
+    MersenneTwister(unsigned long seed);
     ~MersenneTwister(void);
 
     double random(void) { return genrand_real1(); }
@@ -57,8 +58,10 @@ private:
     unsigned long* init_key_;            // Storage for the seed vector
     int key_length_;                     // Seed vector length
     unsigned long s_;                    // Seed integer
-    bool seeded_by_array_;               // Seeded by an array
     bool seeded_by_int_;                 // Seeded by an integer
+
+    /// Initializer function
+    void initialize();
 };
 
 #endif // METRICS_MT_H

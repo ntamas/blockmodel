@@ -4,6 +4,7 @@
 #define BLOCKMODEL_OPTIMIZATION_H
 
 #include <block/blockmodel.h>
+#include <block/math.h>
 #include <mtwister/mt.h>
 
 /// Abstract optimization strategy class
@@ -18,14 +19,14 @@ public:
     /// Constructs an optimization strategy not attached to any model
     OptimizationStrategy() : m_pModel(0) {}
 
-    /// Sets the model being optimized
-    virtual void setModel(Model* model) {
-        m_pModel = model;
-    }
-
     /// Runs the optimization procedure
     void optimize() {
         while (step());
+    }
+
+    /// Sets the model being optimized
+    virtual void setModel(Model* model) {
+        m_pModel = model;
     }
 
     /// Runs one step of the optimization strategy
@@ -67,9 +68,18 @@ private:
     /// The number of steps taken
     int m_stepCount;
 
+    /// The moving average that tracks the acceptance ratio
+    MovingAverage<bool> m_acceptanceRatio;
+
 public:
     /// Constructor
-    MCMCStrategy() : OptimizationStrategy(), m_stepCount(0) {}
+    MCMCStrategy() : OptimizationStrategy(), m_stepCount(0), m_acceptanceRatio(1000) {
+    }
+
+    /// Returns the acceptance ratio
+    float getAcceptanceRatio() const {
+        return m_acceptanceRatio.value();
+    }
 
     /// Returns the number of steps taken so far
     int getStepCount() const {

@@ -49,7 +49,20 @@ int test_getLogLikelihood() {
 
     for (int i = 0; i < 10; i++)
         model.setType(i, i / 5);
+
     if (model.getLogLikelihood() != 0.0)
+        return 1;
+
+    /* Pathological case: no edge between vertices of type 1 */
+    for (int i = 0; i < 10; i++)
+        model.setType(i, (i == 3) ? 1 : 0);
+    if (!ALMOST_EQUALS(model.getLogLikelihood(), -61.826541893, 1e-8))
+        return 1;
+
+    /* Even more pathological case: no vertices of type 1 */
+    for (int i = 0; i < 10; i++)
+        model.setType(i, 0);
+    if (!ALMOST_EQUALS(model.getLogLikelihood(), -61.826541893, 1e-8))
         return 1;
 
     return 0;
@@ -82,6 +95,15 @@ int test_getProbabilities() {
     expected(1, 1) = 0;
     if (model.getProbabilities().maxdifference(expected) > 1e-8)
         return 2;
+
+    /* Even more pathological case: no vertices of type 1 */
+    for (int i = 0; i < 10; i++)
+        model.setType(i, 0);
+
+    expected(0, 0) = 4/9.0;
+    expected(0, 1) = expected(1, 0) = expected(1, 1) = 0;
+    if (model.getProbabilities().maxdifference(expected) > 1e-8)
+        return 3;
 
     return 0;
 }
