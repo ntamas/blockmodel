@@ -3,6 +3,8 @@
 #ifndef IGRAPHPP_VECTOR_H
 #define IGRAPHPP_VECTOR_H
 
+#include <cstring>
+#include <igraph/igraph_blas.h>
 #include <igraph/cpp/types.h>
 
 namespace igraph {
@@ -24,9 +26,12 @@ public:
     /* Constructors, destructors */
     /*****************************/
 
-    /// Constructs an empty vector
-    Vector(long length = 0) {
-        IGRAPH_TRY(igraph_vector_init(&m_vector, length));
+    /// Constructs a vector
+    explicit Vector(long length = 0, igraph_real_t* data = 0) {
+        if (data) {
+            IGRAPH_TRY(igraph_vector_init_copy(&m_vector, data, length));
+        } else
+            IGRAPH_TRY(igraph_vector_init(&m_vector, length));
     }
 
     /// Constructs a wrapper that wraps the given igraph_vector_t instance
@@ -77,6 +82,32 @@ public:
         return &m_vector;
     }
 
+    /// Returns the last element of the vector
+    igraph_real_t& back() {
+        return VECTOR(m_vector)[size()-1];
+    }
+
+    /// Returns the last element of the vector (const variant)
+    const igraph_real_t& back() const {
+        return VECTOR(m_vector)[size()-1];
+    }
+
+    /// Finds an element using binary search in a sorted vector
+    /**
+     * Returns \c true if the element is found, \c false otherwise.
+     * If \p pos is not null, it will be assigned to the position
+     * where the element was found, or where it should be inserted
+     * if the element was not found to keep the vector sorted.
+     */
+    bool binsearch(igraph_real_t what, long int *pos = 0) {
+        return igraph_vector_binsearch(&m_vector, what, pos);
+    }
+
+    /// Returns whether a given element is in the vector, using linear search
+    bool contains(igraph_real_t e) {
+        return igraph_vector_contains(&m_vector, e);
+    }
+
     /// Returns a pointer to the internal igraph_vector_t
     igraph_vector_t* c_vector() {
         return &m_vector;
@@ -97,6 +128,21 @@ public:
         igraph_vector_fill(&m_vector, element);
     }
 
+    /// Returns the first element of the vector
+    igraph_real_t& front() {
+        return VECTOR(m_vector)[0];
+    }
+
+    /// Returns the first element of the vector (const variant)
+    const igraph_real_t& front() const {
+        return VECTOR(m_vector)[0];
+    }
+
+    /// Returns the minimum element of the vector
+    igraph_real_t min() const {
+        return igraph_vector_min(&m_vector);
+    }
+
     /// Returns the maximum element of the vector
     igraph_real_t max() const {
         return igraph_vector_max(&m_vector);
@@ -112,6 +158,11 @@ public:
         igraph_vector_print(&m_vector);
     }
 
+    /// Searches the vector for a given element from the given position
+    bool search(long int from, igraph_real_t what, long int* pos = 0) {
+        return igraph_vector_search(&m_vector, from, what, pos);
+    }
+
     /// Returns the size of the vector
     size_t size() const {
         return igraph_vector_size(&m_vector);
@@ -124,6 +175,15 @@ public:
     /// Assignment operator: copies the given vector to this one
     Vector& operator=(const Vector& other) {
         IGRAPH_TRY(igraph_vector_update(&m_vector, &other.m_vector));
+        return *this;
+    }
+
+    /// Assignment operator: copies the given array to this vector
+    /**
+     * It is assumed that the array has the required size.
+     */
+    Vector& operator=(const igraph_real_t* other) {
+        memcpy(m_vector.stor_begin, other, size());
         return *this;
     }
 
@@ -147,7 +207,45 @@ public:
         return VECTOR(m_vector)[index];
     }
 
-    /// Matrix-vector product
+    /// In-place addition of a constant
+    Vector& operator+=(igraph_real_t plus) {
+        igraph_vector_add_constant(&m_vector, plus);
+        return *this;
+    }
+
+    /// In-place subtraction of a constant
+    Vector& operator-=(igraph_real_t minus) {
+        igraph_vector_add_constant(&m_vector, -minus);
+        return *this;
+    }
+
+    /// In-place multiplication by a constant
+    Vector& operator*=(const igraph_real_t by) {
+        igraph_vector_scale(&m_vector, by);
+        return *this;
+    }
+
+    /// In-place division by a constant
+    Vector& operator/=(igraph_real_t by) {
+        igraph_vector_scale(&m_vector, 1.0 / by);
+        return *this;
+    }
+
+    /// Multiplication by a constant
+    Vector operator*(igraph_real_t by) const {
+        Vector result(*this);
+        result *= by;
+        return result;
+    }
+
+    /// Division by a constant
+    Vector operator/(igraph_real_t by) const {
+        Vector result(*this);
+        result /= by;
+        return result;
+    }
+
+    /// Matrix-vector product, matrix is on the right
     Vector operator*(const Matrix& matrix);
 };
 

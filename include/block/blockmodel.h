@@ -63,17 +63,7 @@ public:
     }
 
     /// Returns the estimated probability between the two given types
-    double getProbability(int type1, int type2) const {
-        double count1 = m_typeCounts[type1];
-        double count2 = m_typeCounts[type2];
-
-        if (count1 == 0 || count2 == 0)
-            return 0;
-
-        if (type1 == type2)
-            return m_edgeCounts(type1, type2) / count1 / (count2 - 1);
-        return m_edgeCounts(type1, type2) / count1 / count2;
-    }
+    double getProbability(int type1, int type2) const;
 
     /// Returns the estimated probability matrix
     igraph::Matrix getProbabilities() const;

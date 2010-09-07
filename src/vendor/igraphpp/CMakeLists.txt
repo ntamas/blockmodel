@@ -1,1 +1,1 @@
-add_library(igraphpp STATIC graph)
+add_library(igraphpp STATIC graph vector)

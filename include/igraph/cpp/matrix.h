@@ -3,8 +3,10 @@
 #ifndef IGRAPHPP_MATRIX_H
 #define IGRAPHPP_MATRIX_H
 
+#include <cstring>
 #include <igraph/igraph_blas.h>
 #include <igraph/cpp/types.h>
+#include <igraph/cpp/vector.h>
 
 namespace igraph {
 
@@ -24,7 +26,7 @@ public:
     /*****************************/
 
     /// Constructs an empty matrix
-    Matrix(long nrow = 0, long ncol = 0) {
+    explicit Matrix(long nrow = 0, long ncol = 0) {
         IGRAPH_TRY(igraph_matrix_init(&m_matrix, nrow, ncol));
     }
 
@@ -77,6 +79,11 @@ public:
         igraph_matrix_fill(&m_matrix, element);
     }
 
+    /// Returns the minimum element of the matrix
+    igraph_real_t min() const {
+        return igraph_matrix_min(&m_matrix);
+    }
+
     /// Returns the maximum element of the matrix
     igraph_real_t max() const {
         return igraph_matrix_max(&m_matrix);
@@ -124,6 +131,16 @@ public:
     /// Assignment operator: copies the given matrix to this one
     Matrix& operator=(const Matrix& other) {
         IGRAPH_TRY(igraph_matrix_update(&m_matrix, &other.m_matrix));
+        return *this;
+    }
+
+    /// Assignment operator: copies the given array
+    /**
+     * It is assumed that the array has the required size and it is
+     * stored in the same ordering as the matrix.
+     */
+    Matrix& operator=(const igraph_real_t* other) {
+        memcpy(m_matrix.data.stor_begin, other, sizeof(igraph_real_t) * size());
         return *this;
     }
 

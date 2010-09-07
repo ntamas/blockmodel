@@ -9,7 +9,11 @@ using namespace igraph;
 
 namespace {
     double log_1_minus_x(double x) {
-        return 1.0 - log(x);
+        return 1.0 - std::log(x);
+    }
+
+    igraph_real_t exp_igraph(igraph_real_t x) {
+        return std::exp(x);
     }
 }
 
@@ -98,3 +102,34 @@ bool MetropolisHastingsStrategy::step() {
     m_acceptanceRatio.push_back(true);
     return true;
 }
+
+/*************************************************************************/
+
+bool GibbsSamplingStrategy::step() {
+    Graph* graph = m_pModel->getGraph();
+    int i = m_rng.randint(graph->vcount());
+    long int k = m_pModel->getNumTypes();
+    Vector logLs(k);
+
+    m_stepCount++;
+
+    // TODO: maybe this can be calculated more efficiently?
+    for (int j = 0; j < k; j++) {
+        m_pModel->setType(i, j);
+        logLs[j] = m_pModel->getLogLikelihood();
+    }
+
+    // Subtract the minimum log-likelihood from the log-likelihoods
+    logLs -= logLs.min();
+
+    // Run exp(), get cumulative sum
+    std::transform(logLs.begin(), logLs.end(), logLs.begin(), exp_igraph);
+    std::partial_sum(logLs.begin(), logLs.end(), logLs.begin());
+
+    // Select a new type based on the log-likelihood distribution
+    logLs.binsearch(m_rng.random() * logLs.back(), &k);
+    m_pModel->setType(i, k);
+
+    return true;
+}
+

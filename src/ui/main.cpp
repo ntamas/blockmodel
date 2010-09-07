@@ -21,7 +21,8 @@ int main(int argc, char** argv) {
     UndirectedBlockmodel model(&graph, args.numGroups);
     model.randomize();
 
-    MetropolisHastingsStrategy mcmc;
+    // MetropolisHastingsStrategy mcmc;
+    GibbsSamplingStrategy mcmc;
     mcmc.setModel(&model);
 
     while (1) {
@@ -29,10 +30,13 @@ int main(int argc, char** argv) {
 
         clog << '[' << setw(6) << mcmc.getStepCount() << "] "
              << setw(12) << logL
-             <<  setw(8) << mcmc.getAcceptanceRatio() << '\n';
+             // <<  setw(8) << mcmc.getAcceptanceRatio()
+             << '\n';
 
-        if (logL == 0.0)
+        if (logL == 0.0) {
+            model.getTypes().print();
             break;
+        }
         if (isnan(logL))
             return 1;
 

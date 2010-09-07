@@ -90,4 +90,23 @@ public:
     bool step();
 };
 
+/// Gibbs sampling for an undirected blockmodel
+/**
+ * In each step, a vertex is selected randomly and a new group is
+ * proposed according to the log-likelihood conditioned on all but the
+ * selected vertex.
+ */
+class GibbsSamplingStrategy : public OptimizationStrategy {
+private:
+    /// The random number generator used by the MCMC sampler
+    MersenneTwister m_rng;
+
+public:
+    /// Constructor
+    GibbsSamplingStrategy() : OptimizationStrategy() {}
+
+    /// Advances the Markov chain by one step
+    bool step();
+};
+
 #endif

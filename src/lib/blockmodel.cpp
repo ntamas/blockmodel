@@ -43,6 +43,22 @@ double UndirectedBlockmodel::getLogLikelihood() const {
     return result;
 }
 
+double UndirectedBlockmodel::getProbability(int type1, int type2) const {
+    double count1 = m_typeCounts[type1];
+    double count2 = m_typeCounts[type2];
+
+    if (count1 == 0 || count2 == 0)
+        return 0;
+
+    if (type1 == type2) {
+        if (count2 == 1)
+            return 0.0;
+        return m_edgeCounts(type1, type2) / count1 / (count2 - 1);
+    }
+
+    return m_edgeCounts(type1, type2) / count1 / count2;
+}
+
 Matrix UndirectedBlockmodel::getProbabilities() const {
     Matrix result(m_numTypes, m_numTypes);
     getProbabilities(result);

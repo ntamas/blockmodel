@@ -4,6 +4,7 @@
 #define IGRAPHPP_TYPES_H
 
 #include <stdexcept>
+#include <igraph/igraph_constants.h>
 
 namespace igraph {
 
