@@ -97,11 +97,6 @@ public:
         return igraph_matrix_nrow(&m_matrix);
     }
 
-    /// Sets all the elements in the matrix to zero
-    void null() {
-        igraph_matrix_null(&m_matrix);
-    }
-
     /// Prints the matrix to the standard output
     void print() const {
         igraph_matrix_print(&m_matrix);
