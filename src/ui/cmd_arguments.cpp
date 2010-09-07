@@ -12,12 +12,15 @@ using namespace SimpleOpt;
 
 enum {
     HELP, VERSION, NUM_GROUPS, VERBOSE, QUIET, USE_STDIN,
-    LOG_PERIOD
+    LOG_PERIOD, INIT_METHOD
 };
 
-CommandLineArguments::CommandLineArguments(int argc, char** argv)
-	: verbosity(1), numGroups(-1), logPeriod(-1)
-{
+CommandLineArguments::CommandLineArguments() : verbosity(1),
+      numGroups(-1),
+      logPeriod(-1), initMethod(GREEDY)
+{}
+
+void CommandLineArguments::parse(int argc, char** argv) {
     CSimpleOpt::SOption optionSpec[] = {
         /* standard options */
 
@@ -43,7 +46,8 @@ CommandLineArguments::CommandLineArguments(int argc, char** argv)
 
         /* advanced options */
 
-        { LOG_PERIOD, "--log-period", SO_REQ_SEP },
+        { LOG_PERIOD,  "--log-period",  SO_REQ_SEP },
+        { INIT_METHOD, "--init-method", SO_REQ_SEP },
 
         SO_END_OF_OPTIONS
     };
@@ -95,6 +99,17 @@ CommandLineArguments::CommandLineArguments(int argc, char** argv)
             /* Processing advanced parameters */
             case LOG_PERIOD:
                 logPeriod = atoi(args.OptionArg());
+
+            case INIT_METHOD:
+                if (!strcmp(args.OptionArg(), "greedy"))
+                    initMethod = GREEDY;
+                else if (!strcmp(args.OptionArg(), "random"))
+                    initMethod = RANDOM;
+                else {
+                    cerr << "Unknown initialization method: "
+                         << args.OptionArg() << "\n";
+                    exit(1);
+                }
         }
     }
 

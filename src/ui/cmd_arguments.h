@@ -5,6 +5,11 @@
 
 #include <string>
 
+/// Possible initialization methods for the algorithm
+typedef enum {
+    GREEDY, RANDOM
+} InitializationMethod;
+
 /// This class parsers and stores parameters retrieved from the command line
 class CommandLineArguments {
 private:
@@ -29,10 +34,17 @@ public:
     /* Advanced parameters */
     /***********************/
 
+    /// Number of steps after which a status message is printed
     long logPeriod;
 
+    /// Initialization method to be used for the MCMC sampling
+    InitializationMethod initMethod;
+
 	/// Constructor
-	CommandLineArguments(int argc, char** argv);
+	CommandLineArguments();
+    
+    /// Parses the command line arguments
+    void parse(int argc, char** argv);
 
 	/// Shows a help message on the given stream
 	void showHelp(std::ostream& os) const;
