@@ -1,18 +1,26 @@
 /* vim:set ts=4 sw=4 sts=4 et: */
 
-#include "cmd_arguments.h"
-#include "SimpleOpt.h"
-
 #include <iostream>
 #include <string>
+#include <block/version.h>
+
+#include "cmd_arguments.h"
+#include "SimpleOpt.h"
 
 using namespace std;
 using namespace SimpleOpt;
 
+enum {
+    HELP, VERSION, NUM_GROUPS, VERBOSE, QUIET, USE_STDIN,
+    LOG_PERIOD
+};
+
 CommandLineArguments::CommandLineArguments(int argc, char** argv)
-	: verbosity(1), numGroups(-1)
+	: verbosity(1), numGroups(-1), logPeriod(-1)
 {
     CSimpleOpt::SOption optionSpec[] = {
+        /* standard options */
+
         { USE_STDIN, "-", SO_NONE },
 
         { HELP, "-?",     SO_NONE     },
@@ -28,8 +36,14 @@ CommandLineArguments::CommandLineArguments(int argc, char** argv)
         { QUIET,   "-q",        SO_NONE },
         { QUIET,   "--quiet",   SO_NONE },
 
+        /* basic options */
+
         { NUM_GROUPS, "-g",       SO_REQ_SEP },
         { NUM_GROUPS, "--groups", SO_REQ_SEP },
+
+        /* advanced options */
+
+        { LOG_PERIOD, "--log-period", SO_REQ_SEP },
 
         SO_END_OF_OPTIONS
     };
@@ -62,7 +76,7 @@ CommandLineArguments::CommandLineArguments(int argc, char** argv)
                 showHelp(cerr);
                 exit(0);
             case VERSION:
-                cerr << executableName << " 0.1" << '\n';
+                cerr << "blockmodel " << BLOCKMODEL_VERSION_STRING << '\n';
                 exit(0);
 
             /* Log levels */
@@ -73,12 +87,20 @@ CommandLineArguments::CommandLineArguments(int argc, char** argv)
 				verbosity = 0;
                 break;
 
-            /* Processing algorithm parameters */
+            /* Processing basic algorithm parameters */
 			case NUM_GROUPS:
                 numGroups = atoi(args.OptionArg());
                 break;
+
+            /* Processing advanced parameters */
+            case LOG_PERIOD:
+                logPeriod = atoi(args.OptionArg());
         }
     }
+
+    /* Post-processing of algorithm values */
+    if (logPeriod <= 0)
+        logPeriod = 8192;
 
     /* If we already have stdin as the input file, return here */
     if (inputFile == "-")
@@ -96,14 +118,18 @@ CommandLineArguments::CommandLineArguments(int argc, char** argv)
 void CommandLineArguments::showHelp(ostream& os) const {
     os << "Usage:\n    " << executableName << " [options] input-file\n"
           "\n"
-          "Options:\n"
-          "    -h, --help:         shows this help message\n"
-          "    -V, --version:      shows the version number\n"
-          "    -v, --verbose:      verbose mode (more output)\n"
-          "    -q, --quiet:        quiet mode (less output, only errors)\n"
+          "General options:\n"
+          "    -h, --help          shows this help message\n"
+          "    -V, --version       shows the version number\n"
+          "    -v, --verbose       verbose mode (more output)\n"
+          "    -q, --quiet         quiet mode (less output, only errors)\n"
           "\n"
-          "    -g K, --groups K:   sets the desired number of groups to\n"
+          "Basic algorithm parameters:\n"
+          "    -g K, --groups K    sets the desired number of groups to\n"
           "                        K. Default = -1 (autodetection).\n"
+          "\n"
+          "Advanced algorithm parameters:\n"
+          "    --log-period COUNT  shows a status message after every COUNT steps\n"
     ;
 }
 

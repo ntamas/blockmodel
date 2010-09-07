@@ -88,18 +88,17 @@ bool MetropolisHastingsStrategy::step() {
 
     m_stepCount++;
 
+    m_lastProposalAccepted = true;
     if (newLogL < logL) {
         double p = std::exp(newLogL - logL);
         if (m_rng.random() > p) {
             /* reject the proposal, reset the state */
             m_pModel->setType(i, oldType);
-            m_acceptanceRatio.push_back(false);
-            return true;
+            m_lastProposalAccepted = false;
         }
     }
 
-    /* accept the proposal */
-    m_acceptanceRatio.push_back(true);
+    m_acceptanceRatio.push_back(m_lastProposalAccepted);
     return true;
 }
 

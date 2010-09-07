@@ -25,10 +25,10 @@ public:
     MersenneTwister(unsigned long seed);
     ~MersenneTwister(void);
 
-    double random(void) { return genrand_real1(); }
-	int randint(int max) { return genrand_real1()*max; }
+    double random(void) { return genrand_res53(); }
+	int randint(int max) { return genrand_res53()*max; }
 	int randint(int min, int max) {
-		return min + genrand_real1()*(max-min);
+		return min + genrand_res53()*(max-min);
 	}
     void print(void);
 

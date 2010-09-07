@@ -76,9 +76,13 @@ private:
     /// The moving average that tracks the acceptance ratio
     MovingAverage<bool> m_acceptanceRatio;
 
+    /// Whether the last proposal was accepted or not
+    bool m_lastProposalAccepted;
+
 public:
     /// Constructor
-    MetropolisHastingsStrategy() : OptimizationStrategy(), m_acceptanceRatio(1000) {
+    MetropolisHastingsStrategy() : OptimizationStrategy(),
+        m_acceptanceRatio(1000), m_lastProposalAccepted(false) {
     }
 
     /// Returns the acceptance ratio
@@ -88,6 +92,11 @@ public:
 
     /// Advances the Markov chain by one step
     bool step();
+
+    /// Returns whether the last proposal was accepted or not
+    bool wasLastProposalAccepted() const {
+        return m_lastProposalAccepted;
+    }
 };
 
 /// Gibbs sampling for an undirected blockmodel

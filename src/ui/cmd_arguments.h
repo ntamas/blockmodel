@@ -8,14 +8,14 @@
 /// This class parsers and stores parameters retrieved from the command line
 class CommandLineArguments {
 private:
-	typedef enum {
-		HELP, VERSION, NUM_GROUPS, VERBOSE, QUIET, USE_STDIN
-	} OptionIO;
-
 	/// String storing the name of the executable used to start the program
 	std::string executableName;
 
 public:
+    /********************/
+    /* Basic parameters */
+    /********************/
+
 	/// Name of the input file
 	std::string inputFile;
 
@@ -24,6 +24,12 @@ public:
 
 	/// Desired number of groups
 	int numGroups;
+
+    /***********************/
+    /* Advanced parameters */
+    /***********************/
+
+    long logPeriod;
 
 	/// Constructor
 	CommandLineArguments(int argc, char** argv);
