@@ -21,6 +21,8 @@ bool GreedyStrategy::step() {
     int k = m_pModel->getNumTypes();
     Vector newTypes(n);
 
+    m_stepCount++;
+
     // Calculate logP and log(1-P)
     Matrix logP = m_pModel->getProbabilities();
     Matrix log1P(logP);
@@ -70,7 +72,7 @@ bool GreedyStrategy::step() {
 
 /*************************************************************************/
 
-bool MCMCStrategy::step() {
+bool MetropolisHastingsStrategy::step() {
     Graph* graph = m_pModel->getGraph();
     int i = m_rng.randint(graph->vcount());
     int oldType = m_pModel->getType(i);

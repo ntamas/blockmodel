@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
     UndirectedBlockmodel model(&graph, args.numGroups);
     model.randomize();
 
-    MCMCStrategy mcmc;
+    MetropolisHastingsStrategy mcmc;
     mcmc.setModel(&model);
 
     while (1) {

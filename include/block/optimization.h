@@ -15,9 +15,17 @@ protected:
     /// Pointer to the model being optimized
     Model* m_pModel;
 
+    /// The number of steps taken
+    int m_stepCount;
+
 public:
     /// Constructs an optimization strategy not attached to any model
-    OptimizationStrategy() : m_pModel(0) {}
+    OptimizationStrategy() : m_pModel(0), m_stepCount(0) {}
+
+    /// Returns the number of steps taken so far
+    int getStepCount() const {
+        return m_stepCount;
+    }
 
     /// Runs the optimization procedure
     void optimize() {
@@ -47,7 +55,7 @@ public:
     bool step();
 };
 
-/// Markov chain Monte Carlo sampling for an undirected blockmodel
+/// Metropolis-Hastings algorithm for an undirected blockmodel
 /**
  * In each step, a vertex is selected randomly and a random new group is
  * proposed. There are two possibilities:
@@ -60,30 +68,22 @@ public:
  *    the likelihood ratio of the new and the old configuration. If the
  *    new group is rejected, the same sample will be returned.
  */
-class MCMCStrategy : public OptimizationStrategy {
+class MetropolisHastingsStrategy : public OptimizationStrategy {
 private:
     /// The random number generator used by the MCMC sampler
     MersenneTwister m_rng;
-
-    /// The number of steps taken
-    int m_stepCount;
 
     /// The moving average that tracks the acceptance ratio
     MovingAverage<bool> m_acceptanceRatio;
 
 public:
     /// Constructor
-    MCMCStrategy() : OptimizationStrategy(), m_stepCount(0), m_acceptanceRatio(1000) {
+    MetropolisHastingsStrategy() : OptimizationStrategy(), m_acceptanceRatio(1000) {
     }
 
     /// Returns the acceptance ratio
     float getAcceptanceRatio() const {
         return m_acceptanceRatio.value();
-    }
-
-    /// Returns the number of steps taken so far
-    int getStepCount() const {
-        return m_stepCount;
     }
 
     /// Advances the Markov chain by one step
