@@ -35,15 +35,36 @@ General options
 Basic algorithm parameters
 --------------------------
 
--g K, --groups K      Sets the desired number of groups to ``K``. The
-                      default is -1, which means autodetection.
+-g K, --groups K      Sets the desired number of groups to ``K``. The default is
+                      -1, which means autodetection.
 
 Advanced algorithm parameters
 -----------------------------
 
---log-period COUNT    Shows a status message after every ``COUNT``
-                      steps with the current and best log-likelihood
-                      and several other information.
+--block-size N        Sets the block size used when determining the convergence
+                      of the Markov chain. Consecutive blocks of size N will be
+                      taken and their average log-likelihood will be compared.
+                      The average should be roughly equal if the Markov chain converged
+                      to the stationary distribution. The default block size is
+                      10000 samples.
+
+--init-method METHOD  Uses the given initialization method to select the first
+                      state of the Markov chain. The following options are
+                      available:
+
+                      random
+                        starts from a random configuration
+
+                      greedy
+                        uses a simple greedy optimization scheme to find a
+                        configuration that is thought to be close to the mode
+                        of the likelihood distribution.
+
+                      The default method is the greedy one.
+
+--log-period COUNT    Shows a status message after every ``COUNT`` steps with
+                      the current and best log-likelihood and several other
+                      information. The default value is 8192.
 
 PROBLEMS
 ========

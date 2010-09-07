@@ -12,12 +12,12 @@ using namespace SimpleOpt;
 
 enum {
     HELP, VERSION, NUM_GROUPS, VERBOSE, QUIET, USE_STDIN,
-    LOG_PERIOD, INIT_METHOD
+    LOG_PERIOD, INIT_METHOD, BLOCK_SIZE
 };
 
 CommandLineArguments::CommandLineArguments() : verbosity(1),
-      numGroups(-1),
-      logPeriod(-1), initMethod(GREEDY)
+    numGroups(-1),
+    blockSize(10000), initMethod(GREEDY), logPeriod(8192)
 {}
 
 void CommandLineArguments::parse(int argc, char** argv) {
@@ -46,8 +46,9 @@ void CommandLineArguments::parse(int argc, char** argv) {
 
         /* advanced options */
 
-        { LOG_PERIOD,  "--log-period",  SO_REQ_SEP },
+        { BLOCK_SIZE,  "--block-size",  SO_REQ_SEP },
         { INIT_METHOD, "--init-method", SO_REQ_SEP },
+        { LOG_PERIOD,  "--log-period",  SO_REQ_SEP },
 
         SO_END_OF_OPTIONS
     };
@@ -97,8 +98,10 @@ void CommandLineArguments::parse(int argc, char** argv) {
                 break;
 
             /* Processing advanced parameters */
-            case LOG_PERIOD:
-                logPeriod = atoi(args.OptionArg());
+
+            case BLOCK_SIZE:
+                blockSize = atoi(args.OptionArg());
+                break;
 
             case INIT_METHOD:
                 if (!strcmp(args.OptionArg(), "greedy"))
@@ -110,12 +113,15 @@ void CommandLineArguments::parse(int argc, char** argv) {
                          << args.OptionArg() << "\n";
                     exit(1);
                 }
+                break;
+
+            case LOG_PERIOD:
+                logPeriod = atoi(args.OptionArg());
+                break;
         }
     }
 
     /* Post-processing of algorithm values */
-    if (logPeriod <= 0)
-        logPeriod = 8192;
 
     /* If we already have stdin as the input file, return here */
     if (inputFile == "-")
@@ -144,6 +150,11 @@ void CommandLineArguments::showHelp(ostream& os) const {
           "                        K. Default = -1 (autodetection).\n"
           "\n"
           "Advanced algorithm parameters:\n"
+          "    --block-size N      sets the block size used when determining the\n"
+          "                        convergence of the Markov chain to N\n"
+          "    --init-method METH  use the given initialization method METH for\n"
+          "                        the Markov chain. Available methods: greedy,\n"
+          "                        random.\n"
           "    --log-period COUNT  shows a status message after every COUNT steps\n"
     ;
 }

@@ -34,11 +34,14 @@ public:
     /* Advanced parameters */
     /***********************/
 
-    /// Number of steps after which a status message is printed
-    long logPeriod;
+    /// Block size used in MCMC sampling to assess convergence
+    int blockSize;
 
     /// Initialization method to be used for the MCMC sampling
     InitializationMethod initMethod;
+
+    /// Number of steps after which a status message is printed
+    int logPeriod;
 
 	/// Constructor
 	CommandLineArguments();

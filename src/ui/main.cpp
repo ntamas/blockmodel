@@ -33,6 +33,11 @@ LOGGING_FUNCTION(error, 0);
 int main(int argc, char** argv) {
     args.parse(argc, argv);
 
+    if (args.numGroups <= 0) {
+        error("Automatic group count detection not supported yet :(\n");
+        return 1;
+    }
+
     // Graph graph = Graph::Full(5) + Graph::Full(5);
     Graph graph = Graph::GRG(100, 0.2);
 
