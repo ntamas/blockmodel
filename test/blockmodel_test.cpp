@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cstdlib>
-#include <iostream>
 #include <igraph/cpp/graph.h>
 #include <block/blockmodel.h>
 

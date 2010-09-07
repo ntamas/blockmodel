@@ -93,4 +93,3 @@ bool MCMCStrategy::step() {
 
     return true;
 }
-

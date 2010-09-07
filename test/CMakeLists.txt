@@ -1,5 +1,6 @@
 set(TEST_CASES blockmodel
                greedy_strategy
+               moving_average
 )
 
 foreach(test ${TEST_CASES})
