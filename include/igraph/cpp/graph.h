@@ -122,7 +122,26 @@ public:
     /* Operators */
     /*************/
 
+    /// Disjoint union of two graphs
     Graph operator+(const Graph& other) const;
+
+    /// Assignment operator
+    Graph& operator=(const Graph& other) {
+        if (&other == this)
+            return *this;
+
+        igraph_t new_graph;
+        IGRAPH_TRY(igraph_copy(&new_graph, other.m_pGraph));
+
+        if (m_pGraph) {
+            igraph_destroy(m_pGraph);
+        } else {
+            m_pGraph = new igraph_t;
+        }
+        *m_pGraph = new_graph;
+
+        return *this;
+    }
 };
 
 }       // end of namespaces
