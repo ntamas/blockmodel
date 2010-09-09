@@ -1,5 +1,6 @@
 /* vim:set ts=4 sw=4 sts=4 et: */
 
+#include <ctime>
 #include <iostream>
 #include <string>
 #include <block/version.h>
@@ -12,12 +13,13 @@ using namespace SimpleOpt;
 
 enum {
     HELP, VERSION, NUM_GROUPS, VERBOSE, QUIET, USE_STDIN,
-    LOG_PERIOD, INIT_METHOD, BLOCK_SIZE
+    LOG_PERIOD, INIT_METHOD, BLOCK_SIZE, SEED
 };
 
 CommandLineArguments::CommandLineArguments() : verbosity(1),
     numGroups(-1),
-    blockSize(10000), initMethod(GREEDY), logPeriod(8192)
+    blockSize(10000), initMethod(GREEDY), logPeriod(8192),
+    randomSeed(time(0))
 {}
 
 void CommandLineArguments::parse(int argc, char** argv) {
@@ -49,6 +51,7 @@ void CommandLineArguments::parse(int argc, char** argv) {
         { BLOCK_SIZE,  "--block-size",  SO_REQ_SEP },
         { INIT_METHOD, "--init-method", SO_REQ_SEP },
         { LOG_PERIOD,  "--log-period",  SO_REQ_SEP },
+        { SEED,        "--seed",        SO_REQ_SEP },
 
         SO_END_OF_OPTIONS
     };
@@ -118,6 +121,10 @@ void CommandLineArguments::parse(int argc, char** argv) {
             case LOG_PERIOD:
                 logPeriod = atoi(args.OptionArg());
                 break;
+
+            case SEED:
+                randomSeed = atol(args.OptionArg());
+                break;
         }
     }
 
@@ -156,6 +163,8 @@ void CommandLineArguments::showHelp(ostream& os) const {
           "                        the Markov chain. Available methods: greedy,\n"
           "                        random.\n"
           "    --log-period COUNT  shows a status message after every COUNT steps\n"
+          "    --seed SEED         use the given number to seed the random number\n"
+          "                        generator.\n"
     ;
 }
 

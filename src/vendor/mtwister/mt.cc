@@ -48,6 +48,7 @@
 */
 
 #include <iostream>
+#include <cstring>
 #include <ctime>
 
 #include <mtwister/mt.h>
@@ -66,6 +67,19 @@ MersenneTwister::MersenneTwister(void) {
 MersenneTwister::MersenneTwister(unsigned long seed) {
     initialize();
     init_genrand(seed);
+}
+
+/**
+ * Copy constructor
+ */
+MersenneTwister::MersenneTwister(const MersenneTwister& other) {
+	initialize();
+	memcpy(mt_, other.mt_, sizeof(unsigned long) * N);
+    mti_ = other.mti_;
+    init_key_ = other.init_key_;
+    key_length_ = other.key_length_;
+    s_ = other.s_;
+    seeded_by_int_ = other.seeded_by_int_;
 }
 
 /**

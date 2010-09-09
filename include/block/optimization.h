@@ -3,6 +3,7 @@
 #ifndef BLOCKMODEL_OPTIMIZATION_H
 #define BLOCKMODEL_OPTIMIZATION_H
 
+#include <memory>
 #include <block/blockmodel.h>
 #include <block/math.h>
 #include <mtwister/mt.h>
@@ -55,6 +56,27 @@ public:
     bool step();
 };
 
+/// Optimization strategy that uses a random number generator
+class RandomizedOptimizationStrategy : public OptimizationStrategy {
+protected:
+    /// The random generator used by the strategy
+    std::auto_ptr<MersenneTwister> m_pRng;
+
+public:
+    /// Constructor
+    RandomizedOptimizationStrategy() : m_pRng(new MersenneTwister()) {}
+
+    /// Returns the random generator used by the strategy
+    MersenneTwister* getRNG() {
+        return m_pRng.get();
+    }
+
+    /// Sets the random generator used by the strategy
+    void setRNG(MersenneTwister* pRng) {
+        m_pRng.reset(pRng);
+    }
+};
+
 /// Metropolis-Hastings algorithm for an undirected blockmodel
 /**
  * In each step, a vertex is selected randomly and a random new group is
@@ -68,11 +90,8 @@ public:
  *    the likelihood ratio of the new and the old configuration. If the
  *    new group is rejected, the same sample will be returned.
  */
-class MetropolisHastingsStrategy : public OptimizationStrategy {
+class MetropolisHastingsStrategy : public RandomizedOptimizationStrategy {
 private:
-    /// The random number generator used by the MCMC sampler
-    MersenneTwister m_rng;
-
     /// The moving average that tracks the acceptance ratio
     MovingAverage<bool> m_acceptanceRatio;
 
@@ -81,7 +100,7 @@ private:
 
 public:
     /// Constructor
-    MetropolisHastingsStrategy() : OptimizationStrategy(),
+    MetropolisHastingsStrategy() : RandomizedOptimizationStrategy(),
         m_acceptanceRatio(1000), m_lastProposalAccepted(false) {
     }
 
@@ -105,14 +124,10 @@ public:
  * proposed according to the log-likelihood conditioned on all but the
  * selected vertex.
  */
-class GibbsSamplingStrategy : public OptimizationStrategy {
-private:
-    /// The random number generator used by the MCMC sampler
-    MersenneTwister m_rng;
-
+class GibbsSamplingStrategy : public RandomizedOptimizationStrategy {
 public:
     /// Constructor
-    GibbsSamplingStrategy() : OptimizationStrategy() {}
+    GibbsSamplingStrategy() : RandomizedOptimizationStrategy() {}
 
     /// Advances the Markov chain by one step
     bool step();

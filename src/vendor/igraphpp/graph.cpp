@@ -1,6 +1,7 @@
 /* vim:set ts=4 sw=4 sts=4 et: */
 
 #include <igraph/igraph_conversion.h>
+#include <igraph/igraph_foreign.h>
 #include <igraph/igraph_games.h>
 #include <igraph/igraph_operators.h>
 #include <igraph/cpp/graph.h>
@@ -29,6 +30,12 @@ Graph Graph::GRG(integer_t nodes, real_t radius, bool torus,
     std::auto_ptr<igraph_t> result(new igraph_t);
     IGRAPH_TRY(igraph_grg_game(result.get(), nodes, radius, torus,
                 x->c_vector(), y->c_vector()));
+    return Graph(result.release());
+}
+
+Graph Graph::ReadEdgelist(FILE* instream, integer_t n, bool directed) {
+    std::auto_ptr<igraph_t> result(new igraph_t);
+    IGRAPH_TRY(igraph_read_graph_edgelist(result.get(), instream, n, directed));
     return Graph(result.release());
 }
 

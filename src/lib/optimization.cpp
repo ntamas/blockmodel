@@ -78,9 +78,9 @@ bool GreedyStrategy::step() {
 
 bool MetropolisHastingsStrategy::step() {
     Graph* graph = m_pModel->getGraph();
-    int i = m_rng.randint(graph->vcount());
+    int i = m_pRng->randint(graph->vcount());
     int oldType = m_pModel->getType(i);
-    int newType = m_rng.randint(m_pModel->getNumTypes());
+    int newType = m_pRng->randint(m_pModel->getNumTypes());
     double logL = m_pModel->getLogLikelihood();
 
     m_pModel->setType(i, newType);
@@ -91,7 +91,7 @@ bool MetropolisHastingsStrategy::step() {
     m_lastProposalAccepted = true;
     if (newLogL < logL) {
         double p = std::exp(newLogL - logL);
-        if (m_rng.random() > p) {
+        if (m_pRng->random() > p) {
             /* reject the proposal, reset the state */
             m_pModel->setType(i, oldType);
             m_lastProposalAccepted = false;
@@ -106,7 +106,7 @@ bool MetropolisHastingsStrategy::step() {
 
 bool GibbsSamplingStrategy::step() {
     Graph* graph = m_pModel->getGraph();
-    int i = m_rng.randint(graph->vcount());
+    int i = m_pRng->randint(graph->vcount());
     long int k = m_pModel->getNumTypes();
     Vector logLs(k);
 
@@ -126,7 +126,7 @@ bool GibbsSamplingStrategy::step() {
     std::partial_sum(logLs.begin(), logLs.end(), logLs.begin());
 
     // Select a new type based on the log-likelihood distribution
-    logLs.binsearch(m_rng.random() * logLs.back(), &k);
+    logLs.binsearch(m_pRng->random() * logLs.back(), &k);
     m_pModel->setType(i, k);
 
     return true;

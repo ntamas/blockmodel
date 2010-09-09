@@ -6,6 +6,7 @@
 #include <iostream>
 #include <limits>
 #include <memory>
+#include <sstream>
 #include <block/blockmodel.h>
 #include <block/optimization.h>
 #include <igraph/cpp/graph.h>
@@ -22,6 +23,7 @@ using namespace std;
             return;                          \
         va_start(arglist, format);           \
         vfprintf(stderr, format, arglist);   \
+        fprintf(stderr, "\n");               \
         va_end(arglist);                     \
     }
 
@@ -31,7 +33,7 @@ private:
     CommandLineArguments m_args;
 
     /// Graph being analyzed by the UI
-    Graph* m_pGraph;
+    std::auto_ptr<Graph> m_pGraph;
 
     /// Blockmodel being fitted to the graph
     UndirectedBlockmodel* m_pModel;
@@ -49,8 +51,6 @@ public:
 
     /// Destructor
     ~BlockmodelCmdlineApp() {
-        if (m_pGraph)
-            delete m_pGraph;
         if (m_pModel)
             delete m_pModel;
     }
@@ -65,25 +65,51 @@ public:
         return m_args.verbosity > 2;
     }
 
+    /// Loads a graph from the given file
+    /**
+     * If the name of the file is "-", the file is assumed to be the
+     * standard input.
+     */
+    std::auto_ptr<Graph> loadGraph(const std::string& filename) {
+        std::auto_ptr<Graph> result;
+        FILE* fptr = stdin;
+
+        if (filename != "-") {
+            fptr = fopen(filename.c_str(), "r");
+            if (fptr == NULL) {
+                std::ostringstream oss;
+                oss << "File not found: " << filename;
+                throw std::runtime_error(oss.str());
+            }
+        }
+
+        result.reset(new Graph(Graph::ReadEdgelist(fptr)));
+        return result;
+    }
+
     /// Runs the user interface
     int run(int argc, char** argv) {
         m_args.parse(argc, argv);
 
         if (m_args.numGroups <= 0) {
-            error("Automatic group count detection not supported yet :(\n");
+            error("Automatic group count detection not supported yet :(");
             return 1;
         }
 
-        // Graph graph = Graph::Full(5) + Graph::Full(5);
-        m_pGraph = new Graph(Graph::GRG(100, 0.2));
-        m_pModel = new UndirectedBlockmodel(m_pGraph, m_args.numGroups);
-        m_pModel->randomize();
+        info(">> loading graph: %s", m_args.inputFile.c_str());
+        m_pGraph = loadGraph(m_args.inputFile);
+
+        debug(">> using random seed: %lu", m_args.randomSeed);
+        mcmc.getRNG()->init_genrand(m_args.randomSeed);
+
+        m_pModel = new UndirectedBlockmodel(m_pGraph.get(), m_args.numGroups);
+        m_pModel->randomize(*mcmc.getRNG());
 
         if (m_args.initMethod == GREEDY) {
             GreedyStrategy greedy;
             greedy.setModel(m_pModel);
 
-            info(">> running greedy initialization\n");
+            info(">> running greedy initialization");
             m_pModel->getTypes().print();
 
             while (greedy.step()) {
@@ -93,6 +119,8 @@ public:
                          << setw(12) << logL << "\t(" << logL << ")\n";
                 }
                 m_pModel->getTypes().print();
+                if (greedy.getStepCount() > 20)
+                    return 1;
             }
 
             return 0;
@@ -103,7 +131,7 @@ public:
         double logL;
         double bestLogL = -std::numeric_limits<double>::max();
 
-        info(">> starting Markov chain\n");
+        info(">> starting Markov chain");
 
         {
             Graph graph2;

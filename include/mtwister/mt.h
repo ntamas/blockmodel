@@ -23,6 +23,7 @@ class MersenneTwister
 public:
     MersenneTwister();
     MersenneTwister(unsigned long seed);
+	MersenneTwister(const MersenneTwister& other);
     ~MersenneTwister(void);
 
     double random(void) { return genrand_res53(); }
@@ -62,6 +63,10 @@ private:
 
     /// Initializer function
     void initialize();
+
+
+	/// Assignment function (intentionally left unimplemented)
+	MersenneTwister& operator=(const MersenneTwister& other);
 };
 
 #endif // METRICS_MT_H

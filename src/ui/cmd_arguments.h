@@ -43,6 +43,9 @@ public:
     /// Number of steps after which a status message is printed
     int logPeriod;
 
+    /// The random seed to be used
+    unsigned long randomSeed;
+
 	/// Constructor
 	CommandLineArguments();
     

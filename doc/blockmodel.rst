@@ -66,6 +66,9 @@ Advanced algorithm parameters
                       the current and best log-likelihood and several other
                       information. The default value is 8192.
 
+--seed SEED           Seed the internal Mersenne Twister random generator with
+                      the given number (and make the result deterministic).
+
 PROBLEMS
 ========
 

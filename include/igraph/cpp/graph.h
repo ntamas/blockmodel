@@ -73,6 +73,10 @@ public:
     static Graph GRG(integer_t nodes, real_t radius, bool torus=false,
             Vector* x=0, Vector* y=0);
 
+    /// Reads a graph from an edge list file
+    static Graph ReadEdgelist(FILE* instream, integer_t n=0,
+            bool directed=false);
+
     /// Constructs a ring graph
     static Graph Ring(integer_t n, bool directed=false, bool mutual=true,
             bool circular=true);

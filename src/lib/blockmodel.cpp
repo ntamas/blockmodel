@@ -21,7 +21,7 @@ double UndirectedBlockmodel::getLogLikelihood() const {
         if (count1 == 0)
             continue;
 
-        for (int j = 0; j < m_numTypes; j++) {
+        for (int j = i; j < m_numTypes; j++) {
             int count2 = m_typeCounts[j];
             double prob;
 
@@ -32,7 +32,7 @@ double UndirectedBlockmodel::getLogLikelihood() const {
                 if (count2 == 1)
                     continue;
                 prob = m_edgeCounts(i, i) / count1 / (count2 - 1);
-                result += count1 * (count2 - 1) * binary_entropy(prob);
+                result += count1 * (count2 - 1) * 0.5 * binary_entropy(prob);
             } else {
                 prob = m_edgeCounts(i, j) / count1 / count2;
                 result += count1 * count2 * binary_entropy(prob);
