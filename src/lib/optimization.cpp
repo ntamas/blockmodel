@@ -9,7 +9,7 @@ using namespace igraph;
 
 namespace {
     double log_1_minus_x(double x) {
-        return 1.0 - std::log(x);
+        return std::log(1.0 - x);
     }
 
     igraph_real_t exp_igraph(igraph_real_t x) {
@@ -23,42 +23,71 @@ bool GreedyStrategy::step() {
     Graph* graph = m_pModel->getGraph();
     long int i, n = graph->vcount();
     int k = m_pModel->getNumTypes();
+    Vector oldTypeCounts(m_pModel->getTypeCounts());
     Vector newTypes(n);
 
     m_stepCount++;
 
-    // Calculate logP and log(1-P)
-    Matrix logP = m_pModel->getProbabilities();
-    Matrix log1P(logP);
-    std::transform(logP.begin(), logP.end(), log1P.begin(), log_1_minus_x);
-    std::transform(logP.begin(), logP.end(), logP.begin(), log);
-    
-    // Calculate logP - log(1-P), we will only need this, see explanation
-    // below in the main loop
-    logP -= log1P;
+    // Calculate log(1-P)
+    Matrix logP_minus_log1P = m_pModel->getProbabilities();
+    Matrix log1P(logP_minus_log1P);
+    std::transform(logP_minus_log1P.begin(), logP_minus_log1P.end(),
+            log1P.begin(), log_1_minus_x);
+
+    // Calculate logP_minus_log1P
+    std::transform(logP_minus_log1P.begin(), logP_minus_log1P.end(),
+            logP_minus_log1P.begin(), log);
+    logP_minus_log1P -= log1P;
+
+    // Okay, so the local contribution of vertex i to the log-likelihood is
+    // given as follows, assuming that the type of vertex i is t_i,
+    // n_k is the number of neighbors of vertex i with type k and
+    // N_k is the total number of vertices with type k
+    //
+    // sum_k (n_k * log(p(t_i, k)) + (N_k - n_k) * log(1-p(t_i, k)))
+    //
+    // This can be re-written as:
+    //
+    // sum_k (N_k * log(1-p(t_i, k)) + n_k * (log(p(t_i, k)) - log(1-p(t_i, k))))
+    //
+    // That's why I wrote above that we will need logP - log(1-P). Switching to
+    // vector notations:
+    //
+    // N * log(1-P) + n * (log(P) - log(1-P))
+    //
+    // is what we are looking for. This gives us a vector and we simply have
+    // to select the maximum element to get the new type of vertex i.
+    //
+    // Well, there's a small glitch here: if vertex i is currently in group t_i,
+    // we have to decrease component t_i of N by 1; or, subtract row t_i of
+    // log(1-P) from the final vector.
+    //
+    // TODO: or column? Think about it. It doesn't matter for undirected
+    // blockmodels, but it may matter for directed ones.
 
     // For each vertex...
     for (i = 0; i < n; i++) {
-        // Approximate the local contribution of the vertex to the likelihood
-        // when it is moved to each of the groups
-        //
-        // With some math magic, it can be shown that if the group of vertex i
-        // is t_i, then the log-likelihood corresponding to the vertex is equal
-        // to n * (log p(t_i, :) - log(1-p(t_i, :))) + const in Matlab notation.
-        // n is a vector containing the number of neighbors i having type x and
-        // the constant does not depend on n.
-        //
-        // So, first we calculate n, which we will denote with neiCountByType.
+        // First we calculate the number of neighbors of type k for vertex i,
+        // which we will denote with neiCountByType(k).
         Vector neiCountByType(k);
         Vector neis = graph->neighbors(i);
         for (Vector::iterator it = neis.begin(); it != neis.end(); it++) {
             neiCountByType[m_pModel->getType(*it)]++;
         }
 
-        // We already have logP - log1P, so all we need is a matrix-vector
-        // product
-        neiCountByType = logP * neiCountByType;
+        // We already have logP - log1P, so all we need is two matrix-vector
+        // products and an addition.
+        neiCountByType = logP_minus_log1P * neiCountByType;
+        neiCountByType += (log1P * oldTypeCounts);
+        // We might get 'nan' values after this step in neiCountByType if
+        // an infinity or negative infinity (occurring in logP_minus_log1P
+        // or log1P) was multiplied by zero. We don't care, though, nan
+        // values will never be selected as maxima anyway.
 
+        // Now the correction mentioned above
+        neiCountByType -= log1P.getRow(m_pModel->getType(i));
+
+        // Find the maximum element
         newTypes[i] = 
             std::max_element(neiCountByType.begin(), neiCountByType.end()) -
             neiCountByType.begin();

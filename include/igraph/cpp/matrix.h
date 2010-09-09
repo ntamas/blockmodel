@@ -79,6 +79,20 @@ public:
         igraph_matrix_fill(&m_matrix, element);
     }
 
+    /// Returns the given column of the matrix as a vector
+    Vector getCol(long int index) const {
+        Vector result(nrow());
+        IGRAPH_TRY(igraph_matrix_get_col(&m_matrix, result.c_vector(), index));
+        return result;
+    }
+
+    /// Returns the given row of the matrix as a vector
+    Vector getRow(long int index) const {
+        Vector result(ncol());
+        IGRAPH_TRY(igraph_matrix_get_row(&m_matrix, result.c_vector(), index));
+        return result;
+    }
+
     /// Returns the minimum element of the matrix
     igraph_real_t min() const {
         return igraph_matrix_min(&m_matrix);

@@ -213,9 +213,21 @@ public:
         return *this;
     }
 
+    /// In-place addition of a vector
+    Vector& operator+=(const Vector& v2) {
+        IGRAPH_TRY(igraph_vector_add(&m_vector, &v2.m_vector));
+        return *this;
+    }
+
     /// In-place subtraction of a constant
     Vector& operator-=(igraph_real_t minus) {
         igraph_vector_add_constant(&m_vector, -minus);
+        return *this;
+    }
+
+    /// In-place subtraction of a vector
+    Vector& operator-=(const Vector& v2) {
+        IGRAPH_TRY(igraph_vector_sub(&m_vector, &v2.m_vector));
         return *this;
     }
 

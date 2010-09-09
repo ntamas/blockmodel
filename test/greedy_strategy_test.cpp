@@ -75,11 +75,61 @@ int test_four_almost_cliques() {
     return 0;
 }
 
+/* This test is skipped currently as the greedy strategy uses an *approximation*
+ * only, which prevents it from finding an exact match */
+int test_grg() {
+    Graph graph = Graph::GRG(100, 0.2);
+    UndirectedBlockmodel model(&graph, 4);
+    GreedyStrategy greedy;
+    Vector expected(graph.vcount());
+
+    model.randomize();
+
+    // Fill the expected types vector with the expected result
+    for (int i = 0; i < graph.vcount(); i++) {
+        int oldType = model.getType(i);
+        double bestLogL = model.getLogLikelihood(), logL;
+
+        expected[i] = -1;
+        for (int j = 0; j < model.getNumTypes(); j++) {
+            model.setType(i, j);
+            logL = model.getLogLikelihood();
+            if (logL > bestLogL) {
+                bestLogL = logL;
+                expected[i] = j;
+            } else if (logL == bestLogL) {
+                expected[i] = -1;  /* ambiguous */
+            }
+        }
+
+        model.setType(i, oldType);
+    }
+
+    greedy.setModel(&model);
+    greedy.step();
+
+    for (size_t i = 0; i < expected.size(); i++)
+        if (expected[i] == -1)
+            expected[i] = model.getType(i);
+
+    if (model.getTypes() != expected) {
+        printf("Expected: ");
+        expected.print();
+        printf("Observed: ");
+        model.getTypes().print();
+        return 1;
+    }
+
+    return 0;
+}
+
 int main(int argc, char* argv[]) {
     srand(time(0));
 
     CHECK(test_two_rings);
     CHECK(test_four_almost_cliques);
+    // CHECK(test_grg);
+
     return 0;
 }
 
