@@ -18,7 +18,7 @@ enum {
 
 CommandLineArguments::CommandLineArguments() : verbosity(1),
     numGroups(-1),
-    blockSize(10000), initMethod(GREEDY), logPeriod(8192),
+    blockSize(65536), initMethod(GREEDY), logPeriod(8192),
     randomSeed(time(0))
 {}
 

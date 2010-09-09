@@ -41,13 +41,20 @@ private:
     /// Markov chain Monte Carlo strategy to optimize the model
     MetropolisHastingsStrategy mcmc;
 
+    /// Best log-likelihood found so far
+    double m_bestLogL;
+
+    /// Whether the Markov chain has converged already or not
+    bool m_converged;
+
 public:
     LOGGING_FUNCTION(debug, 2);
     LOGGING_FUNCTION(info, 1);
     LOGGING_FUNCTION(error, 0);
 
     /// Constructor
-    BlockmodelCmdlineApp() : m_pGraph(0), m_pModel(0) {}
+    BlockmodelCmdlineApp() : m_pGraph(0), m_pModel(0),
+        m_bestLogL(-std::numeric_limits<double>::max()) {}
 
     /// Destructor
     ~BlockmodelCmdlineApp() {
@@ -87,6 +94,38 @@ public:
         return result;
     }
 
+    /// Runs a single block of the Markov chain Monte Carlo process
+    /**
+     * The sampled log-likelihoods are collected in the given vector.
+     * The vector is cleared at the start of the process.
+     */
+    void runBlock(Vector& samples) {
+        samples.clear();
+        while (1) {
+            double logL;
+            mcmc.step();
+
+            logL = m_pModel->getLogLikelihood();
+            if (m_bestLogL < logL)
+                m_bestLogL = logL;
+            samples.push_back(logL);
+
+            if (mcmc.getStepCount() % m_args.logPeriod == 0 && !isQuiet()) {
+                clog << '[' << setw(6) << mcmc.getStepCount() << "] "
+                     << setw(12) << logL << "\t(" << m_bestLogL << ")\t"
+                     << (mcmc.wasLastProposalAccepted() ? '*' : ' ')
+                     << setw(8) << mcmc.getAcceptanceRatio()
+                     << '\n';
+            }
+
+            if (mcmc.getStepCount() % m_args.blockSize == 0) {
+                // Block ended
+                debug(">> optimization block ended here");
+                return;
+            }
+        }
+    }
+
     /// Runs the user interface
     int run(int argc, char** argv) {
         m_args.parse(argc, argv);
@@ -110,7 +149,6 @@ public:
             greedy.setModel(m_pModel);
 
             info(">> running greedy initialization");
-            m_pModel->getTypes().print();
 
             while (greedy.step()) {
                 double logL = m_pModel->getLogLikelihood();
@@ -118,45 +156,29 @@ public:
                     clog << '[' << setw(6) << greedy.getStepCount() << "] "
                          << setw(12) << logL << "\t(" << logL << ")\n";
                 }
-                m_pModel->getTypes().print();
-                if (greedy.getStepCount() > 20)
-                    return 1;
             }
-
-            return 0;
         }
 
         mcmc.setModel(m_pModel);
 
-        double logL;
-        double bestLogL = -std::numeric_limits<double>::max();
-
         info(">> starting Markov chain");
+        bool converged = false;
+        double prevEstEntropy = 0.0;
+        Vector samples(m_args.blockSize);
 
-        {
-            Graph graph2;
-            graph2 = *m_pGraph;
+        // Run the Markov chain until convergence
+        while (!converged) {
+            double estEntropy;
+            runBlock(samples);
+            estEntropy = samples.sum() / samples.size();
+            debug(">> estimated entropy of distribution: %.4f", estEntropy);
+            if (std::fabs(estEntropy - prevEstEntropy) < 1.0)
+                converged = true;
+            prevEstEntropy = estEntropy;
         }
 
-        while (1) {
-            mcmc.step();
-
-            logL = m_pModel->getLogLikelihood();
-            if (bestLogL < logL)
-                bestLogL = logL;
-
-            if (mcmc.getStepCount() % m_args.logPeriod == 0 && !isQuiet()) {
-                clog << '[' << setw(6) << mcmc.getStepCount() << "] "
-                     << setw(12) << logL << "\t(" << bestLogL << ")\t"
-                     << (mcmc.wasLastProposalAccepted() ? '*' : ' ')
-                     << setw(8) << mcmc.getAcceptanceRatio()
-                     << '\n';
-            }
-
-            if (isnan(logL))
-                return 1;
-        }
-
+        info(">> chain seems to have converged to stationary state");
+        m_pModel->getTypes().print();
         return 0;
     }
 };

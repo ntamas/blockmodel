@@ -103,6 +103,16 @@ public:
         return igraph_vector_binsearch(&m_vector, what, pos);
     }
 
+    /// Removes all the elements from the vector
+    /**
+     * Note that this function sets the length of the vector to zero, but it
+     * does not allocate previously used memory -- it is still kept in case
+     * the vector has to grow again.
+     */
+    void clear() {
+        igraph_vector_clear(&m_vector);
+    }
+
     /// Returns whether a given element is in the vector, using linear search
     bool contains(igraph_real_t e) {
         return igraph_vector_contains(&m_vector, e);
@@ -158,6 +168,21 @@ public:
         igraph_vector_print(&m_vector);
     }
 
+    /// Adds a new element to the end of the vector
+    void push_back(igraph_real_t e) {
+        IGRAPH_TRY(igraph_vector_push_back(&m_vector, e));
+    }
+
+    /// Reserves space for the given number of elements in the vector
+    void reserve(long int newsize) {
+        IGRAPH_TRY(igraph_vector_reserve(&m_vector, newsize));
+    }
+
+    /// Resizes the vector
+    void resize(long int newsize) {
+        IGRAPH_TRY(igraph_vector_resize(&m_vector, newsize));
+    }
+
     /// Searches the vector for a given element from the given position
     bool search(long int from, igraph_real_t what, long int* pos = 0) {
         return igraph_vector_search(&m_vector, from, what, pos);
@@ -166,6 +191,11 @@ public:
     /// Returns the size of the vector
     size_t size() const {
         return igraph_vector_size(&m_vector);
+    }
+
+    /// Returns the sum of the elements of the vector
+    igraph_real_t sum() const {
+        return igraph_vector_sum(&m_vector);
     }
 
     /*************/
