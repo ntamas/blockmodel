@@ -1,6 +1,7 @@
 /* vim:set ts=4 sw=4 sts=4 et: */
 
 #include <cmath>
+#include <csignal>
 #include <cstdarg>
 #include <iomanip>
 #include <iostream>
@@ -39,13 +40,16 @@ private:
     UndirectedBlockmodel* m_pModel;
 
     /// Markov chain Monte Carlo strategy to optimize the model
-    MetropolisHastingsStrategy mcmc;
+    MetropolisHastingsStrategy m_mcmc;
 
     /// Best log-likelihood found so far
     double m_bestLogL;
 
-    /// Whether the Markov chain has converged already or not
-    bool m_converged;
+    /// Best model found so far
+    UndirectedBlockmodel m_bestModel;
+
+    /// Flag to note whether we have to dump the best state when possible
+    bool m_dumpBestStateFlag;
 
 public:
     LOGGING_FUNCTION(debug, 2);
@@ -54,14 +58,21 @@ public:
 
     /// Constructor
     BlockmodelCmdlineApp() : m_pGraph(0), m_pModel(0),
-        m_bestLogL(-std::numeric_limits<double>::max()) {}
+        m_bestLogL(-std::numeric_limits<double>::max()),
+        m_bestModel(), m_dumpBestStateFlag(false) {}
 
     /// Destructor
     ~BlockmodelCmdlineApp() {
         if (m_pModel)
             delete m_pModel;
     }
-    
+
+    /// Dumps the best state found so far and clears the dump flag
+    void dumpBestState() {
+        clog << "TODO: implement state dumping\n";
+        m_dumpBestStateFlag = false;
+    }
+
     /// Returns whether we are running in quiet mode
     bool isQuiet() {
         return m_args.verbosity < 1;
@@ -94,36 +105,57 @@ public:
         return result;
     }
 
+    /// Dumps the best state of the model to a file on the next occasion
+    /**
+     * This function is called by the SIGUSR1 signal handler to signal that
+     * we should dump the best state as soon as possible. We cannot dump
+     * it here directly as we might be modifying it at the same time.
+     */
+    void raiseDumpBestStateFlag() {
+        m_dumpBestStateFlag = true;
+    }
+
     /// Runs a single block of the Markov chain Monte Carlo process
     /**
      * The sampled log-likelihoods are collected in the given vector.
      * The vector is cleared at the start of the process.
      */
-    void runBlock(Vector& samples) {
+    void runBlock(long numSamples, Vector& samples) {
+        double logL;
+
         samples.clear();
-        while (1) {
-            double logL;
-            mcmc.step();
+        while (numSamples > 0) {
+            m_mcmc.step();
 
             logL = m_pModel->getLogLikelihood();
-            if (m_bestLogL < logL)
+            if (m_bestLogL < logL) {
+                // Store the best model and log-likelihood
+                m_bestModel = *m_pModel;
                 m_bestLogL = logL;
+            }
             samples.push_back(logL);
 
-            if (mcmc.getStepCount() % m_args.logPeriod == 0 && !isQuiet()) {
-                clog << '[' << setw(6) << mcmc.getStepCount() << "] "
+            if (m_mcmc.getStepCount() % m_args.logPeriod == 0 && !isQuiet()) {
+                clog << '[' << setw(6) << m_mcmc.getStepCount() << "] "
                      << setw(12) << logL << "\t(" << m_bestLogL << ")\t"
-                     << (mcmc.wasLastProposalAccepted() ? '*' : ' ')
-                     << setw(8) << mcmc.getAcceptanceRatio()
+                     << (m_mcmc.wasLastProposalAccepted() ? '*' : ' ')
+                     << setw(8) << m_mcmc.getAcceptanceRatio()
                      << '\n';
             }
 
-            if (mcmc.getStepCount() % m_args.blockSize == 0) {
-                // Block ended
-                debug(">> optimization block ended here");
-                return;
-            }
+            if (m_dumpBestStateFlag)
+                dumpBestState();
+
+            numSamples--;
         }
+    }
+
+    /// Runs the sampling until hell freezes over
+    void runUntilHellFreezesOver() {
+        Vector dummy;
+
+        while (1)
+            runBlock(1000, dummy);
     }
 
     /// Runs the user interface
@@ -139,10 +171,10 @@ public:
         m_pGraph = loadGraph(m_args.inputFile);
 
         debug(">> using random seed: %lu", m_args.randomSeed);
-        mcmc.getRNG()->init_genrand(m_args.randomSeed);
+        m_mcmc.getRNG()->init_genrand(m_args.randomSeed);
 
         m_pModel = new UndirectedBlockmodel(m_pGraph.get(), m_args.numGroups);
-        m_pModel->randomize(*mcmc.getRNG());
+        m_pModel->randomize(*m_mcmc.getRNG());
 
         if (m_args.initMethod == GREEDY) {
             GreedyStrategy greedy;
@@ -159,17 +191,18 @@ public:
             }
         }
 
-        mcmc.setModel(m_pModel);
+        m_bestModel = *m_pModel;
+        m_bestLogL = m_pModel->getLogLikelihood();
+        m_mcmc.setModel(m_pModel);
 
         info(">> starting Markov chain");
         bool converged = false;
-        double prevEstEntropy = 0.0;
+        double prevEstEntropy = 0.0, estEntropy;
         Vector samples(m_args.blockSize);
 
         // Run the Markov chain until convergence
         while (!converged) {
-            double estEntropy;
-            runBlock(samples);
+            runBlock(m_args.blockSize, samples);
             estEntropy = samples.sum() / samples.size();
             debug(">> estimated entropy of distribution: %.4f", estEntropy);
             if (std::fabs(estEntropy - prevEstEntropy) < 1.0)
@@ -177,13 +210,34 @@ public:
             prevEstEntropy = estEntropy;
         }
 
-        info(">> chain seems to have converged to stationary state");
-        m_pModel->getTypes().print();
+        if (m_args.numSamples > 0) {
+            /* taking a finite number of samples */
+            info(">> convergence condition satisfied, taking %d samples", m_args.numSamples);
+            samples.reserve(m_args.numSamples);
+            runBlock(m_args.numSamples, samples);
+        } else {
+            /* leave the Markov chain running anyway */
+            info(">> convergence condition satisfied, leaving the chain running anyway");
+            samples.reserve(m_args.numSamples);
+            runUntilHellFreezesOver();
+        }
+
         return 0;
     }
 };
 
+// Global app instance. It is here because we need it in the signal handler
+BlockmodelCmdlineApp app;
+
+/// Signal handler called for SIGUSR1
+void handleSIGUSR1(int signum) {
+    app.raiseDumpBestStateFlag();
+}
+
 int main(int argc, char** argv) {
-    BlockmodelCmdlineApp app;
+#ifdef SIGUSR1
+    signal(SIGUSR1, handleSIGUSR1);
+#endif
+    // Register the signal handler for SIGUSR1
     return app.run(argc, argv);
 }

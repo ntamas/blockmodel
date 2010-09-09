@@ -30,6 +30,9 @@ public:
 	/// Desired number of groups
 	int numGroups;
 
+    /// Number of samples taken from the chain after convergence
+    long numSamples;
+
     /***********************/
     /* Advanced parameters */
     /***********************/

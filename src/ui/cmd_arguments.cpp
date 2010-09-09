@@ -12,12 +12,13 @@ using namespace std;
 using namespace SimpleOpt;
 
 enum {
-    HELP, VERSION, NUM_GROUPS, VERBOSE, QUIET, USE_STDIN,
+    HELP, VERSION, VERBOSE, QUIET, USE_STDIN,
+    NUM_GROUPS, NUM_SAMPLES,
     LOG_PERIOD, INIT_METHOD, BLOCK_SIZE, SEED
 };
 
 CommandLineArguments::CommandLineArguments() : verbosity(1),
-    numGroups(-1),
+    numGroups(-1), numSamples(100000),
     blockSize(65536), initMethod(GREEDY), logPeriod(8192),
     randomSeed(time(0))
 {}
@@ -43,8 +44,11 @@ void CommandLineArguments::parse(int argc, char** argv) {
 
         /* basic options */
 
-        { NUM_GROUPS, "-g",       SO_REQ_SEP },
-        { NUM_GROUPS, "--groups", SO_REQ_SEP },
+        { NUM_GROUPS,  "-g",        SO_REQ_SEP },
+        { NUM_GROUPS,  "--groups",  SO_REQ_SEP },
+
+        { NUM_SAMPLES, "-s",        SO_REQ_SEP },
+        { NUM_SAMPLES, "--samples", SO_REQ_SEP },
 
         /* advanced options */
 
@@ -96,8 +100,13 @@ void CommandLineArguments::parse(int argc, char** argv) {
                 break;
 
             /* Processing basic algorithm parameters */
+
 			case NUM_GROUPS:
                 numGroups = atoi(args.OptionArg());
+                break;
+
+            case NUM_SAMPLES:
+                numSamples = atol(args.OptionArg());
                 break;
 
             /* Processing advanced parameters */

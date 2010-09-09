@@ -31,6 +31,9 @@ private:
     igraph::Matrix m_edgeCounts;
 
 public:
+    /// Constructs a new undirected blockmodel not associated with any given graph
+    UndirectedBlockmodel() {}
+
     /// Constructs a new undirected blockmodel to be fitted to the given graph
     UndirectedBlockmodel(igraph::Graph* graph, int numTypes)
         : m_pGraph(graph), m_numTypes(numTypes), m_types(graph->vcount()),

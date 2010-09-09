@@ -38,6 +38,9 @@ Basic algorithm parameters
 -g K, --groups K      Sets the desired number of groups to ``K``. The default is
                       -1, which means autodetection.
 
+-s N, --samples N     Sets the number of samples to be taken from the Markov
+                      chain after convergence to ``N``. The default is 100000.
+
 Advanced algorithm parameters
 -----------------------------
 
