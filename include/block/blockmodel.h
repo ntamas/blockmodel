@@ -57,8 +57,18 @@ public:
         return m_pGraph;
     }
 
+    /// Returns a pointer to the graph associated to the model (const)
+    const igraph::Graph* getGraph() const {
+        return m_pGraph;
+    }
+
     /// Returns the log-likelihood of the model
     double getLogLikelihood() const;
+
+    /// Returns the number of free parameters in this model
+    int getNumParameters() const {
+        return (m_numTypes * (m_numTypes+1) / 2.) + m_types.size() + 1;
+    }
 
     /// Returns the number of types in this model
     int getNumTypes() const {

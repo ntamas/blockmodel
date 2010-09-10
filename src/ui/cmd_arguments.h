@@ -3,6 +3,7 @@
 #ifndef _CMD_ARGUMENTS_H
 #define _CMD_ARGUMENTS_H
 
+#include <block/io.hpp>
 #include <string>
 
 /// Possible initialization methods for the algorithm
@@ -32,6 +33,12 @@ public:
 
     /// Number of samples taken from the chain after convergence
     long numSamples;
+
+    /// Name of the output file
+    std::string outputFile;
+
+    /// Format of the output file
+    Format outputFormat;
 
     /***********************/
     /* Advanced parameters */

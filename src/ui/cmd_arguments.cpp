@@ -13,12 +13,12 @@ using namespace SimpleOpt;
 
 enum {
     HELP, VERSION, VERBOSE, QUIET, USE_STDIN,
-    NUM_GROUPS, NUM_SAMPLES,
+    NUM_GROUPS, NUM_SAMPLES, OUT_FILE, OUT_FORMAT,
     LOG_PERIOD, INIT_METHOD, BLOCK_SIZE, SEED
 };
 
 CommandLineArguments::CommandLineArguments() : verbosity(1),
-    numGroups(-1), numSamples(100000),
+    numGroups(-1), numSamples(100000), outputFile(), outputFormat(PLAIN),
     blockSize(65536), initMethod(GREEDY), logPeriod(8192),
     randomSeed(time(0))
 {}
@@ -44,8 +44,14 @@ void CommandLineArguments::parse(int argc, char** argv) {
 
         /* basic options */
 
+        { OUT_FORMAT,  "-F",        SO_REQ_SEP },
+        { OUT_FORMAT,  "--format",  SO_REQ_SEP },
+
         { NUM_GROUPS,  "-g",        SO_REQ_SEP },
         { NUM_GROUPS,  "--groups",  SO_REQ_SEP },
+
+        { OUT_FILE,    "-o",        SO_REQ_SEP },
+        { OUT_FILE,    "--output",  SO_REQ_SEP },
 
         { NUM_SAMPLES, "-s",        SO_REQ_SEP },
         { NUM_SAMPLES, "--samples", SO_REQ_SEP },
@@ -109,6 +115,22 @@ void CommandLineArguments::parse(int argc, char** argv) {
                 numSamples = atol(args.OptionArg());
                 break;
 
+            case OUT_FILE:
+                outputFile = args.OptionArg();
+                break;
+
+            case OUT_FORMAT:
+                if (!strcmp(args.OptionArg(), "plain"))
+                    outputFormat = PLAIN;
+                else if (!strcmp(args.OptionArg(), "json"))
+                    outputFormat = JSON;
+                else {
+                    cerr << "Unknown output format: "
+                         << args.OptionArg() << "\n";
+                    exit(1);
+                }
+                break;
+
             /* Processing advanced parameters */
 
             case BLOCK_SIZE:
@@ -139,11 +161,15 @@ void CommandLineArguments::parse(int argc, char** argv) {
 
     /* Post-processing of algorithm values */
 
+    /* If the output file is empty, use a single dash, meaning stdout */
+    if (outputFile == "")
+        outputFile = "-";
+
     /* If we already have stdin as the input file, return here */
     if (inputFile == "-")
         return;
 
-    /* If no input file given, show help and exit */
+    /* If no input file was given, show help and exit */
     if (args.FileCount() == 0) {
         showHelp(cerr);
         exit(1);
@@ -164,6 +190,12 @@ void CommandLineArguments::showHelp(ostream& os) const {
           "Basic algorithm parameters:\n"
           "    -g K, --groups K    sets the desired number of groups to\n"
           "                        K. Default = -1 (autodetection).\n"
+          "    -o FILE, --output FILE\n"
+          "                        sets the name of the output file where the results\n"
+          "                        will be written. The default is the standard\n"
+          "                        output stream.\n"
+          "    -s N, --samples N   sets the number of samples to be taken from the\n"
+          "                        Markov chain after convergence.\n"
           "\n"
           "Advanced algorithm parameters:\n"
           "    --block-size N      sets the block size used when determining the\n"

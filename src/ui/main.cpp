@@ -9,6 +9,7 @@
 #include <memory>
 #include <sstream>
 #include <block/blockmodel.h>
+#include <block/io.hpp>
 #include <block/optimization.h>
 #include <igraph/cpp/graph.h>
 
@@ -37,7 +38,7 @@ private:
     std::auto_ptr<Graph> m_pGraph;
 
     /// Blockmodel being fitted to the graph
-    UndirectedBlockmodel* m_pModel;
+    std::auto_ptr<UndirectedBlockmodel> m_pModel;
 
     /// Markov chain Monte Carlo strategy to optimize the model
     MetropolisHastingsStrategy m_mcmc;
@@ -51,6 +52,9 @@ private:
     /// Flag to note whether we have to dump the best state when possible
     bool m_dumpBestStateFlag;
 
+    /// Writer object that is used to dump the best state
+    std::auto_ptr<Writer<UndirectedBlockmodel> > m_pModelWriter;
+
 public:
     LOGGING_FUNCTION(debug, 2);
     LOGGING_FUNCTION(info, 1);
@@ -59,17 +63,17 @@ public:
     /// Constructor
     BlockmodelCmdlineApp() : m_pGraph(0), m_pModel(0),
         m_bestLogL(-std::numeric_limits<double>::max()),
-        m_bestModel(), m_dumpBestStateFlag(false) {}
-
-    /// Destructor
-    ~BlockmodelCmdlineApp() {
-        if (m_pModel)
-            delete m_pModel;
-    }
+        m_bestModel(), m_dumpBestStateFlag(false),
+        m_pModelWriter(0) {}
 
     /// Dumps the best state found so far and clears the dump flag
     void dumpBestState() {
-        clog << "TODO: implement state dumping\n";
+        info(">> dumping best state of the chain");
+        if (m_pModelWriter.get()) {
+            m_pModelWriter->write(m_bestModel, clog);
+        } else {
+            debug(">> no model writer set up, printing nothing");
+        }
         m_dumpBestStateFlag = false;
     }
 
@@ -162,10 +166,15 @@ public:
     int run(int argc, char** argv) {
         m_args.parse(argc, argv);
 
+        /* Process and validate input arguments */
         if (m_args.numGroups <= 0) {
             error("Automatic group count detection not supported yet :(");
             return 1;
         }
+        switch (m_args.outputFormat) {
+            default:
+                m_pModelWriter.reset(new PlainTextWriter<UndirectedBlockmodel>);
+        };
 
         info(">> loading graph: %s", m_args.inputFile.c_str());
         m_pGraph = loadGraph(m_args.inputFile);
@@ -173,12 +182,12 @@ public:
         debug(">> using random seed: %lu", m_args.randomSeed);
         m_mcmc.getRNG()->init_genrand(m_args.randomSeed);
 
-        m_pModel = new UndirectedBlockmodel(m_pGraph.get(), m_args.numGroups);
+        m_pModel.reset(new UndirectedBlockmodel(m_pGraph.get(), m_args.numGroups));
         m_pModel->randomize(*m_mcmc.getRNG());
 
         if (m_args.initMethod == GREEDY) {
             GreedyStrategy greedy;
-            greedy.setModel(m_pModel);
+            greedy.setModel(m_pModel.get());
 
             info(">> running greedy initialization");
 
@@ -193,7 +202,7 @@ public:
 
         m_bestModel = *m_pModel;
         m_bestLogL = m_pModel->getLogLikelihood();
-        m_mcmc.setModel(m_pModel);
+        m_mcmc.setModel(m_pModel.get());
 
         info(">> starting Markov chain");
         bool converged = false;
@@ -221,6 +230,9 @@ public:
             samples.reserve(m_args.numSamples);
             runUntilHellFreezesOver();
         }
+
+        /* Dump the best solution found */
+        dumpBestState();
 
         return 0;
     }

@@ -103,7 +103,7 @@ public:
     }
 
     /// Returns the number of edges in the graph
-    integer_t ecount() {
+    integer_t ecount() const {
         return igraph_ecount(m_pGraph);
     }
 
@@ -118,7 +118,7 @@ public:
     Vector neighbors(long int vertex, NeighborMode mode = IGRAPH_OUT);
 
     /// Returns the number of vertices in the graph
-    integer_t vcount() {
+    integer_t vcount() const {
         return igraph_vcount(m_pGraph);
     }
 
