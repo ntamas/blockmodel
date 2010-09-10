@@ -172,6 +172,10 @@ public:
             return 1;
         }
         switch (m_args.outputFormat) {
+            case JSON:
+                m_pModelWriter.reset(new JSONWriter<UndirectedBlockmodel>);
+                break;
+
             default:
                 m_pModelWriter.reset(new PlainTextWriter<UndirectedBlockmodel>);
         };
