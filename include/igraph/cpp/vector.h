@@ -67,6 +67,11 @@ public:
     /* Instance methods */
     /********************/
 
+    /// Appends another vector to this one
+    void append(const Vector& from) {
+        IGRAPH_TRY(igraph_vector_append(&m_vector, &from.m_vector));
+    }
+
     /// Returns an iterator pointing to the first element of the vector
     iterator begin() {
         return &(VECTOR(m_vector)[0]);
@@ -193,9 +198,19 @@ public:
         return igraph_vector_size(&m_vector);
     }
 
+    /// Sorts the elements of the vector into ascending order
+    void sort() {
+        igraph_vector_sort(&m_vector);
+    }
+
     /// Returns the sum of the elements of the vector
     igraph_real_t sum() const {
         return igraph_vector_sum(&m_vector);
+    }
+
+    /// Swaps the elements of this vector with another one if they are of equal length
+    void swap(Vector& v2) {
+        IGRAPH_TRY(igraph_vector_swap(&m_vector, &v2.m_vector));
     }
 
     /*************/

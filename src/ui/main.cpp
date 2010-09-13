@@ -119,7 +119,6 @@ public:
         }
     }
 
-    //
     /// Returns whether we are running in quiet mode
     bool isQuiet() {
         return m_args.verbosity < 1;
@@ -261,6 +260,9 @@ public:
         } else {
             /* leave the Markov chain running anyway */
             info(">> convergence condition satisfied, leaving the chain running anyway");
+#ifdef SIGUSR1
+            info(">> send SIGUSR1 to dump the current best state to stdout");
+#endif
             runUntilHellFreezesOver();
         }
 
@@ -280,8 +282,8 @@ void handleSIGUSR1(int signum) {
 
 int main(int argc, char** argv) {
 #ifdef SIGUSR1
+    // Register the signal handler for SIGUSR1
     signal(SIGUSR1, handleSIGUSR1);
 #endif
-    // Register the signal handler for SIGUSR1
     return app.run(argc, argv);
 }

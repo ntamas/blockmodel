@@ -14,6 +14,9 @@ namespace {
 }
 
 double UndirectedBlockmodel::getLogLikelihood() const {
+    if (m_logLikelihood <= 0)
+        return m_logLikelihood;
+
     double result = 0.0;
 
     for (int i = 0; i < m_numTypes; i++) {
@@ -40,6 +43,7 @@ double UndirectedBlockmodel::getLogLikelihood() const {
         }
     }
 
+    m_logLikelihood = result;
     return result;
 }
 
@@ -98,6 +102,9 @@ void UndirectedBlockmodel::getProbabilities(Matrix& result) const {
 void UndirectedBlockmodel::randomize(MersenneTwister& rng) {
     for (Vector::iterator it = m_types.begin(); it != m_types.end(); it++)
         *it = rng.randint(m_numTypes);
+    // Invalidate the log-likelihood cache
+    invalidateCache();
+    // Recount the edges
     recountEdges();
 }
 
@@ -138,9 +145,14 @@ void UndirectedBlockmodel::setType(long index, int newType) {
     }
     // Set the type of the vertex to the new type
     m_types[index] = newType;
+    // Invalidate the log-likelihood cache
+    invalidateCache();
 }
 
 void UndirectedBlockmodel::setTypes(const Vector& types) {
     m_types = types;
+    // Invalidate the log-likelihood cache
+    invalidateCache();
+    // Recount the edges
     recountEdges();
 }

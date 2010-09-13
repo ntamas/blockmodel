@@ -30,6 +30,9 @@ private:
      */
     igraph::Matrix m_edgeCounts;
 
+    /// Cached value of the log-likelihood
+    mutable double m_logLikelihood;
+
 public:
     /// Constructs a new undirected blockmodel not associated with any given graph
     UndirectedBlockmodel() {}
@@ -37,7 +40,9 @@ public:
     /// Constructs a new undirected blockmodel to be fitted to the given graph
     UndirectedBlockmodel(igraph::Graph* graph, int numTypes)
         : m_pGraph(graph), m_numTypes(numTypes), m_types(graph->vcount()),
-          m_typeCounts(numTypes), m_edgeCounts(numTypes, numTypes) {
+          m_typeCounts(numTypes), m_edgeCounts(numTypes, numTypes),
+          m_logLikelihood(1)
+    {
         m_typeCounts[0] = m_pGraph->vcount();
         m_edgeCounts(0,0) = 2 * m_pGraph->ecount();
     }
@@ -120,6 +125,11 @@ public:
     void setTypes(const igraph::Vector& types);
 
 private:
+    /// Invalidates the cached log-likelihood value
+    void invalidateCache() {
+        m_logLikelihood = 1.0;
+    }
+
     /// Recounts the edges and updates m_typeCounts and m_edgeCounts
     void recountEdges();
 };
