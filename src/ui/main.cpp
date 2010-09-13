@@ -97,6 +97,7 @@ public:
                 double logL = m_pModel->getLogLikelihood();
                 if (!isQuiet()) {
                     clog << '[' << setw(6) << greedy.getStepCount() << "] "
+                         << '(' << setw(2) << m_pModel->getNumTypes() << ") "
                          << setw(12) << logL << "\t(" << logL << ")\n";
                 }
             }
@@ -183,6 +184,7 @@ public:
 
             if (m_mcmc.getStepCount() % m_args.logPeriod == 0 && !isQuiet()) {
                 clog << '[' << setw(6) << m_mcmc.getStepCount() << "] "
+                     << '(' << setw(2) << m_pModel->getNumTypes() << ") "
                      << setw(12) << logL << "\t(" << m_bestLogL << ")\t"
                      << (m_mcmc.wasLastProposalAccepted() ? '*' : ' ')
                      << setw(8) << m_mcmc.getAcceptanceRatio()
