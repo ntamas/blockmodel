@@ -1,7 +1,9 @@
 set(TEST_CASES blockmodel
                greedy_strategy
                moving_average
+               statistics
                vector_matrix
+               util
 )
 
 foreach(test ${TEST_CASES})

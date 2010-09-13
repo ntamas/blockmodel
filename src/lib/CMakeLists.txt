@@ -3,4 +3,5 @@ add_library(block STATIC
 			io
             math
             optimization
+            statistics
 )

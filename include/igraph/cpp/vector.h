@@ -14,8 +14,15 @@ class Matrix;
 /// C++-style wrapper around an igraph_vector_t
 class Vector {
 public:
+    typedef igraph_real_t& reference;
+    typedef igraph_real_t& const_reference;
     typedef igraph_real_t* iterator;
     typedef const igraph_real_t* const_iterator;
+    typedef size_t size_type;
+    typedef ptrdiff_t difference_type;
+    typedef igraph_real_t value_type;
+    typedef igraph_real_t* pointer;
+    typedef const igraph_real_t* const_pointer;
 
 private:
     /// The igraph_vector_t instance encapsulated by the wrapper
