@@ -11,6 +11,7 @@
 #include <block/blockmodel.h>
 #include <block/io.hpp>
 #include <block/optimization.h>
+#include <block/util.hpp>
 #include <igraph/cpp/graph.h>
 
 #include "cmd_arguments.h"
@@ -70,13 +71,55 @@ public:
     void dumpBestState() {
         info(">> dumping best state of the chain");
         if (m_pModelWriter.get()) {
-            m_pModelWriter->write(m_bestModel, clog);
+            m_pModelWriter->write(m_bestModel, cout);
         } else {
             debug(">> no model writer set up, printing nothing");
         }
         m_dumpBestStateFlag = false;
     }
 
+    /// Fits the blockmodel to the data using a given group count
+    void fitForGivenGroupCount(int groupCount) {
+        bool converged = false;
+        double prevEstEntropy = 0.0, estEntropy;
+        Vector samples(m_args.blockSize);
+
+        m_pModel.reset(new UndirectedBlockmodel(m_pGraph.get(), groupCount));
+        m_pModel->randomize(*m_mcmc.getRNG());
+
+        if (m_args.initMethod == GREEDY) {
+            GreedyStrategy greedy;
+            greedy.setModel(m_pModel.get());
+
+            info(">> running greedy initialization");
+
+            while (greedy.step()) {
+                double logL = m_pModel->getLogLikelihood();
+                if (!isQuiet()) {
+                    clog << '[' << setw(6) << greedy.getStepCount() << "] "
+                         << setw(12) << logL << "\t(" << logL << ")\n";
+                }
+            }
+        }
+
+        m_bestModel = *m_pModel;
+        m_bestLogL = m_pModel->getLogLikelihood();
+        m_mcmc.setModel(m_pModel.get());
+
+        info(">> starting Markov chain");
+
+        // Run the Markov chain until convergence
+        while (!converged) {
+            runBlock(m_args.blockSize, samples);
+            estEntropy = samples.sum() / samples.size();
+            debug(">> estimated entropy of distribution: %.4f", estEntropy);
+            if (std::fabs(estEntropy - prevEstEntropy) < 1.0)
+                converged = true;
+            prevEstEntropy = estEntropy;
+        }
+    }
+
+    //
     /// Returns whether we are running in quiet mode
     bool isQuiet() {
         return m_args.verbosity < 1;
@@ -134,7 +177,7 @@ public:
             logL = m_pModel->getLogLikelihood();
             if (m_bestLogL < logL) {
                 // Store the best model and log-likelihood
-                m_bestModel = *m_pModel;
+                m_bestModel = *m_pModel.get();
                 m_bestLogL = logL;
             }
             samples.push_back(logL);
@@ -166,11 +209,6 @@ public:
     int run(int argc, char** argv) {
         m_args.parse(argc, argv);
 
-        /* Process and validate input arguments */
-        if (m_args.numGroups <= 0) {
-            error("Automatic group count detection not supported yet :(");
-            return 1;
-        }
         switch (m_args.outputFormat) {
             case JSON:
                 m_pModelWriter.reset(new JSONWriter<UndirectedBlockmodel>);
@@ -186,58 +224,48 @@ public:
         debug(">> using random seed: %lu", m_args.randomSeed);
         m_mcmc.getRNG()->init_genrand(m_args.randomSeed);
 
-        m_pModel.reset(new UndirectedBlockmodel(m_pGraph.get(), m_args.numGroups));
-        m_pModel->randomize(*m_mcmc.getRNG());
+        if (m_args.numGroups > 0) {
+            /* Run the Markov chain until it converges */
+            fitForGivenGroupCount(m_args.numGroups);
+            info(">> AIC = %.4f", aic(*m_pModel));
+        } else {
+            double currentAIC, bestAIC = std::numeric_limits<double>::max();
+            UndirectedBlockmodel bestModel;
 
-        if (m_args.initMethod == GREEDY) {
-            GreedyStrategy greedy;
-            greedy.setModel(m_pModel.get());
-
-            info(">> running greedy initialization");
-
-            while (greedy.step()) {
-                double logL = m_pModel->getLogLikelihood();
-                if (!isQuiet()) {
-                    clog << '[' << setw(6) << greedy.getStepCount() << "] "
-                         << setw(12) << logL << "\t(" << logL << ")\n";
+            /* Find the optimal type count */
+            for (int k = 2; k <= sqrt(m_pGraph->vcount()); k++) {
+                info(">> trying with %d types", k);
+                fitForGivenGroupCount(k);
+                currentAIC = aic(m_bestModel);
+                if (currentAIC < bestAIC) {
+                    bestAIC = currentAIC;
+                    bestModel = m_bestModel;
                 }
+                debug(">> AIC = %.4f, best AIC = %.4f", currentAIC, bestAIC);
             }
+
+            *m_pModel = bestModel;
+            m_bestModel = bestModel;
+            m_bestLogL = m_pModel->getLogLikelihood();
+            info(">> best type count is %d", m_pModel->getNumTypes());
         }
 
-        m_bestModel = *m_pModel;
-        m_bestLogL = m_pModel->getLogLikelihood();
-        m_mcmc.setModel(m_pModel.get());
-
-        info(">> starting Markov chain");
-        bool converged = false;
-        double prevEstEntropy = 0.0, estEntropy;
-        Vector samples(m_args.blockSize);
-
-        // Run the Markov chain until convergence
-        while (!converged) {
-            runBlock(m_args.blockSize, samples);
-            estEntropy = samples.sum() / samples.size();
-            debug(">> estimated entropy of distribution: %.4f", estEntropy);
-            if (std::fabs(estEntropy - prevEstEntropy) < 1.0)
-                converged = true;
-            prevEstEntropy = estEntropy;
-        }
-
+        /* Start sampling */
         if (m_args.numSamples > 0) {
             /* taking a finite number of samples */
+            Vector samples;
+
             info(">> convergence condition satisfied, taking %d samples", m_args.numSamples);
             samples.reserve(m_args.numSamples);
             runBlock(m_args.numSamples, samples);
         } else {
             /* leave the Markov chain running anyway */
             info(">> convergence condition satisfied, leaving the chain running anyway");
-            samples.reserve(m_args.numSamples);
             runUntilHellFreezesOver();
         }
 
         /* Dump the best solution found */
         dumpBestState();
-
         return 0;
     }
 };
