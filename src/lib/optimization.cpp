@@ -23,6 +23,7 @@ bool GreedyStrategy::step() {
     Graph* graph = m_pModel->getGraph();
     long int i, n = graph->vcount();
     int k = m_pModel->getNumTypes();
+    double logL = m_pModel->getLogLikelihood();
     Vector oldTypeCounts(m_pModel->getTypeCounts());
     Vector newTypes(n);
 
@@ -97,7 +98,7 @@ bool GreedyStrategy::step() {
     // maybe that's faster?
     if (newTypes != m_pModel->getTypes()) {
         m_pModel->setTypes(newTypes);
-        return true;
+        return (m_pModel->getLogLikelihood() > logL);
     }
 
     return false;
