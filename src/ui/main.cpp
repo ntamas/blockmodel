@@ -232,9 +232,10 @@ public:
         if (m_args.numGroups > 0) {
             /* Run the Markov chain until it converges */
             fitForGivenGroupCount(m_args.numGroups);
-            info(">> AIC = %.4f", aic(*m_pModel));
+            info(">> AIC = %.4f, BIC = %.4f", aic(*m_pModel), bic(*m_pModel));
         } else {
             double currentAIC, bestAIC = std::numeric_limits<double>::max();
+            double currentBIC, bestBIC = std::numeric_limits<double>::max();
             UndirectedBlockmodel bestModel;
 
             /* Find the optimal type count */
@@ -242,11 +243,16 @@ public:
                 info(">> trying with %d types", k);
                 fitForGivenGroupCount(k);
                 currentAIC = aic(m_bestModel);
+				currentBIC = bic(m_bestModel);
                 if (currentAIC < bestAIC) {
                     bestAIC = currentAIC;
                     bestModel = m_bestModel;
                 }
-                debug(">> AIC = %.4f, best AIC = %.4f", currentAIC, bestAIC);
+                if (currentBIC < bestBIC) {
+                    bestBIC = currentBIC;
+                }
+                debug(">> AIC = %.4f (%.4f), BIC = %.4f (%.4f)",
+						currentAIC, bestAIC, currentBIC, bestBIC);
             }
 
             *m_pModel = bestModel;

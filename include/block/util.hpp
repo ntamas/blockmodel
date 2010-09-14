@@ -18,8 +18,8 @@ double aic(const T& model) {
 template <typename T>
 double bic(const T& model) {
     return -2 * model.getLogLikelihood() +
-		   std::log(model.getNumParameters()) *
-           model.getNumObservations();
+		   model.getNumParameters() *
+           std::log(model.getNumObservations());
 }
 
 /// Comparator that can be used to sort an index vector of a container
