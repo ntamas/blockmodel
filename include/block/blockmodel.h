@@ -70,6 +70,11 @@ public:
     /// Returns the log-likelihood of the model
     double getLogLikelihood() const;
 
+    /// Returns the number of observations in this model
+    long getNumObservations() const {
+        return (m_pGraph->vcount() * (m_pGraph->vcount()-1) / 2);
+    }
+
     /// Returns the number of free parameters in this model
     int getNumParameters() const {
         return (m_numTypes * (m_numTypes+1) / 2.) + m_types.size() + 1;

@@ -8,7 +8,7 @@
 
 /// Supported formats in the IO subsystem
 typedef enum {
-    PLAIN, JSON
+    FORMAT_NULL, FORMAT_PLAIN, FORMAT_JSON
 } Format;
 
 /***************************************************************************/
@@ -44,6 +44,13 @@ class Writer {
 public:
     /// Writes the given object to the given stream
     virtual void write(const T& model, std::ostream& os) = 0;
+};
+
+/// Null writer that does nothing
+template <typename T>
+class NullWriter : public Writer<T> {
+    /// Does nothing.
+    virtual void write(const T&, std::ostream&) {}
 };
 
 /// Writer for block models in plain text format

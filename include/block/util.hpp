@@ -8,10 +8,18 @@
 #include <iterator>
 #include <vector>
 
-/// Calculates the Akaike information criterion of some model
+/// Calculates the value of the Akaike information criterion for some model
 template <typename T>
 double aic(const T& model) {
     return 2 * (model.getNumParameters() - model.getLogLikelihood());
+}
+
+/// Calculates the value of the Bayesian information criterion for some model
+template <typename T>
+double bic(const T& model) {
+    return -2 * model.getLogLikelihood() +
+		   std::log(model.getNumParameters()) *
+           model.getNumObservations();
 }
 
 /// Comparator that can be used to sort an index vector of a container

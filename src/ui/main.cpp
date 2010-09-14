@@ -211,8 +211,12 @@ public:
         m_args.parse(argc, argv);
 
         switch (m_args.outputFormat) {
-            case JSON:
+            case FORMAT_JSON:
                 m_pModelWriter.reset(new JSONWriter<UndirectedBlockmodel>);
+                break;
+
+			case FORMAT_NULL:
+                m_pModelWriter.reset(new NullWriter<UndirectedBlockmodel>);
                 break;
 
             default:

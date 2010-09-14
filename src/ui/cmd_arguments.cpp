@@ -18,7 +18,7 @@ enum {
 };
 
 CommandLineArguments::CommandLineArguments() : verbosity(1),
-    numGroups(-1), numSamples(100000), outputFile(), outputFormat(PLAIN),
+    numGroups(-1), numSamples(100000), outputFile(), outputFormat(FORMAT_PLAIN),
     blockSize(65536), initMethod(GREEDY), logPeriod(8192),
     randomSeed(time(0))
 {}
@@ -121,9 +121,11 @@ void CommandLineArguments::parse(int argc, char** argv) {
 
             case OUT_FORMAT:
                 if (!strcmp(args.OptionArg(), "plain"))
-                    outputFormat = PLAIN;
+                    outputFormat = FORMAT_PLAIN;
                 else if (!strcmp(args.OptionArg(), "json"))
-                    outputFormat = JSON;
+                    outputFormat = FORMAT_JSON;
+                else if (!strcmp(args.OptionArg(), "null"))
+                    outputFormat = FORMAT_NULL;
                 else {
                     cerr << "Unknown output format: "
                          << args.OptionArg() << "\n";
