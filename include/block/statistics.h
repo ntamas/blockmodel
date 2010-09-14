@@ -51,9 +51,6 @@ public:
         setData(xA, xB);
     }
 
-    /// Sets the data used in the two-sample test
-    void setData(const igraph::Vector& xA, const igraph::Vector& xB);
-
     /// Returns the p-value of the test
     double getP() const;
 
@@ -66,6 +63,9 @@ public:
     double getTieCorrection() const {
         return m_tieCorrection;
     }
+
+    /// Sets the data used in the two-sample test
+    void setData(const igraph::Vector& xA, const igraph::Vector& xB);
 
     /// Returns the size of the first sample
     unsigned long sizeA() const {

@@ -3,6 +3,7 @@
 #ifndef BLOCKMODEL_CONVERGENCE_H
 #define BLOCKMODEL_CONVERGENCE_H
 
+#include <block/statistics.h>
 #include <igraph/cpp/vector.h>
 
 /// Abstract convergence criterion class
@@ -46,6 +47,35 @@ private:
 public:
     explicit EntropyConvergenceCriterion(float threshold = 1.0)
         : ConvergenceCriterion(), m_threshold(threshold) {
+        reset();
+    }
+
+    virtual bool check(const igraph::Vector& samples);
+    virtual std::string report() const;
+    virtual void reset();
+};
+
+/// Converge criterion for Markov chains based on a Mann-Whitney U test
+/**
+ * This class decides that the Markov chain has converged if the last two
+ * blocks of log-likelihood values pass the Mann-Whitney U test at a
+ * given significance level (say, 95%).
+ */
+class MannWhitneyConvergenceCriterion : public ConvergenceCriterion {
+private:
+    /// Log-likelihood values of the last block
+    igraph::Vector m_prevSamples;
+
+    /// The p-value threshold
+    float m_significance;
+
+    /// A Mann-Whitney test instance
+    MannWhitneyTest m_test;
+
+public:
+    explicit MannWhitneyConvergenceCriterion(float significance = 0.1)
+        : ConvergenceCriterion(), m_prevSamples(),
+          m_significance(significance) {
         reset();
     }
 

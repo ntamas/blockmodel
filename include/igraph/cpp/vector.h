@@ -135,6 +135,11 @@ public:
         return &m_vector;
     }
 
+    /// Returns whether the vector is empty
+    bool empty() const {
+        return igraph_vector_empty(&m_vector);
+    }
+
     /// Returns an iterator pointing after the last element of the vector
     iterator end() {
         return &(VECTOR(m_vector)[size()]);

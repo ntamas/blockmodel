@@ -30,3 +30,27 @@ void EntropyConvergenceCriterion::reset() {
     m_lastEntropy = std::numeric_limits<float>::quiet_NaN();
 }
 
+/***************************************************************************/
+
+bool MannWhitneyConvergenceCriterion::check(const Vector& samples) {
+    m_test = MannWhitneyTest(samples, m_prevSamples);
+    bool result = (!m_prevSamples.empty() && m_test.getP() > m_significance);
+    m_prevSamples = samples;
+    return result;
+}
+
+std::string MannWhitneyConvergenceCriterion::report() const {
+    if (m_test.sizeB() == 0)
+        return "convergence cannot be decided, less than two blocks were seen";
+
+    std::ostringstream oss;
+    oss << "Mann-Whitney U = " << m_test.getTestStatistic() << ", "
+        << "p = " << m_test.getP();
+    return oss.str();
+}
+
+void MannWhitneyConvergenceCriterion::reset() {
+    m_prevSamples.clear();
+}
+
+

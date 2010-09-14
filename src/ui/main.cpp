@@ -109,7 +109,7 @@ public:
         info(">> starting Markov chain");
 
         // Run the Markov chain until convergence
-		EntropyConvergenceCriterion* pConvCrit = new EntropyConvergenceCriterion(1.0);
+		std::auto_ptr<ConvergenceCriterion> pConvCrit(new EntropyConvergenceCriterion());
         while (!converged) {
             runBlock(m_args.blockSize, samples);
 			converged = pConvCrit->check(samples);
