@@ -1,5 +1,7 @@
 /* vim:set ts=4 sw=4 sts=4 et: */
 
+#include <cstring>
+#include <ctime>
 #include <block/io.hpp>
 #include <block/util.hpp>
 #include <igraph/cpp/graph.h>
@@ -12,8 +14,10 @@ void PlainTextWriter<UndirectedBlockmodel>::write(
     const Graph* pGraph = model.getGraph();
     int n = pGraph->vcount();
     int k = model.getNumTypes();
+    time_t now = time(0);
 
     os << "INFO\n";
+    os << "date\t" << ctime(&now);
     os << "num_vertices\t" << n << '\n';
     os << "num_types\t" << k << '\n';
     os << "log_likelihood\t" << model.getLogLikelihood() << '\n';
@@ -40,9 +44,16 @@ void JSONWriter<UndirectedBlockmodel>::write(
     const Graph* pGraph = model.getGraph();
     int n = pGraph->vcount();
     int k = model.getNumTypes();
+    time_t timestamp = time(0);
+    char* formatted_date = ctime(&timestamp);
+
+    // Trim the newline from the formatted date
+    formatted_date[strlen(formatted_date)-1] = 0;
 
     os << "{\n"
        << "    \"info\": {\n"
+       << "        \"date\": \"" << formatted_date << "\",\n"
+       << "        \"timestamp\": " << timestamp << ",\n"
        << "        \"num_vertices\": " << n << ",\n"
        << "        \"num_types\": " << k << ",\n"
        << "        \"log_likelihood\": " << model.getLogLikelihood() << ",\n"

@@ -3,9 +3,19 @@
 #ifndef BLOCKMODEL_MATH_H
 #define BLOCKMODEL_MATH_H
 
+#include <cmath>
 #include <cstdio>
 #include <numeric>
 #include <vector>
+
+#ifndef isnan
+template <typename T>
+inline bool block_isnan(T x) {
+    return x != x;
+}
+
+#define isnan(x) block_isnan(x)
+#endif
 
 /// Calculates the moving average of some time series
 template <typename T>

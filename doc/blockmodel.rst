@@ -94,7 +94,8 @@ plain
     divided into sections, where consecutive sections are separated by empty
     lines.  A section always starts with a heading that defines what the
     section will contain. There are at least three sections in the output:
-    ``INFO``, which contains the number of vertices, the number of types, the
+    ``INFO``, which contains the original input file name, the date when the
+    dump was created, the number of vertices, the number of types, the
     log-likelihood and the AIC of the model, ``TYPES``, which contains the name
     and type of each vertex in a tabular format, one vertex per line, and
     ``PROBABILITIES``, which contains the *k* by *k* probability matrix.

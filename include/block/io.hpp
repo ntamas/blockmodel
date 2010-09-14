@@ -11,6 +11,8 @@ typedef enum {
     PLAIN, JSON
 } Format;
 
+/***************************************************************************/
+
 /// Abstract templatized reader class
 /**
  * Specializations of this class must implement reading (deserializing)
@@ -22,6 +24,15 @@ public:
     /// Reads the given object from the given stream
     virtual void read(const T& model, std::istream& is) = 0;
 };
+
+/// Reader for block models in plain text format
+template <typename T>
+class PlainTextReader : public Reader<T> {
+    /// Reads the given object from the given stream
+    virtual void read(const T& model, std::istream& is);
+};
+
+/***************************************************************************/
 
 /// Abstract templatized writer class
 /**

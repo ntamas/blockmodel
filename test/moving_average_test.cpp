@@ -3,7 +3,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <vector>
-#include <block/math.h>
+#include <block/math.hpp>
 #include <mtwister/mt.h>
 
 #include "test_common.cpp"

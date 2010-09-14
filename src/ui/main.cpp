@@ -1,6 +1,5 @@
 /* vim:set ts=4 sw=4 sts=4 et: */
 
-#include <cmath>
 #include <csignal>
 #include <cstdarg>
 #include <iomanip>
@@ -9,6 +8,7 @@
 #include <memory>
 #include <sstream>
 #include <block/blockmodel.h>
+#include <block/convergence.h>
 #include <block/io.hpp>
 #include <block/optimization.h>
 #include <block/util.hpp>
@@ -81,7 +81,6 @@ public:
     /// Fits the blockmodel to the data using a given group count
     void fitForGivenGroupCount(int groupCount) {
         bool converged = false;
-        double prevEstEntropy = 0.0, estEntropy;
         Vector samples(m_args.blockSize);
 
         m_pModel.reset(new UndirectedBlockmodel(m_pGraph.get(), groupCount));
@@ -110,13 +109,14 @@ public:
         info(">> starting Markov chain");
 
         // Run the Markov chain until convergence
+		EntropyConvergenceCriterion* pConvCrit = new EntropyConvergenceCriterion(1.0);
         while (!converged) {
             runBlock(m_args.blockSize, samples);
-            estEntropy = samples.sum() / samples.size();
-            debug(">> estimated entropy of distribution: %.4f", estEntropy);
-            if (std::fabs(estEntropy - prevEstEntropy) < 1.0)
-                converged = true;
-            prevEstEntropy = estEntropy;
+			converged = pConvCrit->check(samples);
+
+			std::string report = pConvCrit->report();
+			if (report.size() > 0)
+				debug(">> %s", report.c_str());
         }
     }
 
