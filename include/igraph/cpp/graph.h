@@ -97,6 +97,12 @@ public:
     /// Adds the given number of vertices to the graph
     void addVertices(long numVertices);
 
+    /// Extracts a pointer to the encapsulated graph object
+    igraph_t* c_graph() { return m_pGraph; }
+
+    /// Extracts a pointer to the encapsulated graph object (const)
+    const igraph_t* c_graph() const { return m_pGraph; }
+
     /// Deletes some edges from the graph
     void deleteEdges(const EdgeSelector& es) {
         IGRAPH_TRY(igraph_delete_edges(m_pGraph, *es.c_es()));

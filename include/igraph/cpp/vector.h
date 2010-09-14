@@ -28,13 +28,16 @@ private:
     /// The igraph_vector_t instance encapsulated by the wrapper
     igraph_vector_t m_vector;
 
+    /// Whether we own the given igraph_vector_t instance or not
+    bool m_owner;
+
 public:
     /*****************************/
     /* Constructors, destructors */
     /*****************************/
 
     /// Constructs a vector
-    explicit Vector(long length = 0, igraph_real_t* data = 0) {
+    explicit Vector(long length = 0, igraph_real_t* data = 0) : m_owner(true) {
         if (data) {
             IGRAPH_TRY(igraph_vector_init_copy(&m_vector, data, length));
         } else
@@ -43,20 +46,24 @@ public:
 
     /// Constructs a wrapper that wraps the given igraph_vector_t instance
     /**
-     * The ownership of the wrapped instance is stolen by the wrapper.
-     * The caller should not destroy the graph on its own, ever;
-     * the wrapper should be destroyed instead.
+     * \param  own  specifies whether we own the given \c igraph_vector_t instance
+     *              or not. If own is false, the encapsulated \c igraph_vector_t
+     *              will not be destroyed when the \c Vector wrapper is destroyed.
      */
-    Vector(igraph_vector_t vector) : m_vector(vector) {}
+    Vector(igraph_vector_t vector, bool own=true) : m_vector(vector), m_owner(own) {}
+
+    /// Constructs a wrapper that refers to the same vector as the given igraph_vector_t* pointer
+    Vector(igraph_vector_t* vector, bool own=false) : m_vector(*vector), m_owner(own) {}
 
     /// Copy constructor
-    Vector(const Vector& other) {
+    Vector(const Vector& other) : m_owner(true) {
         IGRAPH_TRY(igraph_vector_copy(&m_vector, &other.m_vector));
     }
 
     /// Destroys the vector
     ~Vector() {
-        igraph_vector_destroy(&m_vector);
+        if (m_owner)
+            igraph_vector_destroy(&m_vector);
     }
 
     /******************/
