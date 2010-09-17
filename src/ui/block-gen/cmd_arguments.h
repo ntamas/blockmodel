@@ -6,39 +6,22 @@
 #include <block/io.hpp>
 #include "../common/cmd_arguments_base.h"
 
-/// Possible initialization methods for the algorithm
-typedef enum {
-    GREEDY, RANDOM
-} InitializationMethod;
-
-/// Command line parser for block-fit
+/// Command line parser for block-gen
 class CommandLineArguments : public CommandLineArgumentsBase {
 public:
     /********************/
     /* Basic parameters */
     /********************/
 
-	/// Desired number of groups
-	int numGroups;
+    /// Number of graphs to generate
+    long count;
 
-    /// Number of samples taken from the chain after convergence
-    long numSamples;
-
-    /// Format of the output file
-    Format outputFormat;
+    /// Format of the input file
+    Format inputFormat;
 
     /***********************/
     /* Advanced parameters */
     /***********************/
-
-    /// Block size used in MCMC sampling to assess convergence
-    int blockSize;
-
-    /// Initialization method to be used for the MCMC sampling
-    InitializationMethod initMethod;
-
-    /// Number of steps after which a status message is printed
-    int logPeriod;
 
 	/// Constructor
 	CommandLineArguments();

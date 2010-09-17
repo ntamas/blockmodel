@@ -22,7 +22,7 @@ CommandLineArguments::CommandLineArguments() :
 
     /* basic options */
 
-    addOption(OUT_FORMAT,  "-F", SO_REQ_SEP, "--format");
+    addOption(OUT_FORMAT,  "-F", SO_REQ_SEP, "--out-format");
     addOption(NUM_GROUPS,  "-g", SO_REQ_SEP, "--groups");
     addOption(NUM_SAMPLES, "-s", SO_REQ_SEP, "--samples");
 
@@ -85,6 +85,10 @@ int CommandLineArguments::handleOption(int id, const std::string& arg) {
 void CommandLineArguments::showHelp(ostream& os) const {
     CommandLineArgumentsBase::showHelp(os);
     os << "Basic algorithm parameters:\n"
+          "    -F FORMAT, --output-format FORMAT\n"
+          "                        sets the format of the output file. The default value\n"
+          "                        is plain, which is a simple plain text format. Known\n"
+          "                        formats are: json, plain.\n"
           "    -g K, --groups K    sets the desired number of groups to\n"
           "                        K. Default = -1 (autodetection).\n"
           "    -o FILE, --output FILE\n"

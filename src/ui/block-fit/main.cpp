@@ -1,7 +1,6 @@
 /* vim:set ts=4 sw=4 sts=4 et: */
 
 #include <csignal>
-#include <cstdarg>
 #include <iomanip>
 #include <iostream>
 #include <limits>
@@ -14,23 +13,13 @@
 #include <block/util.hpp>
 #include <igraph/cpp/graph.h>
 
+#include "../common/logging.h"
 #include "cmd_arguments.h"
 
 using namespace igraph;
 using namespace std;
 
-#define LOGGING_FUNCTION(funcname, level) \
-    void funcname(const char* format, ...) { \
-        va_list arglist;                     \
-        if (m_args.verbosity < level)          \
-            return;                          \
-        va_start(arglist, format);           \
-        vfprintf(stderr, format, arglist);   \
-        fprintf(stderr, "\n");               \
-        va_end(arglist);                     \
-    }
-
-class BlockmodelCmdlineApp {
+class BlockmodelFittingApp {
 private:
     /// Parsed command line arguments
     CommandLineArguments m_args;
@@ -62,7 +51,7 @@ public:
     LOGGING_FUNCTION(error, 0);
 
     /// Constructor
-    BlockmodelCmdlineApp() : m_pGraph(0), m_pModel(0),
+    BlockmodelFittingApp() : m_pGraph(0), m_pModel(0),
         m_bestLogL(-std::numeric_limits<double>::max()),
         m_bestModel(), m_dumpBestStateFlag(false),
         m_pModelWriter(0) {}
@@ -127,7 +116,7 @@ public:
 
     /// Returns whether we are running in verbose mode
     bool isVerbose() {
-        return m_args.verbosity > 2;
+        return m_args.verbosity > 1;
     }
 
     /// Loads a graph from the given file
@@ -285,7 +274,7 @@ public:
 };
 
 // Global app instance. It is here because we need it in the signal handler
-BlockmodelCmdlineApp app;
+BlockmodelFittingApp app;
 
 /// Signal handler called for SIGUSR1
 void handleSIGUSR1(int signum) {

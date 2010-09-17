@@ -37,7 +37,7 @@ Basic algorithm parameters
 
 -F FORMAT, --output-format FORMAT
                       Sets the format of the output. The default value is
-                      **plain**, which is a simple plain text output format.
+                      **plain**, which is a simple plain text format.
                       See the section on `Output formats`_ for more details.
 
 -g K, --groups K      Sets the desired number of groups to *K*. The default is

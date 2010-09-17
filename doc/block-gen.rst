@@ -39,6 +39,12 @@ OPTIONS
                       where `%d` will be replaced by the index of the generated
                       graph. Indexing starts from zero.
 
+-f FORMAT, --input-format FORMAT
+                      Sets the format of the input file. The default value is
+                      **plain**, which is a simple plain text format. See
+                      the manual page of ``block-fit`` for more information on
+                      the supported file formats.
+
 PROBLEMS
 ========
 
