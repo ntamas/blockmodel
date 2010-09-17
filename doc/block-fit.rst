@@ -1,6 +1,6 @@
-============
- blockmodel
-============
+===========
+ block-fit
+===========
 
 ----------------------------------------
 fitting stochastic blockmodels to graphs
@@ -16,7 +16,7 @@ fitting stochastic blockmodels to graphs
 SYNOPSIS
 ========
 
-  blockmodel [options] inputfile
+  block-fit [options] inputfile
 
 DESCRIPTION
 ===========

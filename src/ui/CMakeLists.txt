@@ -1,5 +1,1 @@
-add_executable(blockmodel main cmd_arguments)
-target_link_libraries(blockmodel igraph igraphpp block mtwister)
-
-install(TARGETS blockmodel
-	    RUNTIME DESTINATION bin)
+add_subdirectory(block-fit)
