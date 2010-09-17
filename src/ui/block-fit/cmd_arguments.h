@@ -5,37 +5,25 @@
 
 #include <block/io.hpp>
 #include <string>
+#include "../common/cmd_arguments_base.h"
 
 /// Possible initialization methods for the algorithm
 typedef enum {
     GREEDY, RANDOM
 } InitializationMethod;
 
-/// This class parsers and stores parameters retrieved from the command line
-class CommandLineArguments {
-private:
-	/// String storing the name of the executable used to start the program
-	std::string executableName;
-
+/// Command line parser for block-fit
+class CommandLineArguments : public CommandLineArgumentsBase {
 public:
     /********************/
     /* Basic parameters */
     /********************/
-
-	/// Name of the input file
-	std::string inputFile;
-
-    /// Verbosity level
-    int verbosity;
 
 	/// Desired number of groups
 	int numGroups;
 
     /// Number of samples taken from the chain after convergence
     long numSamples;
-
-    /// Name of the output file
-    std::string outputFile;
 
     /// Format of the output file
     Format outputFormat;
@@ -53,17 +41,14 @@ public:
     /// Number of steps after which a status message is printed
     int logPeriod;
 
-    /// The random seed to be used
-    unsigned long randomSeed;
-
 	/// Constructor
 	CommandLineArguments();
-    
-    /// Parses the command line arguments
-    void parse(int argc, char** argv);
+
+    /// Handles the command line options not handled by the superclass
+    virtual int handleOption(int id, const std::string& arg);
 
 	/// Shows a help message on the given stream
-	void showHelp(std::ostream& os) const;
+	virtual void showHelp(std::ostream& os) const;
 };
 
 #endif     // _CMD_ARGUMENTS_H
