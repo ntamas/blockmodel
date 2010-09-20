@@ -28,7 +28,7 @@ int CommandLineArguments::handleOption(int id, const std::string& arg) {
         /* Processing basic algorithm parameters */
 
         case COUNT:
-            count = atol(arg.c_str());
+            count = atoi(arg.c_str());
             break;
 
         case IN_FORMAT:

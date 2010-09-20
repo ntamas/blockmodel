@@ -14,7 +14,7 @@ public:
     /********************/
 
     /// Number of graphs to generate
-    long count;
+    unsigned int count;
 
     /// Format of the input file
     Format inputFormat;

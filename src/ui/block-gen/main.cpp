@@ -9,6 +9,7 @@
 #include <igraph/cpp/graph.h>
 
 #include "../common/logging.h"
+#include "../common/string_util.h"
 #include "cmd_arguments.h"
 
 using namespace igraph;
@@ -27,6 +28,11 @@ public:
     /// Constructor
     BlockmodelGeneratorApp() {}
 
+    /// Generates the output filename for the given index
+    string generateOutputFilename(int index) {
+        return StringUtil::format(m_args.outputFile, index);
+    }
+
     /// Returns whether we are running in quiet mode
     bool isQuiet() {
         return m_args.verbosity < 1;
@@ -39,11 +45,29 @@ public:
 
     /// Runs the user interface
     int run(int argc, char** argv) {
-        std::auto_ptr<Reader<UndirectedBlockmodel> > pModelReader;
+        auto_ptr<Reader<UndirectedBlockmodel> > pModelReader;
         UndirectedBlockmodel model;
+        FILE* out = NULL;
 
         m_args.parse(argc, argv);
-        
+
+        if (m_args.count == 0)
+            return 0;
+
+        if (m_args.count > 1) {
+            if (m_args.outputFile == "-") {
+                error("Output file must not be the standard output if "
+                      "-c is given");
+                return 2;
+            }
+
+            if (m_args.outputFile.find('%') == string::npos) {
+                error("The name of the output file must contain a %%d "
+                      "placeholder if -c is given");
+                return 3;
+            }
+        }
+
         switch (m_args.inputFormat) {
             default:
                 pModelReader.reset(new PlainTextReader<UndirectedBlockmodel>);
@@ -52,20 +76,36 @@ public:
 
         try {
             if (m_args.inputFile == "-")
-                pModelReader->read(model, std::cin);
+                pModelReader->read(model, cin);
             else {
-                std::ifstream is(m_args.inputFile.c_str());
+                ifstream is(m_args.inputFile.c_str());
                 pModelReader->read(model, is);
             }
-        } catch (const std::runtime_error& ex) {
-            error("cannot read input file: %s", m_args.inputFile.c_str());
+        } catch (const runtime_error& ex) {
+            error("Cannot read input file: %s", m_args.inputFile.c_str());
             error(ex.what());
             return 1;
         }
 
+        if (m_args.outputFile == "-")
+            out = stdout;
+
         for (long int i = 0; i < m_args.count; i++) {
             Graph graph = model.generate();
-            graph.writeEdgelist(stdout);
+
+            if (out != stdout) {
+                string outputFile = generateOutputFilename(i);
+                out = fopen(outputFile.c_str(), "w");
+                if (out) {
+                    graph.writeEdgelist(out);
+                    fclose(out);
+                } else {
+                    error("Cannot open output file: %s", outputFile.c_str());
+                    return 4;
+                }
+            } else {
+                graph.writeEdgelist(out);
+            }
         }
 
         return 0;

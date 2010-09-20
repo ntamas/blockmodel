@@ -22,12 +22,14 @@ CommandLineArgumentsBase::CommandLineArgumentsBase(
 
     addOption(USE_STDIN, "-", SO_NONE);
 
-    addOption(HELP, "-?",     SO_NONE);
-    addOption(HELP, "-h",     SO_NONE, "--help");
+    addOption(HELP, "-?", SO_NONE);
+    addOption(HELP, "-h", SO_NONE, "--help");
 
-    addOption(VERSION, "-V",        SO_NONE, "--version");
-    addOption(VERBOSE, "-v",        SO_NONE, "--verbose");
-    addOption(QUIET, "-q",      SO_NONE, "--quiet");
+    addOption(VERSION, "-V", SO_NONE, "--version");
+    addOption(VERBOSE, "-v", SO_NONE, "--verbose");
+    addOption(QUIET,   "-q", SO_NONE, "--quiet");
+
+    addOption(OUT_FILE, "-o", SO_REQ_SEP, "--output");
 }
 
 void CommandLineArgumentsBase::addOption(int id, const char* option,
