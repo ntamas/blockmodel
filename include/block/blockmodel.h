@@ -130,6 +130,9 @@ public:
     void setTypes(const igraph::Vector& types);
 
 private:
+    /// Counts how many edges could there be (theoretically) between the two groups
+    long int getTotalEdgesBetweenGroups(int type1, int type2) const;
+
     /// Invalidates the cached log-likelihood value
     void invalidateCache() {
         m_logLikelihood = 1.0;

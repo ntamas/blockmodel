@@ -56,13 +56,13 @@ int test_getLogLikelihood() {
     for (int i = 0; i < 10; i++)
         model.setType(i, (i == 3) ? 1 : 0);
     if (!ALMOST_EQUALS(model.getLogLikelihood(), -30.913270946, 1e-8))
-        return 1;
+        return 2;
 
     /* Even more pathological case: no vertices of type 1 */
     for (int i = 0; i < 10; i++)
         model.setType(i, 0);
     if (!ALMOST_EQUALS(model.getLogLikelihood(), -30.913270946, 1e-8))
-        return 1;
+        return 3;
 
     return 0;
 }

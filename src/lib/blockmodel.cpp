@@ -17,50 +17,50 @@ double UndirectedBlockmodel::getLogLikelihood() const {
     if (m_logLikelihood <= 0)
         return m_logLikelihood;
 
-    double result = 0.0;
+    double den, result = 0.0;
 
     for (int i = 0; i < m_numTypes; i++) {
-        int count1 = m_typeCounts[i];
-        if (count1 == 0)
+        if (m_typeCounts[i] == 0)
             continue;
 
-        for (int j = i; j < m_numTypes; j++) {
-            int count2 = m_typeCounts[j];
-            double prob;
-
-            if (count2 == 0)
+        for (int j = i+1; j < m_numTypes; j++) {
+            den = getTotalEdgesBetweenGroups(i, j);
+            if (den == 0)
                 continue;
-
-            if (i == j) {
-                if (count2 == 1)
-                    continue;
-                prob = m_edgeCounts(i, i) / count1 / (count2 - 1);
-                result += count1 * (count2 - 1) * 0.5 * binary_entropy(prob);
-            } else {
-                prob = m_edgeCounts(i, j) / count1 / count2;
-                result += count1 * count2 * binary_entropy(prob);
-            }
+            result += den * binary_entropy(m_edgeCounts(i, j) / den);
         }
+
+        den = getTotalEdgesBetweenGroups(i, i);
+        if (den == 0)
+            continue;
+        result += den * binary_entropy(m_edgeCounts(i, i) / 2 / den);
     }
 
     m_logLikelihood = result;
     return result;
 }
 
-double UndirectedBlockmodel::getProbability(int type1, int type2) const {
+long int UndirectedBlockmodel::getTotalEdgesBetweenGroups(int type1, int type2) const {
     double count1 = m_typeCounts[type1];
     double count2 = m_typeCounts[type2];
 
-    if (count1 == 0 || count2 == 0)
+    if (type1 == type2)
+        return count1 * (count2 - 1) / 2;
+
+    return count1 * count2;
+}
+
+double UndirectedBlockmodel::getProbability(int type1, int type2) const {
+    double possibleEdges = getTotalEdgesBetweenGroups(type1, type2);
+
+    if (possibleEdges == 0)
         return 0;
 
-    if (type1 == type2) {
-        if (count2 == 1)
-            return 0.0;
-        return m_edgeCounts(type1, type2) / count1 / (count2 - 1);
-    }
+    if (type1 == type2)
+        // m_edgeCounts counts edges between the same group twice
+        possibleEdges *= 2;
 
-    return m_edgeCounts(type1, type2) / count1 / count2;
+    return m_edgeCounts(type1, type2) / possibleEdges;
 }
 
 Matrix UndirectedBlockmodel::getProbabilities() const {
@@ -73,29 +73,24 @@ void UndirectedBlockmodel::getProbabilities(Matrix& result) const {
     result.resize(m_numTypes, m_numTypes);
 
     for (int i = 0; i < m_numTypes; i++) {
-        int count1 = m_typeCounts[i];
+        double den;
 
-        if (count1 == 0) {
+        if (m_typeCounts[i] == 0) {
             /* numerator is strongly zero */
-            for (int j = 0; j < m_numTypes; j++)
-                result(i, j) = 0;
+            for (int j = i; j < m_numTypes; j++) {
+                result(i, j) = result(j, i) = 0;
+            }
             continue;
         }
 
-        for (int j = 0; j < m_numTypes; j++) {
-            int count2 = m_typeCounts[j];
-
-            if (count2 == 0) {
-                /* numerator is strongly zero */
-                result(i, j) = 0;
-                continue;
-            } else if (i == j) {
-                result(i, j) = (count2 == 1) ? 0 :
-                               ((double)m_edgeCounts(i, j)) / count1 / (count2-1);
-            } else {
-                result(i, j) = ((double)m_edgeCounts(i, j)) / count1 / count2;
-            }
+        for (int j = i+1; j < m_numTypes; j++) {
+            den = getTotalEdgesBetweenGroups(i, j);
+            result(i, j) = result(j, i) =
+                (den == 0) ? 0 : (m_edgeCounts(i, j) / den);
         }
+
+        den = getTotalEdgesBetweenGroups(i, i);
+        result(i, i) = (den == 0) ? 0 : (m_edgeCounts(i, i) / 2 / den); 
     }
 }
 
