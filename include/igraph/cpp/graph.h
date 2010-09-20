@@ -6,6 +6,7 @@
 #include <cassert>
 #include <igraph/igraph_constructors.h>
 #include <igraph/igraph_datatype.h>
+#include <igraph/igraph_foreign.h>
 #include <igraph/igraph_interface.h>
 #include <igraph/cpp/edge_selector.h>
 #include <stdexcept>
@@ -52,12 +53,7 @@ public:
     }
 
     /// Destroys the graph
-    ~Graph() {
-        if (m_pGraph) {
-            igraph_destroy(m_pGraph);
-            delete m_pGraph;
-        }
-    }
+    ~Graph();
 
     /******************/
     /* Static methods */
@@ -89,7 +85,7 @@ public:
     void addEdge(integer_t source, integer_t target);
 
     /// Adds a list of edges to the graph
-    void addEdges(const std::vector<integer_t>& edges);
+    void addEdges(const Vector& edges);
 
     /// Adds a single vertex to the graph
     void addVertex();
@@ -104,29 +100,26 @@ public:
     const igraph_t* c_graph() const { return m_pGraph; }
 
     /// Deletes some edges from the graph
-    void deleteEdges(const EdgeSelector& es) {
-        IGRAPH_TRY(igraph_delete_edges(m_pGraph, *es.c_es()));
-    }
+    void deleteEdges(const EdgeSelector& es);
 
     /// Returns the number of edges in the graph
-    integer_t ecount() const {
-        return igraph_ecount(m_pGraph);
-    }
+    integer_t ecount() const { return igraph_ecount(m_pGraph); }
 
     /// Returns the edge list of the graph
-    Vector getEdgelist(bool bycol=false);
+    Vector getEdgelist(bool bycol=false) const;
     /// Returns the edge list of the graph
-    void getEdgelist(Vector* result, bool bycol=false);
+    void getEdgelist(Vector* result, bool bycol=false) const;
 
     /// Returns the neighbors of a vertex
-    void neighbors(Vector* result, long int vertex, NeighborMode mode = IGRAPH_OUT);
+    void neighbors(Vector* result, long int vertex, NeighborMode mode = IGRAPH_OUT) const;
     /// Returns the neighbors of a vertex
-    Vector neighbors(long int vertex, NeighborMode mode = IGRAPH_OUT);
+    Vector neighbors(long int vertex, NeighborMode mode = IGRAPH_OUT) const;
 
     /// Returns the number of vertices in the graph
-    integer_t vcount() const {
-        return igraph_vcount(m_pGraph);
-    }
+    integer_t vcount() const { return igraph_vcount(m_pGraph); }
+
+    /// Writes the edge list of the graph to the given file
+    void writeEdgelist(FILE* outstream) const;
 
     /*************/
     /* Operators */

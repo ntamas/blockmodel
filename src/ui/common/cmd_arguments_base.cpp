@@ -124,6 +124,8 @@ void CommandLineArgumentsBase::parse(int argc, char** argv) {
     /* Set up the input file if it is not stdin */
     if (inputFile != "-")
         inputFile = args.Files()[0];
+
+    delete[] optionSpec;
 }
 
 void CommandLineArgumentsBase::showHelp(ostream& os) const {

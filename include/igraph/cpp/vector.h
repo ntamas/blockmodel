@@ -37,7 +37,7 @@ public:
     /*****************************/
 
     /// Constructs a vector
-    explicit Vector(long length = 0, igraph_real_t* data = 0) : m_owner(true) {
+    explicit Vector(long int length = 0, igraph_real_t* data = 0) : m_owner(true) {
         if (data) {
             IGRAPH_TRY(igraph_vector_init_copy(&m_vector, data, length));
         } else

@@ -21,15 +21,15 @@ typedef enum {
 template <typename T>
 class Reader {
 public:
-    /// Reads the given object from the given stream
-    virtual void read(const T& model, std::istream& is) = 0;
+    /// Reads into the given object from the given stream
+    virtual void read(T& model, std::istream& is) = 0;
 };
 
 /// Reader for block models in plain text format
 template <typename T>
 class PlainTextReader : public Reader<T> {
-    /// Reads the given object from the given stream
-    virtual void read(const T& model, std::istream& is);
+    /// Reads into the given object from the given stream
+    virtual void read(T& model, std::istream& is);
 };
 
 /***************************************************************************/

@@ -1,6 +1,8 @@
 /* vim:set ts=4 sw=4 sts=4 et: */
 
+#include <fstream>
 #include <iostream>
+#include <memory>
 #include <block/blockmodel.h>
 #include <block/io.hpp>
 #include <block/util.hpp>
@@ -37,24 +39,34 @@ public:
 
     /// Runs the user interface
     int run(int argc, char** argv) {
+        std::auto_ptr<Reader<UndirectedBlockmodel> > pModelReader;
+        UndirectedBlockmodel model;
+
         m_args.parse(argc, argv);
         
-        // TODO
-
-        /*
-        switch (m_args.outputFormat) {
-            case FORMAT_JSON:
-                m_pModelWriter.reset(new JSONWriter<UndirectedBlockmodel>);
-                break;
-
-			case FORMAT_NULL:
-                m_pModelWriter.reset(new NullWriter<UndirectedBlockmodel>);
-                break;
-
+        switch (m_args.inputFormat) {
             default:
-                m_pModelWriter.reset(new PlainTextWriter<UndirectedBlockmodel>);
+                pModelReader.reset(new PlainTextReader<UndirectedBlockmodel>);
+                break;
         };
-        */
+
+        try {
+            if (m_args.inputFile == "-")
+                pModelReader->read(model, std::cin);
+            else {
+                std::ifstream is(m_args.inputFile.c_str());
+                pModelReader->read(model, is);
+            }
+        } catch (const std::runtime_error& ex) {
+            error("cannot read input file: %s", m_args.inputFile.c_str());
+            error(ex.what());
+            return 1;
+        }
+
+        for (long int i = 0; i < m_args.count; i++) {
+            Graph graph = model.generate();
+            graph.writeEdgelist(stdout);
+        }
 
         return 0;
     }

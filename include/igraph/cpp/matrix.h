@@ -93,6 +93,11 @@ public:
         return result;
     }
 
+    /// Returns whether the matrix is symmetric
+    bool isSymmetric() const {
+        return igraph_matrix_is_symmetric(&m_matrix);
+    }
+
     /// Returns the minimum element of the matrix
     igraph_real_t min() const {
         return igraph_matrix_min(&m_matrix);

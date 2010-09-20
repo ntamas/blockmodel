@@ -9,6 +9,14 @@
 
 namespace igraph {
 
+/// Destructor
+Graph::~Graph() {
+    if (m_pGraph) {
+        igraph_destroy(m_pGraph);
+        delete m_pGraph;
+    }
+}
+
 /******************/
 /* Static methods */
 /******************/
@@ -50,18 +58,14 @@ Graph Graph::Ring(integer_t n, bool directed, bool mutual, bool circular) {
 /********************/
 
 void Graph::addEdge(igraph_integer_t source, igraph_integer_t target) {
-    igraph_integer_t edge[2] = { source, target };
-    addEdges(std::vector<igraph_integer_t>(edge, edge+2));
+    Vector edge(2);
+    edge[0] = source; edge[1] = target;
+    addEdges(edge);
 }
 
-void Graph::addEdges(const std::vector<double>& edges) {
-    igraph_vector_t v;
-
-    if (edges.empty())
-        return;
-
-    igraph_vector_view(&v, &edges[0], edges.size());
-    IGRAPH_TRY(igraph_add_edges(m_pGraph, &v, 0));
+void Graph::addEdges(const Vector& edges) {
+    assert(m_pGraph);
+    IGRAPH_TRY(igraph_add_edges(m_pGraph, edges.c_vector(), 0));
 }
 
 void Graph::addVertex() { addVertices(1); }
@@ -71,24 +75,36 @@ void Graph::addVertices(long numVertices) {
     IGRAPH_TRY(igraph_add_vertices(m_pGraph, numVertices, 0));
 }
 
-void Graph::getEdgelist(Vector* result, bool bycol) {
+void Graph::deleteEdges(const EdgeSelector& es) {
+    assert(m_pGraph);
+    IGRAPH_TRY(igraph_delete_edges(m_pGraph, *es.c_es()));
+}
+
+void Graph::getEdgelist(Vector* result, bool bycol) const {
+    assert(m_pGraph);
     IGRAPH_TRY(igraph_get_edgelist(m_pGraph, result->c_vector(), bycol));
 }
 
-Vector Graph::getEdgelist(bool bycol) {
+Vector Graph::getEdgelist(bool bycol) const {
     Vector result;
     getEdgelist(&result, bycol);
     return result;
 }
 
-void Graph::neighbors(Vector* result, long int vertex, NeighborMode mode) {
+void Graph::neighbors(Vector* result, long int vertex, NeighborMode mode) const {
+    assert(m_pGraph);
     IGRAPH_TRY(igraph_neighbors(m_pGraph, result->c_vector(), vertex, mode));
 }
 
-Vector Graph::neighbors(long int vertex, NeighborMode mode) {
+Vector Graph::neighbors(long int vertex, NeighborMode mode) const {
     Vector result;
     neighbors(&result, vertex, mode);
     return result;
+}
+
+void Graph::writeEdgelist(FILE* outstream) const {
+    assert(m_pGraph);
+    IGRAPH_TRY(igraph_write_graph_edgelist(m_pGraph, outstream));
 }
 
 /*************/

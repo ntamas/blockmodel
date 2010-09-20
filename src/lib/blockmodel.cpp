@@ -13,6 +13,26 @@ namespace {
     }
 }
 
+Graph UndirectedBlockmodel::generate(MersenneTwister& rng) const {
+    long int n = m_types.size();
+    const Matrix probs = getProbabilities();
+    Graph graph(n);
+    Vector edges;
+
+    for (long int v1 = 0; v1 < n; v1++) {
+        int type1 = m_types[v1];
+        for (long int v2 = v1+1; v2 < n; v2++) {
+            if (rng.random() < probs(type1, m_types[v2])) {
+                edges.push_back(v1);
+                edges.push_back(v2);
+            }
+        }
+    }
+
+    graph.addEdges(edges);
+    return graph;
+}
+
 double UndirectedBlockmodel::getLogLikelihood() const {
     if (m_logLikelihood <= 0)
         return m_logLikelihood;
@@ -51,6 +71,9 @@ long int UndirectedBlockmodel::getTotalEdgesBetweenGroups(int type1, int type2) 
 }
 
 double UndirectedBlockmodel::getProbability(int type1, int type2) const {
+    if (m_pGraph == NULL)
+        return m_probabilities(type1, type2);
+
     double possibleEdges = getTotalEdgesBetweenGroups(type1, type2);
 
     if (possibleEdges == 0)
@@ -70,6 +93,11 @@ Matrix UndirectedBlockmodel::getProbabilities() const {
 }
 
 void UndirectedBlockmodel::getProbabilities(Matrix& result) const {
+    if (m_pGraph == NULL) {
+        result = m_probabilities;
+        return;
+    }
+
     result.resize(m_numTypes, m_numTypes);
 
     for (int i = 0; i < m_numTypes; i++) {
@@ -104,6 +132,9 @@ void UndirectedBlockmodel::randomize(MersenneTwister& rng) {
 }
 
 void UndirectedBlockmodel::recountEdges() {
+    if (m_pGraph == NULL)
+        return;
+
     long n = m_pGraph->vcount();
     Vector edgelist = m_pGraph->getEdgelist();
     Vector::const_iterator it = edgelist.begin();
@@ -120,6 +151,24 @@ void UndirectedBlockmodel::recountEdges() {
         m_edgeCounts(type1,type2) += 1;
         m_edgeCounts(type2,type1) += 1;
     }
+}
+
+void UndirectedBlockmodel::setNumTypes(int numTypes) {
+    if (numTypes <= 0)
+        throw std::runtime_error("must have at least one type");
+
+    m_numTypes = numTypes;
+    m_typeCounts.resize(numTypes);
+    if (m_pGraph != NULL)
+        m_typeCounts[0] += m_pGraph->vcount() - m_typeCounts.sum();
+
+    m_edgeCounts.resize(numTypes, numTypes);
+    recountEdges();
+
+    if (m_pGraph != NULL)
+        m_probabilities.resize(0, 0);
+    else
+        m_probabilities.resize(numTypes, numTypes);
 }
 
 void UndirectedBlockmodel::setType(long index, int newType) {
@@ -142,6 +191,12 @@ void UndirectedBlockmodel::setType(long index, int newType) {
     m_types[index] = newType;
     // Invalidate the log-likelihood cache
     invalidateCache();
+}
+
+void UndirectedBlockmodel::setProbabilities(const Matrix& p) {
+    if (!p.isSymmetric())
+        throw new std::runtime_error("probabilities matrix must be symmetric");
+    m_probabilities = p;
 }
 
 void UndirectedBlockmodel::setTypes(const Vector& types) {

@@ -1,16 +1,125 @@
 /* vim:set ts=4 sw=4 sts=4 et: */
 
+#include <algorithm>
+#include <cmath>
+#include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <sstream>
+#include <stdexcept>
+#include <string>
 #include <block/io.hpp>
 #include <block/util.hpp>
 #include <igraph/cpp/graph.h>
 
 using namespace igraph;
+using namespace std;
+
+/***************************************************************************/
+
+template<>
+void PlainTextReader<UndirectedBlockmodel>::read(
+        UndirectedBlockmodel& model, istream& is) {
+    enum { SECTION_INFO, SECTION_TYPES, SECTION_PROBABILITIES, SECTION_UNKNOWN } section;
+    bool finished = false;
+    Vector types;
+    Vector probabilities;
+
+    string currentHeading;
+    string line;
+    stringstream iss;
+
+    string name;
+    int type;
+    double p;
+
+    if (is.fail())
+        throw runtime_error("error while reading stream");
+
+    section = SECTION_UNKNOWN;
+
+    while (!finished) {
+        getline(is, line);
+        if (is.eof())
+            break;
+        if (is.fail())
+            throw runtime_error("error while reading stream");
+
+        /* Is the line empty? If so, a new heading will follow */
+        if (line.size() == 0) {
+            currentHeading = "";
+            continue;
+        }
+
+        /* Are we looking for a heading? If so, store it */
+        if (currentHeading == "") {
+            currentHeading = line;
+            if (currentHeading == "INFO")
+                section = SECTION_INFO;
+            else if (currentHeading == "PROBABILITIES")
+                section = SECTION_PROBABILITIES;
+            else if (currentHeading == "TYPES")
+                section = SECTION_TYPES;
+            else
+                section = SECTION_UNKNOWN;
+            continue;
+        }
+
+        /* If we are here, we have the heading and the line is not empty */
+        switch (section) {
+            case SECTION_INFO:
+                /* Nothing to do, we don't need anything from here */
+                break;
+
+            case SECTION_TYPES:
+                /* Store the next type */
+                iss.str(line);
+                iss >> name >> type;
+                if (iss.bad())
+                    throw runtime_error("error while parsing probability matrix");
+                types.push_back(type);
+                iss.clear();
+                break;
+
+            case SECTION_PROBABILITIES:
+                /* Store the next row in the probability matrix */
+                iss.str(line);
+                while (!iss.eof()) {
+                    iss >> p;
+                    if (iss.bad())
+                        throw runtime_error("error while parsing probability matrix");
+                    probabilities.push_back(p);
+                }
+                iss.clear();
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    // Find how many types do we have
+    size_t n = sqrt(probabilities.size());
+    if (n * n != probabilities.size())
+        throw runtime_error("probability matrix must be square");
+
+    if (types.min() < 0)
+        throw runtime_error("negative type index found");
+    if (types.max() >= n)
+        throw runtime_error("too large type index found");
+
+    Matrix probMat(n, n);
+    copy(probabilities.begin(), probabilities.end(), probMat.begin());
+
+    model.setTypes(types);
+    model.setProbabilities(probMat);
+}
+
+/***************************************************************************/
 
 template<>
 void PlainTextWriter<UndirectedBlockmodel>::write(
-        const UndirectedBlockmodel& model, std::ostream& os) {
+        const UndirectedBlockmodel& model, ostream& os) {
     const Graph* pGraph = model.getGraph();
     int n = pGraph->vcount();
     int k = model.getNumTypes();
@@ -40,7 +149,7 @@ void PlainTextWriter<UndirectedBlockmodel>::write(
 
 template<>
 void JSONWriter<UndirectedBlockmodel>::write(
-        const UndirectedBlockmodel& model, std::ostream& os) {
+        const UndirectedBlockmodel& model, ostream& os) {
     const Graph* pGraph = model.getGraph();
     int n = pGraph->vcount();
     int k = model.getNumTypes();
