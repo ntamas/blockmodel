@@ -5,6 +5,7 @@
 #include <memory>
 #include <block/blockmodel.h>
 #include <block/io.hpp>
+#include <block/optimization.h>
 #include <block/util.hpp>
 #include <igraph/cpp/graph.h>
 
@@ -15,10 +16,13 @@
 using namespace igraph;
 using namespace std;
 
-class BlockmodelGeneratorApp {
+class BlockmodelPredictionApp {
 private:
     /// Parsed command line arguments
     CommandLineArguments m_args;
+
+    /// Markov chain Monte Carlo strategy to optimize the model
+    MetropolisHastingsStrategy m_mcmc;
 
 public:
     LOGGING_FUNCTION(debug, 2);
@@ -26,12 +30,7 @@ public:
     LOGGING_FUNCTION(error, 0);
 
     /// Constructor
-    BlockmodelGeneratorApp() {}
-
-    /// Generates the output filename for the given index
-    string generateOutputFilename(int index) {
-        return StringUtil::format(m_args.outputFile, index);
-    }
+    BlockmodelPredictionApp() {}
 
     /// Returns whether we are running in quiet mode
     bool isQuiet() {
@@ -74,46 +73,23 @@ public:
     /// Runs the user interface
     int run(int argc, char** argv) {
         UndirectedBlockmodel model;
-        MersenneTwister rng;
-        FILE* out = NULL;
 
         m_args.parse(argc, argv);
 
-        if (m_args.count <= 0)
+        if (m_args.sampleCount <= 0)
             return 0;
 
         if (readModel(model))
             return 1;
 
-        if (m_args.outputFile == "-")
-            out = stdout;
-
         debug(">> using random seed: %lu", m_args.randomSeed);
-        rng.init_genrand(m_args.randomSeed);
-
-        for (long int i = 0; i < m_args.count; i++) {
-            Graph graph = model.generate(rng);
-
-            if (out != stdout) {
-                string outputFile = generateOutputFilename(i);
-                out = fopen(outputFile.c_str(), "w");
-                if (out) {
-                    graph.writeEdgelist(out);
-                    fclose(out);
-                } else {
-                    error("Cannot open output file: %s", outputFile.c_str());
-                    return 4;
-                }
-            } else {
-                graph.writeEdgelist(out);
-            }
-        }
+        m_mcmc.getRNG()->init_genrand(m_args.randomSeed);
 
         return 0;
     }
 };
 
 int main(int argc, char** argv) {
-    BlockmodelGeneratorApp app;
+    BlockmodelPredictionApp app;
     return app.run(argc, argv);
 }
