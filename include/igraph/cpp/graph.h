@@ -4,14 +4,17 @@
 #define IGRAPHPP_GRAPH_H
 
 #include <cassert>
+#include <memory>
 #include <igraph/igraph_constructors.h>
 #include <igraph/igraph_datatype.h>
 #include <igraph/igraph_foreign.h>
 #include <igraph/igraph_interface.h>
+#include <igraph/cpp/attributes.h>
 #include <igraph/cpp/edge_selector.h>
 #include <stdexcept>
 #include <vector>
 
+#include <igraph/cpp/error.h>
 #include <igraph/cpp/types.h>
 #include <igraph/cpp/vector.h>
 
@@ -29,8 +32,7 @@ public:
     /*****************************/
 
     /// Constructs an empty graph
-    Graph(long numVertices = 0, bool directed = false) : m_pGraph(0) {
-        m_pGraph = new igraph_t;
+    Graph(long numVertices = 0, bool directed = false) : m_pGraph(new igraph_t) {
         IGRAPH_TRY(igraph_empty(m_pGraph, numVertices, directed));
     }
     
@@ -47,8 +49,7 @@ public:
     }
 
     /// Copy constructor
-    Graph(const Graph& other) : m_pGraph(0) {
-        m_pGraph = new igraph_t;
+    Graph(const Graph& other) : m_pGraph(new igraph_t) {
         IGRAPH_TRY(igraph_copy(m_pGraph, other.m_pGraph));
     }
 
@@ -105,15 +106,24 @@ public:
     /// Returns the number of edges in the graph
     integer_t ecount() const { return igraph_ecount(m_pGraph); }
 
+    /// Returns a copy of the value of the given graph attribute
+    any getAttribute(const std::string& attribute) const;
+
     /// Returns the edge list of the graph
     Vector getEdgelist(bool bycol=false) const;
     /// Returns the edge list of the graph
     void getEdgelist(Vector* result, bool bycol=false) const;
 
+    /// Returns whether the graph has the given graph attribute
+    bool hasAttribute(const std::string& attribute) const;
+
     /// Returns the neighbors of a vertex
     void neighbors(Vector* result, long int vertex, NeighborMode mode = IGRAPH_OUT) const;
     /// Returns the neighbors of a vertex
     Vector neighbors(long int vertex, NeighborMode mode = IGRAPH_OUT) const;
+
+    /// Sets the value of the given graph attribute
+    void setAttribute(const std::string& attribute, const any& value);
 
     /// Returns the number of vertices in the graph
     integer_t vcount() const { return igraph_vcount(m_pGraph); }
@@ -145,6 +155,24 @@ public:
 
         return *this;
     }
+
+    /// Retrieves the value of the given graph attribute
+    /**
+     * This method works similar to \c std::map<>.operator[]: if the attribute
+     * is found, its value is returned; if the attribute is not found, a new
+     * attribute will be created with the default constructor of \c igraph::any
+     * and this will be returned. Therefore, this operator won't work on const
+     * graphs.
+     */
+    any& operator[](const std::string& attribute);
+
+private:
+    /// Returns a pointer to the attribute holder of the graph
+    inline AttributeHolder* getAttributeHolder();
+
+    /// Returns a pointer to the attribute holder of the graph (const)
+    const inline AttributeHolder* getAttributeHolder() const;
+
 };
 
 }       // end of namespaces

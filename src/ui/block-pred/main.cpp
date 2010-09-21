@@ -1,6 +1,7 @@
 /* vim:set ts=4 sw=4 sts=4 et: */
 
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <block/blockmodel.h>
@@ -73,6 +74,9 @@ public:
     /// Runs the user interface
     int run(int argc, char** argv) {
         UndirectedBlockmodel model;
+        unsigned int samplesTaken = 0;
+        double logL, bestLogL;
+        MersenneTwister* rng = m_mcmc.getRNG();
 
         m_args.parse(argc, argv);
 
@@ -83,7 +87,47 @@ public:
             return 1;
 
         debug(">> using random seed: %lu", m_args.randomSeed);
-        m_mcmc.getRNG()->init_genrand(m_args.randomSeed);
+        rng->init_genrand(m_args.randomSeed);
+
+        m_mcmc.setModel(&model);
+        
+        // If we have requested only one sample, then always take the one
+        // we have in the beginning
+        if (m_args.sampleCount == 1)
+            m_args.samplingFreq = 1.0;
+
+        if (model.getGraph() == NULL && m_args.sampleCount > 1) {
+            error("Loaded model has no associated graph; cannot start sampling.");
+            return 2;
+        }
+
+        info(">> starting Markov chain");
+        bestLogL = model.getLogLikelihood();
+
+        while (1) {
+            if (rng->random() < m_args.samplingFreq) {
+                samplesTaken++;
+                // TODO
+            }
+
+            if (samplesTaken >= m_args.sampleCount)
+                break;
+
+            m_mcmc.step();
+
+            logL = model.getLogLikelihood();
+            if (bestLogL < logL)
+                bestLogL = logL;
+
+            if (m_mcmc.getStepCount() % m_args.logPeriod == 0 && !isQuiet()) {
+                clog << '[' << setw(6) << m_mcmc.getStepCount() << "] "
+                     << '(' << setw(6) << samplesTaken << ") "
+                     << setw(12) << logL << "\t(" << bestLogL << ")\t"
+                     << (m_mcmc.wasLastProposalAccepted() ? '*' : ' ')
+                     << setw(8) << m_mcmc.getAcceptanceRatio()
+                     << '\n';
+            }
+        }
 
         return 0;
     }
@@ -91,5 +135,7 @@ public:
 
 int main(int argc, char** argv) {
     BlockmodelPredictionApp app;
+
+    igraph::AttributeHandler::attach();
     return app.run(argc, argv);
 }

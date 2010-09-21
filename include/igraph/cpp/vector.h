@@ -5,6 +5,7 @@
 
 #include <cstring>
 #include <igraph/igraph_blas.h>
+#include <igraph/cpp/error.h>
 #include <igraph/cpp/types.h>
 
 namespace igraph {

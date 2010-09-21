@@ -80,6 +80,10 @@ void Graph::deleteEdges(const EdgeSelector& es) {
     IGRAPH_TRY(igraph_delete_edges(m_pGraph, *es.c_es()));
 }
 
+any Graph::getAttribute(const std::string& attribute) const {
+    return getAttributeHolder()->getGraphAttribute(attribute);
+}
+
 void Graph::getEdgelist(Vector* result, bool bycol) const {
     assert(m_pGraph);
     IGRAPH_TRY(igraph_get_edgelist(m_pGraph, result->c_vector(), bycol));
@@ -91,6 +95,10 @@ Vector Graph::getEdgelist(bool bycol) const {
     return result;
 }
 
+bool Graph::hasAttribute(const std::string& attribute) const {
+    return getAttributeHolder()->hasGraphAttribute(attribute);
+}
+
 void Graph::neighbors(Vector* result, long int vertex, NeighborMode mode) const {
     assert(m_pGraph);
     IGRAPH_TRY(igraph_neighbors(m_pGraph, result->c_vector(), vertex, mode));
@@ -100,6 +108,10 @@ Vector Graph::neighbors(long int vertex, NeighborMode mode) const {
     Vector result;
     neighbors(&result, vertex, mode);
     return result;
+}
+
+void Graph::setAttribute(const std::string& attribute, const any& value) {
+    return getAttributeHolder()->setGraphAttribute(attribute, value);
 }
 
 void Graph::writeEdgelist(FILE* outstream) const {
@@ -115,6 +127,20 @@ Graph Graph::operator+(const Graph& other) const {
     std::auto_ptr<igraph_t> result(new igraph_t);
     IGRAPH_TRY(igraph_disjoint_union(result.get(), m_pGraph, other.m_pGraph));
     return Graph(result.release());
+}
+
+any& Graph::operator[](const std::string& attribute) {
+    return getAttributeHolder()->getGraphAttributeReference(attribute);
+}
+
+/***************************************************************************/
+
+AttributeHolder* Graph::getAttributeHolder() {
+    return static_cast<AttributeHolder*>(m_pGraph->attr);
+}
+
+const AttributeHolder* Graph::getAttributeHolder() const {
+    return static_cast<AttributeHolder*>(m_pGraph->attr);
 }
 
 }         // end of namespaces

@@ -127,6 +127,8 @@ void PlainTextWriter<UndirectedBlockmodel>::write(
 
     os << "INFO\n";
     os << "date\t" << ctime(&now);
+    if (pGraph->hasAttribute("filename"))
+        os << "filename\t" << pGraph->getAttribute("filename").as<std::string>() << '\n';
     os << "num_vertices\t" << n << '\n';
     os << "num_types\t" << k << '\n';
     os << "log_likelihood\t" << model.getLogLikelihood() << '\n';

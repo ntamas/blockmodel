@@ -11,16 +11,22 @@ using namespace std;
 using namespace SimpleOpt;
 
 enum {
-    COUNT, IN_FORMAT
+    COUNT, IN_FORMAT,
+    LOG_PERIOD, SAMPLING_FREQ
 };
 
 CommandLineArguments::CommandLineArguments() :
     CommandLineArgumentsBase("block-pred", BLOCKMODEL_VERSION_STRING),
-    sampleCount(1), inputFormat(FORMAT_PLAIN) {
+    sampleCount(1), inputFormat(FORMAT_PLAIN),
+    logPeriod(8192), samplingFreq(0.1)
+{
 
     /* basic options */
     addOption(COUNT,     "-c", SO_REQ_SEP, "--count");
     addOption(IN_FORMAT, "-f", SO_REQ_SEP, "--input-format");
+
+    /* advanced options */
+    addOption(SAMPLING_FREQ, "--sampling-freq", SO_REQ_SEP);
 }
 
 int CommandLineArguments::handleOption(int id, const std::string& arg) {
@@ -40,6 +46,16 @@ int CommandLineArguments::handleOption(int id, const std::string& arg) {
                 cerr << "Unknown input format: " << arg << "\n";
                 return 1;
             }
+            break;
+
+        /* Processing advanced parameters */
+
+        case LOG_PERIOD:
+            logPeriod = atoi(arg.c_str());
+            break;
+
+        case SAMPLING_FREQ:
+            samplingFreq = atof(arg.c_str());
             break;
     }
 
@@ -62,6 +78,12 @@ void CommandLineArguments::showHelp(ostream& os) const {
           "                        output stream.\n"
           "\n"
           "Advanced algorithm parameters:\n"
+          "    --log-period COUNT  shows a status message after every COUNT steps\n"
+          "    --sampling-freq P   take a sample from the Markov chain at every step\n"
+          "                        with probability P. Smaller P values decorrelate the\n"
+          "                        Markov chain at the expense of longer sampling time.\n"
+          "                        Default = 0.1 (i.e. a sample is taken after every 10\n"
+          "                        steps on average).\n"
           "    --seed SEED         use the given number to seed the random number\n"
           "                        generator.\n"
     ;

@@ -138,6 +138,9 @@ public:
         }
 
         result.reset(new Graph(Graph::ReadEdgelist(fptr)));
+        if (filename != "-")
+            result->setAttribute("filename", filename);
+
         return result;
     }
 
@@ -214,6 +217,8 @@ public:
 
         info(">> loading graph: %s", m_args.inputFile.c_str());
         m_pGraph = loadGraph(m_args.inputFile);
+        info(">> graph has %ld vertices and %ld edges",
+             (long)m_pGraph->vcount(), (long)m_pGraph->ecount());
 
         debug(">> using random seed: %lu", m_args.randomSeed);
         m_mcmc.getRNG()->init_genrand(m_args.randomSeed);
@@ -286,5 +291,7 @@ int main(int argc, char** argv) {
     // Register the signal handler for SIGUSR1
     signal(SIGUSR1, handleSIGUSR1);
 #endif
+
+    igraph::AttributeHandler::attach();
     return app.run(argc, argv);
 }

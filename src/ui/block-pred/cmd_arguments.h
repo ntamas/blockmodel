@@ -23,6 +23,12 @@ public:
     /* Advanced parameters */
     /***********************/
 
+    /// Number of steps after which a status message is printed
+    int logPeriod;
+
+    /// Sampling frequency
+    float samplingFreq;
+
 	/// Constructor
 	CommandLineArguments();
 
