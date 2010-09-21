@@ -149,6 +149,42 @@ void PlainTextWriter<UndirectedBlockmodel>::write(
     }
 }
 
+/// Converts a string to its JSON representation
+static std::string toJSON(const std::string& str) {
+    std::string out("\"");
+
+    for (std::string::const_iterator it = str.begin(); it != str.end(); it++) {
+        switch (*it) {
+            case '"':
+                out.append("\\\""); break;
+            case '\\':
+                out.append("\\\\"); break;
+            case '\b':
+                out.append("\\b"); break;
+            case '\f':
+                out.append("\\f"); break;
+            case '\n':
+                out.append("\\n"); break;
+            case '\r':
+                out.append("\\r"); break;
+            case '\t':
+                out.append("\\t"); break;
+            case '/':
+                out.append("\\/"); break;
+            default:
+                if (*it >= 0 && *it <= 31) {
+                    char buf[7];
+                    sprintf(buf, "\\u00%x", int(*it));
+                    out.append(buf);
+                } else out.append(1, *it);
+        }
+    }
+
+    out.append("\"");
+
+    return out;
+}
+
 template<>
 void JSONWriter<UndirectedBlockmodel>::write(
         const UndirectedBlockmodel& model, ostream& os) {
@@ -163,8 +199,13 @@ void JSONWriter<UndirectedBlockmodel>::write(
 
     os << "{\n"
        << "    \"info\": {\n"
-       << "        \"date\": \"" << formatted_date << "\",\n"
-       << "        \"timestamp\": " << timestamp << ",\n"
+       << "        \"date\": " << toJSON(formatted_date) << ",\n";
+
+    if (pGraph->hasAttribute("filename"))
+        os << "        \"filename\": "
+           << toJSON(pGraph->getAttribute("filename").as<std::string>()) << ",\n";
+
+    os << "        \"timestamp\": " << timestamp << ",\n"
        << "        \"num_vertices\": " << n << ",\n"
        << "        \"num_types\": " << k << ",\n"
        << "        \"log_likelihood\": " << model.getLogLikelihood() << ",\n"

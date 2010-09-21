@@ -63,6 +63,7 @@ class PlainTextWriter : public Writer<T> {
 /// Writer for block models in JSON format
 template <typename T>
 class JSONWriter : public Writer<T> {
+public:
     /// Writes the given object to the given stream
     virtual void write(const T& model, std::ostream& os);
 };
