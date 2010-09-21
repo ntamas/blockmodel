@@ -17,7 +17,6 @@ using namespace std;
 
 /***************************************************************************/
 
-template<>
 void PlainTextReader<UndirectedBlockmodel>::read(
         UndirectedBlockmodel& model, istream& is) {
     enum { SECTION_INFO, SECTION_TYPES, SECTION_PROBABILITIES, SECTION_UNKNOWN } section;
@@ -32,6 +31,8 @@ void PlainTextReader<UndirectedBlockmodel>::read(
     string name;
     int type;
     double p;
+
+    m_originalFilename.clear();
 
     if (is.fail())
         throw runtime_error("error while reading stream");
@@ -68,7 +69,13 @@ void PlainTextReader<UndirectedBlockmodel>::read(
         /* If we are here, we have the heading and the line is not empty */
         switch (section) {
             case SECTION_INFO:
-                /* Nothing to do, we don't need anything from here */
+                /* Store the original filename (if any) */
+                iss.str(line);
+                iss >> name;
+                if (name == "filename") {
+                    iss >> m_originalFilename;
+                }
+                iss.clear();
                 break;
 
             case SECTION_TYPES:
@@ -111,6 +118,7 @@ void PlainTextReader<UndirectedBlockmodel>::read(
     Matrix probMat(n, n);
     copy(probabilities.begin(), probabilities.end(), probMat.begin());
 
+    model.setNumTypes(n);
     model.setTypes(types);
     model.setProbabilities(probMat);
 }

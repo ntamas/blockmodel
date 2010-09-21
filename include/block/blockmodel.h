@@ -50,10 +50,9 @@ public:
 
     /// Constructs a new undirected blockmodel to be fitted to the given graph
     explicit UndirectedBlockmodel(igraph::Graph* graph, int numTypes)
-        : m_pGraph(graph), m_types(graph->vcount()), m_logLikelihood(1) {
+        : m_pGraph(0), m_types((long int)0), m_logLikelihood(1) {
         setNumTypes(numTypes);
-        m_typeCounts[0] = m_pGraph->vcount();
-        m_edgeCounts(0,0) = 2 * m_pGraph->ecount();
+        setGraph(graph);
     }
 
     /// Generates a new graph according to the current parameters of the blockmodel
@@ -140,6 +139,19 @@ public:
 
     /// Randomizes the current configuration of the model using the given RNG
     void randomize(MersenneTwister& rng);
+
+    /// Sets the graph associated to the model
+    /**
+     * If the graph is not NULL, the type vector will be resized to the number
+     * of vertices in the graph and the edge counts will be re-calculated.
+     */
+    void setGraph(igraph::Graph* graph) {
+        m_pGraph = graph;
+        if (m_pGraph != NULL) {
+            m_types.resize(m_pGraph->vcount());
+            recountEdges();
+        }
+    }
 
     /// Sets the number of types
     /**

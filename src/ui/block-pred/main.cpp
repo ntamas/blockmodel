@@ -25,13 +25,17 @@ private:
     /// Markov chain Monte Carlo strategy to optimize the model
     MetropolisHastingsStrategy m_mcmc;
 
+    /// Graph that was used to fit the model to
+    auto_ptr<Graph> m_pGraph;
+
 public:
     LOGGING_FUNCTION(debug, 2);
     LOGGING_FUNCTION(info, 1);
+    LOGGING_FUNCTION(warning, 1);
     LOGGING_FUNCTION(error, 0);
 
     /// Constructor
-    BlockmodelPredictionApp() {}
+    BlockmodelPredictionApp() : m_args(), m_mcmc(), m_pGraph(0) {}
 
     /// Returns whether we are running in quiet mode
     bool isQuiet() {
@@ -45,27 +49,33 @@ public:
 
     /// Reads the model from the disk
     int readModel(UndirectedBlockmodel& model) {
-        auto_ptr<Reader<UndirectedBlockmodel> > pModelReader;
+        PlainTextReader<UndirectedBlockmodel> modelReader;
 
         info(">> loading model: %s", m_args.inputFile.c_str());
 
-        switch (m_args.inputFormat) {
-            default:
-                pModelReader.reset(new PlainTextReader<UndirectedBlockmodel>);
-                break;
-        };
-
         try {
             if (m_args.inputFile == "-")
-                pModelReader->read(model, cin);
+                modelReader.read(model, cin);
             else {
                 ifstream is(m_args.inputFile.c_str());
-                pModelReader->read(model, is);
+                modelReader.read(model, is);
             }
         } catch (const runtime_error& ex) {
             error("Cannot read input file: %s", m_args.inputFile.c_str());
             error(ex.what());
             return 1;
+        }
+
+        if (!modelReader.getOriginalFilename().empty()) {
+            FILE* f = fopen(modelReader.getOriginalFilename().c_str(), "r");
+            if (f != NULL) {
+                m_pGraph.reset(new Graph(Graph::ReadEdgelist(f)));
+                model.setGraph(m_pGraph.get());
+                fclose(f);
+            } else {
+                warning(">> cannot load original graph `%s', continuing anyway",
+                        modelReader.getOriginalFilename().c_str());
+            }
         }
 
         return 0;

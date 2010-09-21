@@ -4,6 +4,7 @@
 #define BLOCKMODEL_IO_HPP
 
 #include <iostream>
+#include <string>
 #include <block/blockmodel.h>
 
 /// Supported formats in the IO subsystem
@@ -25,11 +26,35 @@ public:
     virtual void read(T& model, std::istream& is) = 0;
 };
 
-/// Reader for block models in plain text format
+/// Reader for objects in plain text format
 template <typename T>
 class PlainTextReader : public Reader<T> {
+public:
     /// Reads into the given object from the given stream
     virtual void read(T& model, std::istream& is);
+};
+
+/// Reader for objects in plain text format
+template <>
+class PlainTextReader<UndirectedBlockmodel> :
+    public Reader<UndirectedBlockmodel> {
+private:
+    /// The name of the graph to which the model last read was fitted
+    /**
+     * The plain text formatted version of a model may store the filename
+     * of a graph to which the model was fitted. This string will store
+     * the name of the file if known; otherwise it will be empty.
+     */
+    std::string m_originalFilename;
+
+public:
+    /// Returns the name of the graph to which the model last read was fitted
+    const std::string getOriginalFilename() const {
+        return m_originalFilename;
+    }
+
+    /// Reads into the given object from the given stream
+    virtual void read(UndirectedBlockmodel& model, std::istream& is);
 };
 
 /***************************************************************************/
@@ -53,14 +78,14 @@ class NullWriter : public Writer<T> {
     virtual void write(const T&, std::ostream&) {}
 };
 
-/// Writer for block models in plain text format
+/// Writer for objects in plain text format
 template <typename T>
 class PlainTextWriter : public Writer<T> {
     /// Writes the given object to the given stream
     virtual void write(const T& model, std::ostream& os);
 };
 
-/// Writer for block models in JSON format
+/// Writer for objects in JSON format
 template <typename T>
 class JSONWriter : public Writer<T> {
 public:
