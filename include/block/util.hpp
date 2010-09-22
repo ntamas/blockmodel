@@ -41,6 +41,7 @@ struct pair_comparator {
     bool operator()(Pair p1, Pair p2);
 };
 
+/// Specialization of pair_comparator for sorting based on the first element
 template <>
 struct pair_comparator<1> {
     template <typename Pair>
@@ -49,6 +50,7 @@ struct pair_comparator<1> {
     }
 };
 
+/// Specialization of pair_comparator for sorting based on the second element
 template <>
 struct pair_comparator<2> {
     template <typename Pair>
