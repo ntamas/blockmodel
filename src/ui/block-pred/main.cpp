@@ -7,6 +7,7 @@
 #include <block/blockmodel.h>
 #include <block/io.hpp>
 #include <block/optimization.h>
+#include <block/prediction.h>
 #include <block/util.hpp>
 #include <igraph/cpp/graph.h>
 
@@ -84,7 +85,6 @@ public:
     /// Runs the user interface
     int run(int argc, char** argv) {
         UndirectedBlockmodel model;
-        unsigned int samplesTaken = 0;
         double logL, bestLogL;
         MersenneTwister* rng = m_mcmc.getRNG();
 
@@ -113,14 +113,14 @@ public:
 
         info(">> starting Markov chain");
         bestLogL = model.getLogLikelihood();
+        auto_ptr<Predictor> pPredictor(new AveragingPredictor(&model));
 
+        /* Start taking samples */
         while (1) {
-            if (rng->random() < m_args.samplingFreq) {
-                samplesTaken++;
-                // TODO
-            }
+            if (rng->random() < m_args.samplingFreq)
+                pPredictor->takeSample();
 
-            if (samplesTaken >= m_args.sampleCount)
+            if (pPredictor->getSampleCount() >= m_args.sampleCount)
                 break;
 
             m_mcmc.step();
@@ -131,12 +131,43 @@ public:
 
             if (m_mcmc.getStepCount() % m_args.logPeriod == 0 && !isQuiet()) {
                 clog << '[' << setw(6) << m_mcmc.getStepCount() << "] "
-                     << '(' << setw(6) << samplesTaken << ") "
+                     << '(' << setw(6) << pPredictor->getSampleCount() << ") "
                      << setw(12) << logL << "\t(" << bestLogL << ")\t"
                      << (m_mcmc.wasLastProposalAccepted() ? '*' : ' ')
                      << setw(8) << m_mcmc.getAcceptanceRatio()
                      << '\n';
             }
+        }
+
+        /* Okay, list the predictions */
+        size_t n = model.getVertexCount();
+
+        if (m_args.sort) {
+            typedef vector<pair<pair<int, int>, double> > Predictions;
+            Predictions preds;
+            preds.reserve(n * (n-1) / 2);
+            for (size_t v1 = 0; v1 < n; v1++)
+                for (size_t v2 = v1+1; v2 < n; v2++)
+                    preds.push_back(make_pair(
+                                make_pair(v1, v2),
+                                pPredictor->predictProbability(v1, v2)
+                    ));
+
+            pair_comparator<2> cmp;
+            make_heap(preds.begin(), preds.end(), cmp);
+
+            while (!preds.empty()) {
+                Predictions::const_iterator it = preds.begin();
+                cout << (it->first.first) << '\t' << (it->first.second) << '\t'
+                     << it->second << '\n';
+                pop_heap(preds.begin(), preds.end(), cmp);
+                preds.pop_back();
+            }
+        } else {
+            for (size_t v1 = 0; v1 < n; v1++)
+                for (size_t v2 = v1+1; v2 < n; v2++)
+                    cout << v1 << '\t' << v2 << '\t'
+                         << pPredictor->predictProbability(v1, v2) << '\n';
         }
 
         return 0;

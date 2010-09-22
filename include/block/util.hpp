@@ -34,6 +34,29 @@ struct key_comparator {
     }
 };
 
+/// Comparator that can be used to sort pairs
+template <int I>
+struct pair_comparator {
+    template <typename Pair>
+    bool operator()(Pair p1, Pair p2);
+};
+
+template <>
+struct pair_comparator<1> {
+    template <typename Pair>
+    bool operator()(const Pair& p1, const Pair& p2) {
+        return p1.first < p2.first;
+    }
+};
+
+template <>
+struct pair_comparator<2> {
+    template <typename Pair>
+    bool operator()(const Pair& p1, const Pair& p2) {
+        return p1.second < p2.second;
+    }
+};
+
 /// Permuted view of a container
 template <typename Container, typename Permutation>
 class PermutedContainer {

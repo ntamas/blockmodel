@@ -130,6 +130,11 @@ public:
     igraph::Vector getTypes() const {
         return m_types;
     }
+    
+    /// Returns the number of vertices in the model
+    size_t getVertexCount() const {
+        return m_types.size();
+    }
 
     /// Randomizes the current configuration of the model
     void randomize() {
@@ -145,13 +150,7 @@ public:
      * If the graph is not NULL, the type vector will be resized to the number
      * of vertices in the graph and the edge counts will be re-calculated.
      */
-    void setGraph(igraph::Graph* graph) {
-        m_pGraph = graph;
-        if (m_pGraph != NULL) {
-            m_types.resize(m_pGraph->vcount());
-            recountEdges();
-        }
-    }
+    void setGraph(igraph::Graph* graph);
 
     /// Sets the number of types
     /**

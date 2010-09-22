@@ -19,9 +19,15 @@ public:
     /// Format of the input file
     Format inputFormat;
 
+    /// Whether we want to sort the predictions
+    bool sort;
+
     /***********************/
     /* Advanced parameters */
     /***********************/
+
+    /// Whether we want to run a burn-in period first
+    bool burnin;
 
     /// Number of steps after which a status message is printed
     int logPeriod;

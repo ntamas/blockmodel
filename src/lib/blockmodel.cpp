@@ -153,6 +153,18 @@ void UndirectedBlockmodel::recountEdges() {
     }
 }
 
+void UndirectedBlockmodel::setGraph(igraph::Graph* graph) {
+    size_t oldSize = m_types.size();
+
+    m_pGraph = graph;
+    if (m_pGraph != NULL) {
+        m_types.resize(m_pGraph->vcount());
+        for (; oldSize < m_types.size(); oldSize++)
+            m_types[oldSize] = 0;
+        recountEdges();
+    }
+}
+
 void UndirectedBlockmodel::setNumTypes(int numTypes) {
     if (numTypes <= 0)
         throw std::runtime_error("must have at least one type");
