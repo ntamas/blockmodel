@@ -205,7 +205,7 @@ namespace SimpleOpt {
 # define SO_STATICBUF   SO_MAX_ARGS
 #else
 # include <stdlib.h>    // malloc, free
-# include <string.h>    // memcpy
+# include <string.h>    // memmove
 # define SO_STATICBUF   50
 #endif
 
@@ -534,7 +534,7 @@ private:
         // keep our promise of no CLIB usage
         while (nCount-- > 0) *ppDst++ = *ppSrc++;
 #else
-        memcpy(ppDst, ppSrc, nCount * sizeof(SOCHAR*));
+        memmove(ppDst, ppSrc, nCount * sizeof(SOCHAR*));
 #endif
     }
 
