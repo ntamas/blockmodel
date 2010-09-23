@@ -162,10 +162,11 @@ public:
             }
 
             getline(is, line);
-            if (!is.eof())
-                m_nameMapping.push_back(line);
+            m_nameMapping.push_back(line);
         }
         is.close();
+        if (!m_nameMapping.empty() && m_nameMapping.back() == "")
+            m_nameMapping.pop_back();
         info(">> loaded names for %d vertices", m_nameMapping.size());
 
         if (m_nameMapping.size() < m_pModel->getVertexCount()) {
