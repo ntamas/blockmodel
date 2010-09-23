@@ -169,11 +169,11 @@ public:
         info(">> loaded names for %d vertices", m_nameMapping.size());
 
         if (m_nameMapping.size() < m_pModel->getVertexCount()) {
-            char buf[1000];
             warning(">> numeric IDs will still be used for vertices without names");
             while (m_nameMapping.size() < m_pModel->getVertexCount()) {
-                sprintf(buf, "%ld", (long)m_nameMapping.size());
-                m_nameMapping.push_back(buf);
+                m_nameMapping.push_back(
+                    StringUtil::format("%ld", (long)m_nameMapping.size())
+                );
             }
         }
 
