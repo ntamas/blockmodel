@@ -3,6 +3,7 @@
 #ifndef _CMD_ARGUMENTS_H
 #define _CMD_ARGUMENTS_H
 
+#include <string>
 #include <block/io.hpp>
 #include "../common/cmd_arguments_base.h"
 
@@ -31,6 +32,9 @@ public:
 
     /// Number of steps after which a status message is printed
     int logPeriod;
+
+    /// Name of a file to be used for mapping vertex IDs to names
+    std::string nameMappingFile;
 
     /// Sampling frequency
     float samplingFreq;

@@ -12,13 +12,13 @@ using namespace SimpleOpt;
 
 enum {
     COUNT, IN_FORMAT, SORT,
-    LOG_PERIOD, NO_BURNIN, SAMPLING_FREQ
+    LOG_PERIOD, NAME_MAPPING, NO_BURNIN, SAMPLING_FREQ
 };
 
 CommandLineArguments::CommandLineArguments() :
     CommandLineArgumentsBase("block-pred", BLOCKMODEL_VERSION_STRING),
     sampleCount(1), inputFormat(FORMAT_PLAIN), sort(false),
-    burnin(true), logPeriod(8192), samplingFreq(0.1)
+    burnin(true), logPeriod(8192), nameMappingFile(), samplingFreq(0.1)
 {
 
     /* basic options */
@@ -28,6 +28,7 @@ CommandLineArguments::CommandLineArguments() :
 
     /* advanced options */
     addOption(LOG_PERIOD,    "--log-period",    SO_REQ_SEP);
+    addOption(NAME_MAPPING,  "--name-mapping",  SO_REQ_SEP);
     addOption(NO_BURNIN,     "--no-burnin",     SO_NONE);
     addOption(SAMPLING_FREQ, "--sampling-freq", SO_REQ_SEP);
 }
@@ -61,6 +62,10 @@ int CommandLineArguments::handleOption(int id, const std::string& arg) {
             logPeriod = atoi(arg.c_str());
             break;
 
+        case NAME_MAPPING:
+            nameMappingFile = arg;
+            break;
+
         case NO_BURNIN:
             burnin = false;
             break;
@@ -90,6 +95,9 @@ void CommandLineArguments::showHelp(ostream& os) const {
           "\n"
           "Advanced algorithm parameters:\n"
           "    --log-period COUNT  shows a status message after every COUNT steps\n"
+          "    --name-mapping FILE\n"
+          "                        reads vertex names from the given FILE and uses\n"
+          "                        these names instead of indices in the output.\n"
           "    --no-burnin         don't burn in the Markov chain, start sampling\n"
           "                        immediately.\n"
           "    --sampling-freq P   take a sample from the Markov chain at every step\n"

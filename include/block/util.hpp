@@ -22,6 +22,18 @@ double bic(const T& model) {
            std::log(model.getNumObservations());
 }
 
+/// Identity map
+template <typename Key=int>
+struct identity_map {
+    Key operator[](const Key& x) {
+        return x;
+    }
+
+    const Key& operator[](const Key& x) const {
+        return x;
+    }
+};
+
 /// Comparator that can be used to sort an index vector of a container
 template <typename Map, typename Element=typename std::iterator_traits<Map>::value_type>
 struct key_comparator {
