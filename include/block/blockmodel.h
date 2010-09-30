@@ -9,9 +9,9 @@
 #include <igraph/cpp/vector.h>
 #include <mtwister/mt.h>
 
-/// Class representing an undirected blockmodel
-class UndirectedBlockmodel {
-private:
+/// Abstract base class for various types of blockmodels
+class Blockmodel {
+protected:
     /// Pointer to a graph to which this model will be fitted
     igraph::Graph* m_pGraph;
 
@@ -31,28 +31,14 @@ private:
      */
     igraph::Matrix m_edgeCounts;
     
-    /// Matrix storing the edge probabilities between pairs of vertex types
-    /**
-     * This is used only if there is no graph associated to the model (i.e.
-     * m_pGraph is NULL).
-     */
-    igraph::Matrix m_probabilities;
-
     /// Cached value of the log-likelihood
     mutable double m_logLikelihood;
 
 public:
-    /// Constructs a new undirected blockmodel not associated with any given graph
-    explicit UndirectedBlockmodel(int numTypes = 1)
-        : m_pGraph(0), m_types((long int)0), m_logLikelihood(1) {
-        setNumTypes(numTypes);
-    }
-
-    /// Constructs a new undirected blockmodel to be fitted to the given graph
-    explicit UndirectedBlockmodel(igraph::Graph* graph, int numTypes)
-        : m_pGraph(0), m_types((long int)0), m_logLikelihood(1) {
-        setNumTypes(numTypes);
-        setGraph(graph);
+    /// Constructs a new blockmodel not associated with any given graph
+    explicit Blockmodel()
+        : m_pGraph(0), m_numTypes(0), m_types(),
+		  m_typeCounts(), m_edgeCounts(), m_logLikelihood(1) {
     }
 
     /// Generates a new graph according to the current parameters of the blockmodel
@@ -62,7 +48,7 @@ public:
     }
 
     /// Generates a new graph according to the current parameters of the blockmodel
-    igraph::Graph generate(MersenneTwister& rng) const;
+    virtual igraph::Graph generate(MersenneTwister& rng) const = 0;
 
     /// Returns the number of edges between the two given groups
     long getEdgeCount(long ri, long ci) const {
@@ -85,7 +71,7 @@ public:
     }
 
     /// Returns the log-likelihood of the model
-    double getLogLikelihood() const;
+    virtual double getLogLikelihood() const = 0;
 
     /// Returns the number of observations in this model
     long getNumObservations() const {
@@ -93,23 +79,12 @@ public:
     }
 
     /// Returns the number of free parameters in this model
-    int getNumParameters() const {
-        return (m_numTypes * (m_numTypes+1) / 2.) + m_types.size() + 1;
-    }
+    virtual int getNumParameters() const  = 0;
 
     /// Returns the number of types in this model
     int getNumTypes() const {
         return m_numTypes;
     }
-
-    /// Returns the estimated probability between the two given types
-    double getProbability(int type1, int type2) const;
-
-    /// Returns the estimated probability matrix
-    igraph::Matrix getProbabilities() const;
-
-    /// Returns the estimated probability matrix
-    void getProbabilities(igraph::Matrix& result) const;
 
     /// Returns the type of the given vertex
     int getType(long index) const {
@@ -136,14 +111,8 @@ public:
         return m_types.size();
     }
 
-    /// Randomizes the current configuration of the model
-    void randomize() {
-        MersenneTwister mt;
-        randomize(mt);
-    }
-
-    /// Randomizes the current configuration of the model using the given RNG
-    void randomize(MersenneTwister& rng);
+	/// Randomizes the current configuration of the model
+	virtual void randomize(MersenneTwister& rng) = 0;
 
     /// Sets the graph associated to the model
     /**
@@ -157,7 +126,81 @@ public:
      * This method should be called only after construction as it will
      * re-create the edge count matrix and the type count vector
      */
-    void setNumTypes(int numTypes);
+    virtual void setNumTypes(int numTypes);
+
+    /// Sets the type of a single vertex
+    void setType(long index, int newType);
+
+    /// Sets the types of multiple vertices
+    void setTypes(const igraph::Vector& types);
+
+protected:
+    /// Recounts the edges and updates m_typeCounts and m_edgeCounts
+    void recountEdges();
+
+    /// Invalidates the cached log-likelihood value
+    void invalidateCache() {
+        m_logLikelihood = 1.0;
+    }
+};
+
+/// Class representing an undirected blockmodel
+class UndirectedBlockmodel : public Blockmodel {
+private:
+    /// Matrix storing the edge probabilities between pairs of vertex types
+    /**
+     * This is used only if there is no graph associated to the model (i.e.
+     * m_pGraph is NULL).
+     */
+    igraph::Matrix m_probabilities;
+
+public:
+    /// Constructs a new undirected blockmodel not associated with any given graph
+    explicit UndirectedBlockmodel(int numTypes = 1) : Blockmodel() {
+		setNumTypes(numTypes);
+	}
+
+    /// Constructs a new undirected blockmodel to be fitted to the given graph
+    UndirectedBlockmodel(igraph::Graph* graph, int numTypes) : Blockmodel() {
+		setGraph(graph);
+		setNumTypes(numTypes);
+	}
+
+    /// Generates a new graph according to the current parameters of the blockmodel
+    igraph::Graph generate(MersenneTwister& rng) const;
+
+    /// Returns the log-likelihood of the model
+    virtual double getLogLikelihood() const;
+
+    /// Returns the number of free parameters in this model
+	virtual int getNumParameters() const {
+        return (m_numTypes * (m_numTypes+1) / 2.) + m_types.size() + 1;
+    }
+
+    /// Returns the estimated probability between the two given types
+    double getProbability(int type1, int type2) const;
+
+    /// Returns the estimated probability matrix
+    igraph::Matrix getProbabilities() const;
+
+    /// Returns the estimated probability matrix
+    void getProbabilities(igraph::Matrix& result) const;
+
+    /// Randomizes the current configuration of the model
+    void randomize() {
+        MersenneTwister mt;
+        randomize(mt);
+    }
+
+    /// Randomizes the current configuration of the model using the given RNG
+    virtual void randomize(MersenneTwister& rng);
+
+    /// Sets the number of types
+    /**
+     * This method should be called only after construction as it will
+     * re-create the edge count matrix and the type count vector
+     */
+    virtual void setNumTypes(int numTypes);
 
     /// Sets the probability of an edge between the two given groups
     /**
@@ -175,23 +218,9 @@ public:
      */
     void setProbabilities(const igraph::Matrix& p);
 
-    /// Sets the type of a single vertex
-    void setType(long index, int newType);
-
-    /// Sets the types of multiple vertices
-    void setTypes(const igraph::Vector& types);
-
 private:
     /// Counts how many edges could there be (theoretically) between the two groups
     long int getTotalEdgesBetweenGroups(int type1, int type2) const;
-
-    /// Invalidates the cached log-likelihood value
-    void invalidateCache() {
-        m_logLikelihood = 1.0;
-    }
-
-    /// Recounts the edges and updates m_typeCounts and m_edgeCounts
-    void recountEdges();
 };
 
 #endif

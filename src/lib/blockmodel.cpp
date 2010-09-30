@@ -13,6 +13,87 @@ namespace {
     }
 }
 
+/***************************************************************************/
+
+void Blockmodel::recountEdges() {
+    if (m_pGraph == NULL)
+        return;
+
+    long n = m_pGraph->vcount();
+    Vector edgelist = m_pGraph->getEdgelist();
+    Vector::const_iterator it = edgelist.begin();
+
+    m_typeCounts.fill(0);
+    for (long i = 0; i < n; i++) {
+        m_typeCounts[m_types[i]]++;
+    }
+
+    m_edgeCounts.fill(0);
+    while (it != edgelist.end()) {
+        long type1 = m_types[*(it++)];
+        long type2 = m_types[*(it++)];
+        m_edgeCounts(type1,type2) += 1;
+        m_edgeCounts(type2,type1) += 1;
+    }
+}
+
+void Blockmodel::setGraph(igraph::Graph* graph) {
+    size_t oldSize = m_types.size();
+
+    m_pGraph = graph;
+    if (m_pGraph != NULL) {
+        m_types.resize(m_pGraph->vcount());
+        for (; oldSize < m_types.size(); oldSize++)
+            m_types[oldSize] = 0;
+        recountEdges();
+    }
+}
+
+void Blockmodel::setNumTypes(int numTypes) {
+    if (numTypes <= 0)
+        throw std::runtime_error("must have at least one type");
+
+    m_numTypes = numTypes;
+    m_typeCounts.resize(numTypes);
+    if (m_pGraph != NULL)
+        m_typeCounts[0] += m_pGraph->vcount() - m_typeCounts.sum();
+
+    m_edgeCounts.resize(numTypes, numTypes);
+    recountEdges();
+}
+
+void Blockmodel::setType(long index, int newType) {
+    // Save the old type
+    int oldType = m_types[index];
+    // Get the neighbors of the affected vertex
+    Vector neighbors = m_pGraph->neighbors(index);
+    // Adjust the edge counts and the type counts
+    // Here we assume that there are no loop edges
+    m_typeCounts[oldType]--; m_typeCounts[newType]++;
+    for (Vector::const_iterator it = neighbors.begin();
+         it != neighbors.end(); it++) {
+        long otherType = m_types[*it];
+        m_edgeCounts(oldType, otherType)--;
+        m_edgeCounts(otherType, oldType)--;
+        m_edgeCounts(newType, otherType)++;
+        m_edgeCounts(otherType, newType)++;
+    }
+    // Set the type of the vertex to the new type
+    m_types[index] = newType;
+    // Invalidate the log-likelihood cache
+    invalidateCache();
+}
+
+void Blockmodel::setTypes(const Vector& types) {
+    m_types = types;
+    // Invalidate the log-likelihood cache
+    invalidateCache();
+    // Recount the edges
+    recountEdges();
+}
+
+/***************************************************************************/
+
 Graph UndirectedBlockmodel::generate(MersenneTwister& rng) const {
     long int n = m_types.size();
     const Matrix probs = getProbabilities();
@@ -131,90 +212,16 @@ void UndirectedBlockmodel::randomize(MersenneTwister& rng) {
     recountEdges();
 }
 
-void UndirectedBlockmodel::recountEdges() {
-    if (m_pGraph == NULL)
-        return;
-
-    long n = m_pGraph->vcount();
-    Vector edgelist = m_pGraph->getEdgelist();
-    Vector::const_iterator it = edgelist.begin();
-
-    m_typeCounts.fill(0);
-    for (long i = 0; i < n; i++) {
-        m_typeCounts[m_types[i]]++;
-    }
-
-    m_edgeCounts.fill(0);
-    while (it != edgelist.end()) {
-        long type1 = m_types[*(it++)];
-        long type2 = m_types[*(it++)];
-        m_edgeCounts(type1,type2) += 1;
-        m_edgeCounts(type2,type1) += 1;
-    }
-}
-
-void UndirectedBlockmodel::setGraph(igraph::Graph* graph) {
-    size_t oldSize = m_types.size();
-
-    m_pGraph = graph;
-    if (m_pGraph != NULL) {
-        m_types.resize(m_pGraph->vcount());
-        for (; oldSize < m_types.size(); oldSize++)
-            m_types[oldSize] = 0;
-        recountEdges();
-    }
-}
-
 void UndirectedBlockmodel::setNumTypes(int numTypes) {
-    if (numTypes <= 0)
-        throw std::runtime_error("must have at least one type");
-
-    m_numTypes = numTypes;
-    m_typeCounts.resize(numTypes);
-    if (m_pGraph != NULL)
-        m_typeCounts[0] += m_pGraph->vcount() - m_typeCounts.sum();
-
-    m_edgeCounts.resize(numTypes, numTypes);
-    recountEdges();
-
+    Blockmodel::setNumTypes(numTypes);
     if (m_pGraph != NULL)
         m_probabilities.resize(0, 0);
     else
         m_probabilities.resize(numTypes, numTypes);
 }
 
-void UndirectedBlockmodel::setType(long index, int newType) {
-    // Save the old type
-    int oldType = m_types[index];
-    // Get the neighbors of the affected vertex
-    Vector neighbors = m_pGraph->neighbors(index);
-    // Adjust the edge counts and the type counts
-    // Here we assume that there are no loop edges
-    m_typeCounts[oldType]--; m_typeCounts[newType]++;
-    for (Vector::const_iterator it = neighbors.begin();
-         it != neighbors.end(); it++) {
-        long otherType = m_types[*it];
-        m_edgeCounts(oldType, otherType)--;
-        m_edgeCounts(otherType, oldType)--;
-        m_edgeCounts(newType, otherType)++;
-        m_edgeCounts(otherType, newType)++;
-    }
-    // Set the type of the vertex to the new type
-    m_types[index] = newType;
-    // Invalidate the log-likelihood cache
-    invalidateCache();
-}
-
 void UndirectedBlockmodel::setProbabilities(const Matrix& p) {
     if (!p.isSymmetric())
         throw new std::runtime_error("probabilities matrix must be symmetric");
     m_probabilities = p;
-}
-
-void UndirectedBlockmodel::setTypes(const Vector& types) {
-    m_types = types;
-    // Invalidate the log-likelihood cache
-    invalidateCache();
-    // Recount the edges
-    recountEdges();
 }
