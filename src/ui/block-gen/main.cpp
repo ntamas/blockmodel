@@ -44,14 +44,15 @@ public:
     }
 
     /// Reads the model from the disk
-    int readModel(UndirectedBlockmodel& model) {
-        auto_ptr<Reader<UndirectedBlockmodel> > pModelReader;
+    template <typename MT>
+    int readModel(MT& model) {
+        auto_ptr<Reader<MT> > pModelReader;
 
         info(">> loading model: %s", m_args.inputFile.c_str());
 
         switch (m_args.inputFormat) {
             default:
-                pModelReader.reset(new PlainTextReader<UndirectedBlockmodel>);
+                pModelReader.reset(new PlainTextReader<MT>);
                 break;
         };
 

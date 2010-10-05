@@ -1,8 +1,9 @@
 /* vim:set ts=4 sw=4 sts=4 et: */
 
 #include <cstdlib>
-#include <igraph/cpp/graph.h>
 #include <block/blockmodel.h>
+#include <igraph/cpp/graph.h>
+#include <mtwister/mt.h>
 
 #include "test_common.cpp"
 
@@ -107,12 +108,64 @@ int test_getProbabilities() {
     return 0;
 }
 
+int test_getTotalEdgesFromAffectedGroups() {
+    /* Disjoint union of two full graphs */
+    Graph graph = Graph::Full(5) + Graph::Full(5);
+    UndirectedBlockmodel model(&graph, 2);
+    Vector counts0, counts1;
+
+    for (int i = 0; i < 10; i++)
+        model.setType(i, i / 5);
+
+    /* Smoke testing first */
+    {
+        PointMutation mutation(0, 0, 1);
+
+        model.getTotalEdgesFromAffectedGroups(mutation, counts0, counts1);
+        if (counts0[0] != 6 || counts0[1] != 24)
+            return 1;
+        if (counts1[0] != 24 || counts1[1] != 15)
+            return 2;
+
+        mutation.to = 0;
+        model.getTotalEdgesFromAffectedGroups(mutation, counts0, counts1);
+        if (counts0[0] != 10 || counts0[1] != 25)
+            return 3;
+        if (counts0 != counts1)
+            return 4;
+    }
+
+    /* Try five groups, do many random mutations */
+    MersenneTwister rng;
+    model = UndirectedBlockmodel(&graph, 5);
+    for (int i = 0; i < 10; i++)
+        model.setType(i, i / 2);
+    for (int i = 0; i < 10000; i++) {
+        int from = rng.randint(10);
+        PointMutation mutation(from, model.getType(from), rng.randint(5));
+        model.getTotalEdgesFromAffectedGroups(mutation, counts0, counts1);
+        model.setType(from, mutation.to);
+
+        for (int j = 0; j < 5; j++) {
+            if (model.getTotalEdgesBetweenGroups(j, mutation.from) !=
+                    counts0[j])
+                return 5;
+            if (model.getTotalEdgesBetweenGroups(j, mutation.to) !=
+                    counts1[j])
+                return 6;
+        }
+    }
+
+    return 0;
+}
+
 int main(int argc, char* argv[]) {
     srand(time(0));
 
     CHECK(test_setType);
     CHECK(test_getProbabilities);
     CHECK(test_getLogLikelihood);
+    CHECK(test_getTotalEdgesFromAffectedGroups);
 
     return 0;
 }

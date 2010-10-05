@@ -9,6 +9,23 @@
 #include <igraph/cpp/vector.h>
 #include <mtwister/mt.h>
 
+/// Simple struct representing a point mutation of a blockmodel
+/**
+ * A point mutation is a step that moves vertex i from group k to group l
+ */
+struct PointMutation {
+	/// The index of the vertex being moved
+	int vertex;
+	/// The group in which the vertex is before the move
+	int from;
+	/// The group in which the vertex is after the move
+	int to;
+
+	/// Constructor
+	PointMutation(int vertex, int from, int to) :
+		vertex(vertex), from(from), to(to) {}
+};
+
 /// Abstract base class for various types of blockmodels
 class Blockmodel {
 protected:
@@ -55,6 +72,19 @@ public:
         return m_edgeCounts(ri, ci);
     }
 
+	/**
+	 * Returns the actual number of edges after a point mutation
+	 * between the two affected groups and others.
+	 *
+	 * \param       mutation    the point mutation we are planning to perform
+	 * \param[out]  countsFrom  the actual number of edges between group
+	 *                          \c mutation.from and other groups after the move
+	 * \param[out]  countsTo    the actual number of edges between group
+	 *                          \c mutation.to and other groups after the move
+	 */
+	void getEdgeCountsFromAffectedGroups(const PointMutation& mutation,
+			igraph::Vector& countsFrom, igraph::Vector& countsTo);
+
     /// Returns the whole edge count matrix
     igraph::Matrix getEdgeCounts() const {
         return m_edgeCounts;
@@ -85,6 +115,22 @@ public:
     int getNumTypes() const {
         return m_numTypes;
     }
+
+    /// Counts how many edges could there be (theoretically) between the two groups
+    long int getTotalEdgesBetweenGroups(int type1, int type2) const;
+
+	/**
+	 * Returns the theoretically possible number of edges after a point mutation
+	 * between the two affected groups and the others.
+	 *
+	 * \param       mutation    the point mutation we are planning to perform
+	 * \param[out]  countsFrom  the theoretically possible number of edges between
+	 *                          group \c mutation.from and other groups after the move
+	 * \param[out]  countsTo    the theoretically possible number of edges between
+	 *                          group \c mutation.to and other groups after the move
+	 */
+	void getTotalEdgesFromAffectedGroups(const PointMutation& mutation,
+			igraph::Vector& countsFrom, igraph::Vector& countsTo);
 
     /// Returns the type of the given vertex
     int getType(long index) const {
@@ -217,10 +263,6 @@ public:
      * (i.e. m_pGraph is NULL).
      */
     void setProbabilities(const igraph::Matrix& p);
-
-private:
-    /// Counts how many edges could there be (theoretically) between the two groups
-    long int getTotalEdgesBetweenGroups(int type1, int type2) const;
 };
 
 #endif

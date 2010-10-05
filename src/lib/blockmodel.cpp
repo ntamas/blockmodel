@@ -1,5 +1,6 @@
 /* vim:set ts=4 sw=4 sts=4 et: */
 
+#include <cassert>
 #include <cmath>
 #include <block/blockmodel.h>
 
@@ -14,6 +15,48 @@ namespace {
 }
 
 /***************************************************************************/
+
+void Blockmodel::getEdgeCountsFromAffectedGroups(const PointMutation& mutation,
+        igraph::Vector& countsFrom, igraph::Vector& countsTo) {
+    // TODO
+}
+
+long int Blockmodel::getTotalEdgesBetweenGroups(int type1, int type2) const {
+    double count1 = m_typeCounts[type1];
+
+    if (type1 == type2)
+        return count1 * (count1 - 1) / 2;
+
+    return count1 * m_typeCounts[type2];
+}
+
+void Blockmodel::getTotalEdgesFromAffectedGroups(const PointMutation& mutation,
+        Vector& countsFrom, Vector& countsTo) {
+    double count;
+    
+    count = m_typeCounts[mutation.from];
+    countsFrom = count * m_typeCounts;
+    countsFrom[mutation.from] -= count;
+    countsFrom[mutation.from] /= 2;
+
+    if (mutation.from == mutation.to) {
+        countsTo = countsFrom;
+        return;
+    }
+
+    count = m_typeCounts[mutation.to];
+    countsTo = count * m_typeCounts;
+    countsTo[mutation.to] -= count;
+    countsTo[mutation.to] /= 2;
+
+    // We take into account the point mutation from here
+    countsFrom -= m_typeCounts;
+    countsTo += m_typeCounts;
+
+    countsFrom[mutation.from]++;
+    countsFrom[mutation.to] += m_typeCounts[mutation.from]-1;
+    countsTo[mutation.from] -= m_typeCounts[mutation.to]+1;
+}
 
 void Blockmodel::recountEdges() {
     if (m_pGraph == NULL)
@@ -139,16 +182,6 @@ double UndirectedBlockmodel::getLogLikelihood() const {
 
     m_logLikelihood = result;
     return result;
-}
-
-long int UndirectedBlockmodel::getTotalEdgesBetweenGroups(int type1, int type2) const {
-    double count1 = m_typeCounts[type1];
-    double count2 = m_typeCounts[type2];
-
-    if (type1 == type2)
-        return count1 * (count2 - 1) / 2;
-
-    return count1 * count2;
 }
 
 double UndirectedBlockmodel::getProbability(int type1, int type2) const {

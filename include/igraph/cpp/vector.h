@@ -284,6 +284,13 @@ public:
         return *this;
     }
 
+    /// Addition of a scalar to a vector
+    Vector operator+(igraph_real_t plus) const {
+        Vector result(*this);
+        result += plus;
+        return result;
+    }
+
     /// In-place subtraction of a constant
     Vector& operator-=(igraph_real_t minus) {
         igraph_vector_add_constant(&m_vector, -minus);
@@ -294,6 +301,18 @@ public:
     Vector& operator-=(const Vector& v2) {
         IGRAPH_TRY(igraph_vector_sub(&m_vector, &v2.m_vector));
         return *this;
+    }
+
+    /// Negation of a vector
+    Vector operator-(void) const {
+        return (*this) * -1;
+    }
+
+    /// Subtraction of a scalar from a vector
+    Vector operator-(igraph_real_t minus) const {
+        Vector result(*this);
+        result -= minus;
+        return result;
     }
 
     /// In-place multiplication by a constant
@@ -325,6 +344,16 @@ public:
     /// Matrix-vector product, matrix is on the right
     Vector operator*(const Matrix& matrix);
 };
+
+/// Addition of a constant to a vector from the left
+Vector operator+(igraph_real_t plus, const Vector& vector);
+
+/// Subtraction of a constant from a vector from the left
+Vector operator-(igraph_real_t minus, const Vector& vector);
+
+/// Multiplication of a vector by a constant from the left
+Vector operator*(igraph_real_t by, const Vector& vector);
+
 
 }       // end of namespaces
 

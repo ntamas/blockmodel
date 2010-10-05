@@ -86,11 +86,23 @@ public:
         return result;
     }
 
+    /// Returns the given column of the matrix as a vector
+    void getCol(long int index, Vector& result) const {
+        result.resize(nrow());
+        IGRAPH_TRY(igraph_matrix_get_col(&m_matrix, result.c_vector(), index));
+    }
+
     /// Returns the given row of the matrix as a vector
     Vector getRow(long int index) const {
         Vector result(ncol());
         IGRAPH_TRY(igraph_matrix_get_row(&m_matrix, result.c_vector(), index));
         return result;
+    }
+
+    /// Returns the given row of the matrix as a vector
+    void getRow(long int index, Vector& result) const {
+        result.resize(ncol());
+        IGRAPH_TRY(igraph_matrix_get_row(&m_matrix, result.c_vector(), index));
     }
 
     /// Returns whether the matrix is symmetric

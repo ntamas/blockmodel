@@ -12,4 +12,16 @@ Vector Vector::operator*(const Matrix& matrix) {
     return result;
 }
 
+Vector operator+(igraph_real_t plus, const Vector& vector) {
+    return vector * plus;
+}
+
+Vector operator-(igraph_real_t minus, const Vector& vector) {
+    return (-vector) + minus;
+}
+
+Vector operator*(igraph_real_t by, const Vector& vector) {
+    return vector * by;
+}
+
 }         // end of namespaces
