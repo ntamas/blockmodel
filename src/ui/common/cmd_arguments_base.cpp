@@ -30,6 +30,8 @@ CommandLineArgumentsBase::CommandLineArgumentsBase(
     addOption(QUIET,   "-q", SO_NONE, "--quiet");
 
     addOption(OUT_FILE, "-o", SO_REQ_SEP, "--output");
+
+    addOption(SEED, "--seed", SO_REQ_SEP);
 }
 
 void CommandLineArgumentsBase::addOption(int id, const char* option,
