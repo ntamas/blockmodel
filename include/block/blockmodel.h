@@ -75,6 +75,8 @@ public:
 	/**
 	 * Returns the actual number of edges after a point mutation
 	 * between the two affected groups and others.
+     *
+     * Edges within the same group are counted twice.
 	 *
 	 * \param       mutation    the point mutation we are planning to perform
 	 * \param[out]  countsFrom  the actual number of edges between group
@@ -122,6 +124,8 @@ public:
 	/**
 	 * Returns the theoretically possible number of edges after a point mutation
 	 * between the two affected groups and the others.
+	 *
+     * Edges within the same group are counted twice.
 	 *
 	 * \param       mutation    the point mutation we are planning to perform
 	 * \param[out]  countsFrom  the theoretically possible number of edges between

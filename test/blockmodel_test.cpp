@@ -108,11 +108,11 @@ int test_getProbabilities() {
     return 0;
 }
 
-int test_getTotalEdgesFromAffectedGroups() {
+int test_getTotalAndActualEdgesFromAffectedGroups() {
     /* Disjoint union of two full graphs */
     Graph graph = Graph::Full(5) + Graph::Full(5);
     UndirectedBlockmodel model(&graph, 2);
-    Vector counts0, counts1;
+    Vector counts0, counts1, counts2, counts3;
 
     for (int i = 0; i < 10; i++)
         model.setType(i, i / 5);
@@ -121,18 +121,28 @@ int test_getTotalEdgesFromAffectedGroups() {
     {
         PointMutation mutation(0, 0, 1);
 
-        model.getTotalEdgesFromAffectedGroups(mutation, counts0, counts1);
-        if (counts0[0] != 6 || counts0[1] != 24)
+        /*model.getTotalEdgesFromAffectedGroups(mutation, counts0, counts1);
+        if (counts0[0] != 12 || counts0[1] != 24)
             return 1;
-        if (counts1[0] != 24 || counts1[1] != 15)
-            return 2;
+        if (counts1[0] != 24 || counts1[1] != 30)
+            return 2;*/
+        model.getEdgeCountsFromAffectedGroups(mutation, counts0, counts1);
+        if (counts0[0] != 12 || counts0[1] != 4)
+            return 3;
+        if (counts1[0] !=  4 || counts1[1] != 20)
+            return 4;
 
         mutation.to = 0;
         model.getTotalEdgesFromAffectedGroups(mutation, counts0, counts1);
-        if (counts0[0] != 10 || counts0[1] != 25)
-            return 3;
+        if (counts0[0] != 20 || counts0[1] != 25)
+            return 5;
         if (counts0 != counts1)
-            return 4;
+            return 6;
+        model.getEdgeCountsFromAffectedGroups(mutation, counts0, counts1);
+        if (counts0[0] != 20 || counts0[1] != 0)
+            return 7;
+        if (counts1 != counts0)
+            return 8;
     }
 
     /* Try five groups, do many random mutations */
@@ -144,15 +154,20 @@ int test_getTotalEdgesFromAffectedGroups() {
         int from = rng.randint(10);
         PointMutation mutation(from, model.getType(from), rng.randint(5));
         model.getTotalEdgesFromAffectedGroups(mutation, counts0, counts1);
+        model.getEdgeCountsFromAffectedGroups(mutation, counts2, counts3);
         model.setType(from, mutation.to);
 
         for (int j = 0; j < 5; j++) {
             if (model.getTotalEdgesBetweenGroups(j, mutation.from) !=
                     counts0[j])
-                return 5;
+                return 9;
             if (model.getTotalEdgesBetweenGroups(j, mutation.to) !=
                     counts1[j])
-                return 6;
+                return 10;
+            if (model.getEdgeCount(j, mutation.from) != counts2[j])
+                return 11;
+            if (model.getEdgeCount(j, mutation.to) != counts3[j])
+                return 12;
         }
     }
 
@@ -165,7 +180,7 @@ int main(int argc, char* argv[]) {
     CHECK(test_setType);
     CHECK(test_getProbabilities);
     CHECK(test_getLogLikelihood);
-    CHECK(test_getTotalEdgesFromAffectedGroups);
+    CHECK(test_getTotalAndActualEdgesFromAffectedGroups);
 
     return 0;
 }

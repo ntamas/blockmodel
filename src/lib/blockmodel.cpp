@@ -18,42 +18,57 @@ namespace {
 
 void Blockmodel::getEdgeCountsFromAffectedGroups(const PointMutation& mutation,
         igraph::Vector& countsFrom, igraph::Vector& countsTo) {
-    // TODO
+    m_edgeCounts.getRow(mutation.from, countsFrom);
+    m_edgeCounts.getCol(mutation.to, countsTo);
+
+    if (mutation.from == mutation.to)
+        return;
+
+    // Get the neighbors of the affected vertex
+    Vector neighbors = m_pGraph->neighbors(mutation.vertex);
+
+    // Adjust countsFrom and countsTo accordingly
+    for (Vector::const_iterator it = neighbors.begin();
+         it != neighbors.end(); it++) {
+        long otherType = m_types[*it];
+        countsFrom[otherType]--;
+        countsTo[otherType]++;
+        if (otherType == mutation.from) {
+            countsFrom[otherType]--;
+            countsFrom[mutation.to]++;
+        } else if (otherType == mutation.to) {
+            countsTo[otherType]++;
+            countsTo[mutation.from]--;
+        }
+    }
 }
 
 long int Blockmodel::getTotalEdgesBetweenGroups(int type1, int type2) const {
-    double count1 = m_typeCounts[type1];
-
     if (type1 == type2)
-        return count1 * (count1 - 1) / 2;
-
-    return count1 * m_typeCounts[type2];
+        return (m_typeCounts[type1] - 1) * m_typeCounts[type2];
+    return m_typeCounts[type1] * m_typeCounts[type2];
 }
 
 void Blockmodel::getTotalEdgesFromAffectedGroups(const PointMutation& mutation,
         Vector& countsFrom, Vector& countsTo) {
-    double count;
-    
-    count = m_typeCounts[mutation.from];
-    countsFrom = count * m_typeCounts;
-    countsFrom[mutation.from] -= count;
-    countsFrom[mutation.from] /= 2;
+    countsFrom = m_typeCounts[mutation.from] * m_typeCounts;
+    countsFrom[mutation.from] -= m_typeCounts[mutation.from];
 
     if (mutation.from == mutation.to) {
         countsTo = countsFrom;
         return;
     }
 
-    count = m_typeCounts[mutation.to];
-    countsTo = count * m_typeCounts;
-    countsTo[mutation.to] -= count;
-    countsTo[mutation.to] /= 2;
+    countsTo = m_typeCounts[mutation.to] * m_typeCounts;
+    countsTo[mutation.to] -= m_typeCounts[mutation.to];
 
     // We take into account the point mutation from here
     countsFrom -= m_typeCounts;
+    countsFrom[mutation.from] -= m_typeCounts[mutation.from];
     countsTo += m_typeCounts;
+    countsTo[mutation.to] += m_typeCounts[mutation.to];
 
-    countsFrom[mutation.from]++;
+    countsFrom[mutation.from] += 2;
     countsFrom[mutation.to] += m_typeCounts[mutation.from]-1;
     countsTo[mutation.from] -= m_typeCounts[mutation.to]+1;
 }
@@ -177,7 +192,7 @@ double UndirectedBlockmodel::getLogLikelihood() const {
         den = getTotalEdgesBetweenGroups(i, i);
         if (den == 0)
             continue;
-        result += den * binary_entropy(m_edgeCounts(i, i) / 2 / den);
+        result += (den/2) * binary_entropy(m_edgeCounts(i, i) / den);
     }
 
     m_logLikelihood = result;
@@ -192,10 +207,6 @@ double UndirectedBlockmodel::getProbability(int type1, int type2) const {
 
     if (possibleEdges == 0)
         return 0;
-
-    if (type1 == type2)
-        // m_edgeCounts counts edges between the same group twice
-        possibleEdges *= 2;
 
     return m_edgeCounts(type1, type2) / possibleEdges;
 }
@@ -225,14 +236,11 @@ void UndirectedBlockmodel::getProbabilities(Matrix& result) const {
             continue;
         }
 
-        for (int j = i+1; j < m_numTypes; j++) {
+        for (int j = i; j < m_numTypes; j++) {
             den = getTotalEdgesBetweenGroups(i, j);
             result(i, j) = result(j, i) =
                 (den == 0) ? 0 : (m_edgeCounts(i, j) / den);
         }
-
-        den = getTotalEdgesBetweenGroups(i, i);
-        result(i, i) = (den == 0) ? 0 : (m_edgeCounts(i, i) / 2 / den); 
     }
 }
 
