@@ -9,6 +9,8 @@
 #include <igraph/cpp/vector.h>
 #include <mtwister/mt.h>
 
+class Blockmodel;
+
 /// Simple struct representing a point mutation of a blockmodel
 /**
  * A point mutation is a step that moves vertex i from group k to group l
@@ -24,6 +26,18 @@ struct PointMutation {
 	/// Constructor
 	PointMutation(int vertex, int from, int to) :
 		vertex(vertex), from(from), to(to) {}
+
+    /// Performs the mutation on the given model
+    void perform(Blockmodel& model) const;
+
+    /// Reverses the mutation
+    void reverse();
+
+    /// Returns a reversed copy of the mutation
+    PointMutation reversed() const;
+
+    /// Undoes the mutation on the given model
+    void undo(Blockmodel& model) const;
 };
 
 /// Abstract base class for various types of blockmodels
@@ -84,8 +98,8 @@ public:
 	 * \param[out]  countsTo    the actual number of edges between group
 	 *                          \c mutation.to and other groups after the move
 	 */
-	void getEdgeCountsFromAffectedGroups(const PointMutation& mutation,
-			igraph::Vector& countsFrom, igraph::Vector& countsTo);
+	void getEdgeCountsFromAffectedGroupsAfter(const PointMutation& mutation,
+			igraph::Vector& countsFrom, igraph::Vector& countsTo) const;
 
     /// Returns the whole edge count matrix
     igraph::Matrix getEdgeCounts() const {
@@ -105,18 +119,29 @@ public:
     /// Returns the log-likelihood of the model
     virtual double getLogLikelihood() const = 0;
 
+    /// Returns the increase in the log-likelihood of the model after a point mutation
+    /**
+     * The default is a dumb implementation which actually performs the move and
+     * calculates the log-likelihood difference. Subclasses may override this
+     * method if a more efficient solution can be provided.
+     */
+    virtual double getLogLikelihoodIncrease(const PointMutation& mutation);
+
     /// Returns the number of observations in this model
     long getNumObservations() const {
         return (m_pGraph->vcount() * (m_pGraph->vcount()-1) / 2);
     }
 
     /// Returns the number of free parameters in this model
-    virtual int getNumParameters() const  = 0;
+    virtual int getNumParameters() const = 0;
 
     /// Returns the number of types in this model
     int getNumTypes() const {
         return m_numTypes;
     }
+
+    /// Counts how many edges could there be (theoretically) from a group to others
+    void getTotalEdgesFromGroup(int type, igraph::Vector& result) const;
 
     /// Counts how many edges could there be (theoretically) between the two groups
     long int getTotalEdgesBetweenGroups(int type1, int type2) const;
@@ -133,8 +158,8 @@ public:
 	 * \param[out]  countsTo    the theoretically possible number of edges between
 	 *                          group \c mutation.to and other groups after the move
 	 */
-	void getTotalEdgesFromAffectedGroups(const PointMutation& mutation,
-			igraph::Vector& countsFrom, igraph::Vector& countsTo);
+	void getTotalEdgesFromAffectedGroupsAfter(const PointMutation& mutation,
+			igraph::Vector& countsFrom, igraph::Vector& countsTo) const;
 
     /// Returns the type of the given vertex
     int getType(long index) const {
@@ -222,6 +247,9 @@ public:
     /// Returns the log-likelihood of the model
     virtual double getLogLikelihood() const;
 
+    /// Returns the increase in the log-likelihood of the model after a point mutation
+    virtual double getLogLikelihoodIncrease(const PointMutation& mutation) const;
+
     /// Returns the number of free parameters in this model
 	virtual int getNumParameters() const {
         return (m_numTypes * (m_numTypes+1) / 2.) + m_types.size() + 1;
@@ -235,6 +263,12 @@ public:
 
     /// Returns the estimated probability matrix
     void getProbabilities(igraph::Matrix& result) const;
+
+    /// Returns one row of the estimated probability matrix
+    igraph::Vector getProbabilitiesFromGroup(int type) const;
+
+    /// Returns one row of the estimated probability matrix
+    void getProbabilitiesFromGroup(int type, igraph::Vector& result) const;
 
     /// Randomizes the current configuration of the model
     void randomize() {

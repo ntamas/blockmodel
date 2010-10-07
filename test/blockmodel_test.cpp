@@ -82,10 +82,13 @@ int test_getProbabilities() {
     if (model.getProbabilities() != expected)
         return 1;
 
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 2; j++)
             if (model.getProbability(i, j) != expected(i, j))
                 return 100 + 10 * i + j;
+        if (model.getProbabilitiesFromGroup(i) != expected.getRow(i))
+            return 100 + 10 * i + 9;
+    }
 
     /* Pathological case: no edge between vertices of type 1 */
     for (int i = 0; i < 10; i++)
@@ -121,24 +124,24 @@ int test_getTotalAndActualEdgesFromAffectedGroups() {
     {
         PointMutation mutation(0, 0, 1);
 
-        /*model.getTotalEdgesFromAffectedGroups(mutation, counts0, counts1);
+        model.getTotalEdgesFromAffectedGroupsAfter(mutation, counts0, counts1);
         if (counts0[0] != 12 || counts0[1] != 24)
             return 1;
         if (counts1[0] != 24 || counts1[1] != 30)
-            return 2;*/
-        model.getEdgeCountsFromAffectedGroups(mutation, counts0, counts1);
+            return 2;
+        model.getEdgeCountsFromAffectedGroupsAfter(mutation, counts0, counts1);
         if (counts0[0] != 12 || counts0[1] != 4)
             return 3;
         if (counts1[0] !=  4 || counts1[1] != 20)
             return 4;
 
         mutation.to = 0;
-        model.getTotalEdgesFromAffectedGroups(mutation, counts0, counts1);
+        model.getTotalEdgesFromAffectedGroupsAfter(mutation, counts0, counts1);
         if (counts0[0] != 20 || counts0[1] != 25)
             return 5;
         if (counts0 != counts1)
             return 6;
-        model.getEdgeCountsFromAffectedGroups(mutation, counts0, counts1);
+        model.getEdgeCountsFromAffectedGroupsAfter(mutation, counts0, counts1);
         if (counts0[0] != 20 || counts0[1] != 0)
             return 7;
         if (counts1 != counts0)
@@ -153,9 +156,9 @@ int test_getTotalAndActualEdgesFromAffectedGroups() {
     for (int i = 0; i < 10000; i++) {
         int from = rng.randint(10);
         PointMutation mutation(from, model.getType(from), rng.randint(5));
-        model.getTotalEdgesFromAffectedGroups(mutation, counts0, counts1);
-        model.getEdgeCountsFromAffectedGroups(mutation, counts2, counts3);
-        model.setType(from, mutation.to);
+        model.getTotalEdgesFromAffectedGroupsAfter(mutation, counts0, counts1);
+        model.getEdgeCountsFromAffectedGroupsAfter(mutation, counts2, counts3);
+        mutation.perform(model);
 
         for (int j = 0; j < 5; j++) {
             if (model.getTotalEdgesBetweenGroups(j, mutation.from) !=
@@ -174,6 +177,37 @@ int test_getTotalAndActualEdgesFromAffectedGroups() {
     return 0;
 }
 
+int test_getLogLikelihoodIncrease() {
+    /* Disjoint union of two full graphs */
+    Graph graph = Graph::Full(5) + Graph::Full(5);
+    UndirectedBlockmodel model(&graph, 5);
+    MersenneTwister rng;
+    double predictedLogL;
+
+    /* Try five groups, do many random mutations */
+    for (int i = 0; i < 10; i++)
+        model.setType(i, i / 2);
+    for (int i = 0; i < 10000; i++) {
+        int from = rng.randint(10);
+        PointMutation mutation(from, model.getType(from), rng.randint(5));
+        while (mutation.from == mutation.to)
+            mutation.to = rng.randint(5);
+
+        predictedLogL = model.getLogLikelihood() +
+            model.getLogLikelihoodIncrease(mutation);
+        mutation.perform(model);
+
+        if (!ALMOST_EQUALS(model.getLogLikelihood(), predictedLogL, 1e-3)) {
+            std::cout << "Step #" << (i+1) << '\n'
+                      << "Predicted logL = " << predictedLogL << '\n'
+                      << "Actual logL    = " << model.getLogLikelihood() << '\n';
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 int main(int argc, char* argv[]) {
     srand(time(0));
 
@@ -181,6 +215,7 @@ int main(int argc, char* argv[]) {
     CHECK(test_getProbabilities);
     CHECK(test_getLogLikelihood);
     CHECK(test_getTotalAndActualEdgesFromAffectedGroups);
+    CHECK(test_getLogLikelihoodIncrease);
 
     return 0;
 }

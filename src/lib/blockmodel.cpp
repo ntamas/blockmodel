@@ -1,5 +1,6 @@
 /* vim:set ts=4 sw=4 sts=4 et: */
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <block/blockmodel.h>
@@ -14,10 +15,32 @@ namespace {
     }
 }
 
+
 /***************************************************************************/
 
-void Blockmodel::getEdgeCountsFromAffectedGroups(const PointMutation& mutation,
-        igraph::Vector& countsFrom, igraph::Vector& countsTo) {
+void PointMutation::perform(Blockmodel& model) const {
+    assert(model.getType(vertex) == from);
+    model.setType(vertex, to);
+}
+
+void PointMutation::reverse() {
+    std::swap(from, to);
+}
+
+PointMutation PointMutation::reversed() const {
+    return PointMutation(vertex, to, from);
+}
+
+void PointMutation::undo(Blockmodel& model) const {
+    assert(model.getType(vertex) == to);
+    model.setType(vertex, from);
+}
+
+/***************************************************************************/
+
+void Blockmodel::getEdgeCountsFromAffectedGroupsAfter(
+        const PointMutation& mutation,
+        igraph::Vector& countsFrom, igraph::Vector& countsTo) const {
     m_edgeCounts.getRow(mutation.from, countsFrom);
     m_edgeCounts.getCol(mutation.to, countsTo);
 
@@ -43,14 +66,29 @@ void Blockmodel::getEdgeCountsFromAffectedGroups(const PointMutation& mutation,
     }
 }
 
+double Blockmodel::getLogLikelihoodIncrease(
+        const PointMutation& mutation) {
+    double result = -getLogLikelihood();
+    mutation.perform(*this);
+    result += getLogLikelihood();
+    mutation.undo(*this);
+    return result;
+}
+
 long int Blockmodel::getTotalEdgesBetweenGroups(int type1, int type2) const {
     if (type1 == type2)
-        return (m_typeCounts[type1] - 1) * m_typeCounts[type2];
+        return (m_typeCounts[type1] - 1) * m_typeCounts[type1];
     return m_typeCounts[type1] * m_typeCounts[type2];
 }
 
-void Blockmodel::getTotalEdgesFromAffectedGroups(const PointMutation& mutation,
-        Vector& countsFrom, Vector& countsTo) {
+void Blockmodel::getTotalEdgesFromGroup(int type, Vector& result) const {
+    result = m_typeCounts[type] * m_typeCounts;
+    result[type] -= m_typeCounts[type];
+}
+
+void Blockmodel::getTotalEdgesFromAffectedGroupsAfter(
+        const PointMutation& mutation,
+        Vector& countsFrom, Vector& countsTo) const {
     countsFrom = m_typeCounts[mutation.from] * m_typeCounts;
     countsFrom[mutation.from] -= m_typeCounts[mutation.from];
 
@@ -199,6 +237,59 @@ double UndirectedBlockmodel::getLogLikelihood() const {
     return result;
 }
 
+double UndirectedBlockmodel::getLogLikelihoodIncrease(
+        const PointMutation& mutation) {
+    double result = 0.0;
+
+    if (mutation.from == mutation.to)
+        return result;
+
+    /* Get the old probabilities and counts */
+
+    Vector oldProbsFrom(m_numTypes),  oldProbsTo(m_numTypes);
+    Vector oldCountsFrom(m_numTypes), oldCountsTo(m_numTypes);
+
+    getTotalEdgesFromGroup(mutation.from, oldCountsFrom);
+    getTotalEdgesFromGroup(mutation.to,   oldCountsTo);
+    getProbabilitiesFromGroup(mutation.from, oldProbsFrom);
+    getProbabilitiesFromGroup(mutation.to,   oldProbsTo);
+
+    /* Get the new probabilities and counts */
+
+    Vector newCountsFrom(m_numTypes), newCountsTo(m_numTypes);
+    Vector newProbsFrom(m_numTypes),  newProbsTo(m_numTypes);
+
+    getTotalEdgesFromAffectedGroupsAfter(mutation, newCountsFrom, newCountsTo);
+    getEdgeCountsFromAffectedGroupsAfter(mutation, newProbsFrom,  newProbsTo);
+    for (int i = 0; i < m_numTypes; i++) {
+        if (newCountsFrom[i] > 0)
+            newProbsFrom[i] /= newCountsFrom[i];
+        if (newCountsTo[i] > 0)
+            newProbsTo[i] /= newCountsTo[i];
+    }
+
+    /* Correct the diagonal elements in oldCounts* and newCounts* as they
+     * contain twice the number of edges there */
+    oldCountsFrom[mutation.from] /= 2;
+    oldCountsTo[mutation.to] /= 2;
+    newCountsFrom[mutation.from] /= 2;
+    newCountsTo[mutation.to] /= 2;
+
+    /* Calculate the increase */
+    for (int i = 0; i < m_numTypes; i++) {
+        result += newCountsFrom[i] * binary_entropy(newProbsFrom[i]);
+        result -= oldCountsFrom[i] * binary_entropy(oldProbsFrom[i]);
+        result += newCountsTo  [i] * binary_entropy(newProbsTo  [i]);
+        result -= oldCountsTo  [i] * binary_entropy(oldProbsTo  [i]);
+    }
+    result -= newCountsFrom[mutation.to] *
+              binary_entropy(newProbsFrom[mutation.to]);
+    result += oldCountsFrom[mutation.to] *
+              binary_entropy(oldProbsFrom[mutation.to]);
+
+    return result;
+}
+
 double UndirectedBlockmodel::getProbability(int type1, int type2) const {
     if (m_pGraph == NULL)
         return m_probabilities(type1, type2);
@@ -241,6 +332,21 @@ void UndirectedBlockmodel::getProbabilities(Matrix& result) const {
             result(i, j) = result(j, i) =
                 (den == 0) ? 0 : (m_edgeCounts(i, j) / den);
         }
+    }
+}
+
+Vector UndirectedBlockmodel::getProbabilitiesFromGroup(int type) const {
+    Vector result;
+    getProbabilitiesFromGroup(type, result);
+    return result;
+}
+
+void UndirectedBlockmodel::getProbabilitiesFromGroup(int type,
+        igraph::Vector& result) const {
+    getTotalEdgesFromGroup(type, result);
+    for (int i = 0; i < m_numTypes; i++) {
+        if (result[i] > 0)
+            result[i] = m_edgeCounts(type, i) / result[i];
     }
 }
 
