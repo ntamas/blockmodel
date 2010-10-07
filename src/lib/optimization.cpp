@@ -109,24 +109,16 @@ bool GreedyStrategy::step() {
 bool MetropolisHastingsStrategy::step() {
     Graph* graph = m_pModel->getGraph();
     int i = m_pRng->randint(graph->vcount());
-    int oldType = m_pModel->getType(i);
     int newType = m_pRng->randint(m_pModel->getNumTypes());
-    double logL = m_pModel->getLogLikelihood();
-
-    m_pModel->setType(i, newType);
-    double newLogL = m_pModel->getLogLikelihood();
+    PointMutation mutation(i, m_pModel->getType(i), newType);
+    double logLDiff = m_pModel->getLogLikelihoodIncrease(mutation);
 
     m_stepCount++;
 
-    m_lastProposalAccepted = true;
-    if (newLogL < logL) {
-        double p = std::exp(newLogL - logL);
-        if (m_pRng->random() > p) {
-            /* reject the proposal, reset the state */
-            m_pModel->setType(i, oldType);
-            m_lastProposalAccepted = false;
-        }
-    }
+    m_lastProposalAccepted =
+        (logLDiff >= 0) || (m_pRng->random() <= std::exp(logLDiff));
+    if (m_lastProposalAccepted)
+        mutation.perform(*m_pModel);
 
     m_acceptanceRatio.push_back(m_lastProposalAccepted);
     return true;
