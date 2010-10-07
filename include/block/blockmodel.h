@@ -248,7 +248,7 @@ public:
     virtual double getLogLikelihood() const;
 
     /// Returns the increase in the log-likelihood of the model after a point mutation
-    virtual double getLogLikelihoodIncrease(const PointMutation& mutation) const;
+    virtual double getLogLikelihoodIncrease(const PointMutation& mutation);
 
     /// Returns the number of free parameters in this model
 	virtual int getNumParameters() const {
