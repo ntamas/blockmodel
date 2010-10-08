@@ -129,8 +129,14 @@ public:
     /// Constructor
     GibbsSamplingStrategy() : RandomizedOptimizationStrategy() {}
 
+    /// Returns the acceptance ratio
+    float getAcceptanceRatio() const { return 1.0; }
+
     /// Advances the Markov chain by one step
     bool step();
+
+    /// Returns whether the last proposal was accepted or not
+    bool wasLastProposalAccepted() const { return true; }
 };
 
 #endif
