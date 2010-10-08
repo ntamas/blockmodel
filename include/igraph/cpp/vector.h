@@ -341,8 +341,11 @@ public:
         return result;
     }
 
+    /// Vector-vector scalar product
+    double operator*(const Vector& vector) const;
+
     /// Matrix-vector product, matrix is on the right
-    Vector operator*(const Matrix& matrix);
+    Vector operator*(const Matrix& matrix) const;
 };
 
 /// Addition of a constant to a vector from the left

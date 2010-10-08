@@ -187,7 +187,7 @@ public:
     }
 
 	/// Randomizes the current configuration of the model
-	virtual void randomize(MersenneTwister& rng) = 0;
+	virtual void randomize(MersenneTwister& rng);
 
     /// Sets the graph associated to the model
     /**
@@ -242,7 +242,7 @@ public:
 	}
 
     /// Generates a new graph according to the current parameters of the blockmodel
-    igraph::Graph generate(MersenneTwister& rng) const;
+    virtual igraph::Graph generate(MersenneTwister& rng) const;
 
     /// Returns the log-likelihood of the model
     virtual double getLogLikelihood() const;
@@ -270,15 +270,6 @@ public:
     /// Returns one row of the estimated probability matrix
     void getProbabilitiesFromGroup(int type, igraph::Vector& result) const;
 
-    /// Randomizes the current configuration of the model
-    void randomize() {
-        MersenneTwister mt;
-        randomize(mt);
-    }
-
-    /// Randomizes the current configuration of the model using the given RNG
-    virtual void randomize(MersenneTwister& rng);
-
     /// Sets the number of types
     /**
      * This method should be called only after construction as it will
@@ -303,4 +294,37 @@ public:
     void setProbabilities(const igraph::Matrix& p);
 };
 
+/// Class representing an undirected degree-corrected blockmodel
+class DegreeCorrectedUndirectedBlockmodel : public Blockmodel {
+public:
+    /**
+     * \brief Constructs a new undirected degree-corrected blockmodel not
+     *        associated with any given graph
+     */
+    explicit DegreeCorrectedUndirectedBlockmodel(int numTypes = 1)
+        : Blockmodel() {
+		setNumTypes(numTypes);
+	}
+
+    /**
+     * \brief Constructs a new undirected degree-corrected blockmodel to
+     *        be fitted to the given graph
+     */
+    DegreeCorrectedUndirectedBlockmodel(igraph::Graph* graph, int numTypes)
+        : Blockmodel() {
+		setGraph(graph);
+		setNumTypes(numTypes);
+	}
+
+    /// Generates a new graph according to the current parameters of the blockmodel
+    virtual igraph::Graph generate(MersenneTwister& rng) const;
+
+    /// Returns the log-likelihood of the model
+    virtual double getLogLikelihood() const;
+
+    /// Returns the number of free parameters in this model
+	virtual int getNumParameters() const {
+        return (m_numTypes * (m_numTypes+1) / 2.) + 2 * m_types.size() + 1;
+    }
+};
 #endif

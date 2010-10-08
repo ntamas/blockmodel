@@ -64,6 +64,18 @@ public:
         return &m_matrix;
     }
 
+    /// Returns the sums of the columns
+    Vector colsum() const {
+        Vector result;
+        colsum(result);
+        return result;
+    }
+
+    /// Returns the sums of the columns
+    void colsum(Vector& result) const {
+        IGRAPH_TRY(igraph_matrix_colsum(&m_matrix, result.c_vector()));
+    }
+
     /// Returns an iterator pointing after the last element of the matrix
     iterator end() {
         return &(MATRIX(m_matrix, 0, 0)) + size();
@@ -143,6 +155,18 @@ public:
     /// Resizes the matrix
     void resize(long nrow, long ncol) {
         IGRAPH_TRY(igraph_matrix_resize(&m_matrix, nrow, ncol));
+    }
+
+    /// Returns the sums of the rows
+    Vector rowsum() const {
+        Vector result;
+        rowsum(result);
+        return result;
+    }
+
+    /// Returns the sums of the rows
+    void rowsum(Vector& result) const {
+        IGRAPH_TRY(igraph_matrix_rowsum(&m_matrix, result.c_vector()));
     }
 
     /// Returns the size of the matrix

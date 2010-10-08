@@ -111,6 +111,15 @@ void Blockmodel::getTotalEdgesFromAffectedGroupsAfter(
     countsTo[mutation.from] -= m_typeCounts[mutation.to]+1;
 }
 
+void Blockmodel::randomize(MersenneTwister& rng) {
+    for (Vector::iterator it = m_types.begin(); it != m_types.end(); it++)
+        *it = rng.randint(m_numTypes);
+    // Invalidate the log-likelihood cache
+    invalidateCache();
+    // Recount the edges
+    recountEdges();
+}
+
 void Blockmodel::recountEdges() {
     if (m_pGraph == NULL)
         return;
@@ -350,15 +359,6 @@ void UndirectedBlockmodel::getProbabilitiesFromGroup(int type,
     }
 }
 
-void UndirectedBlockmodel::randomize(MersenneTwister& rng) {
-    for (Vector::iterator it = m_types.begin(); it != m_types.end(); it++)
-        *it = rng.randint(m_numTypes);
-    // Invalidate the log-likelihood cache
-    invalidateCache();
-    // Recount the edges
-    recountEdges();
-}
-
 void UndirectedBlockmodel::setNumTypes(int numTypes) {
     Blockmodel::setNumTypes(numTypes);
     if (m_pGraph != NULL)
@@ -372,3 +372,40 @@ void UndirectedBlockmodel::setProbabilities(const Matrix& p) {
         throw new std::runtime_error("probabilities matrix must be symmetric");
     m_probabilities = p;
 }
+
+/***************************************************************************/
+
+Graph DegreeCorrectedUndirectedBlockmodel::generate(
+        MersenneTwister& rng) const {
+    // TODO
+    return Graph();
+}
+
+double DegreeCorrectedUndirectedBlockmodel::getLogLikelihood() const {
+    Vector degrees = m_pGraph->degree(VertexSelector::All());
+    Vector logTheta = degrees;
+    Vector sumDegreesWithType(m_numTypes);
+    
+    m_edgeCounts.colsum(sumDegreesWithType);
+
+    for (size_t i = 0; i < degrees.size(); i++)
+        logTheta[i] = std::log(logTheta[i] / sumDegreesWithType[m_types[i]]);
+
+    double result = degrees * logTheta;
+
+    for (int i = 0; i < m_numTypes; i++) {
+        double ec;
+
+        for (int j = i+1; j < m_numTypes; j++) {
+            ec = m_edgeCounts(i, j);
+            result += ec * (std::log(ec) - 1);
+        }
+
+        ec = m_edgeCounts(i, i);
+        result += (ec/2) * (std::log(ec) - 1);
+    }
+
+    return result;
+}
+
+

@@ -11,6 +11,7 @@
 #include <igraph/igraph_interface.h>
 #include <igraph/cpp/attributes.h>
 #include <igraph/cpp/edge_selector.h>
+#include <igraph/cpp/vertex_selector.h>
 #include <stdexcept>
 #include <vector>
 
@@ -99,6 +100,13 @@ public:
 
     /// Extracts a pointer to the encapsulated graph object (const)
     const igraph_t* c_graph() const { return m_pGraph; }
+
+    /// Returns the degrees of some vertices
+    Vector degree(const VertexSelector& vids,
+            NeighborMode mode = IGRAPH_ALL, bool loops = false);
+    /// Returns the degrees of some vertices
+    void degree(Vector* result, const VertexSelector& vids,
+            NeighborMode mode = IGRAPH_ALL, bool loops = false);
 
     /// Deletes some edges from the graph
     void deleteEdges(const EdgeSelector& es);

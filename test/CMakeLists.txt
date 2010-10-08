@@ -1,4 +1,5 @@
-set(TEST_CASES blockmodel
+set(TEST_CASES undir_blockmodel
+               dc_undir_blockmodel
                greedy_strategy
                moving_average
                statistics

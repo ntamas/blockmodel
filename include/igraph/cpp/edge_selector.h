@@ -29,7 +29,7 @@ public:
         IGRAPH_TRY(igraph_es_1(&m_es, eid));
     }
 
-    /// Constructs an edge selector t hat handles a vector as an edge selector
+    /// Constructs an edge selector that handles a vector as an edge selector
     EdgeSelector(Vector* vector) {
         IGRAPH_TRY(igraph_es_vector(&m_es, vector->c_vector()));
     }
@@ -37,7 +37,7 @@ public:
     /// Constructs a wrapper that wraps the given igraph_es_t instance
     /**
      * The ownership of the wrapped instance is stolen by the wrapper.
-     * The caller should not destroy the graph on its own, ever;
+     * The caller should not destroy the edge selector on its own, ever;
      * the wrapper should be destroyed instead.
      */
     EdgeSelector(igraph_es_t es) : m_es(es) {}
@@ -50,6 +50,13 @@ public:
     /******************/
     /* Static methods */
     /******************/
+
+    /// Creates an edge selector that selects all edges
+    static EdgeSelector All(EdgeOrderType order = IGRAPH_EDGEORDER_ID) {
+        igraph_es_t es;
+        IGRAPH_TRY(igraph_es_all(&es, order));
+        return EdgeSelector(es);
+    }
 
     /// Creates an edge selector from multiple edges defined by their endpoints
     static EdgeSelector Pairs(const Vector& vector, bool directed=true) {

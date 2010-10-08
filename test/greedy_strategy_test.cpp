@@ -81,9 +81,10 @@ int test_grg() {
     Graph graph = Graph::GRG(100, 0.2);
     UndirectedBlockmodel model(&graph, 4);
     GreedyStrategy greedy;
+    MersenneTwister rng;
     Vector expected(graph.vcount());
 
-    model.randomize();
+    model.randomize(rng);
 
     // Fill the expected types vector with the expected result
     for (int i = 0; i < graph.vcount(); i++) {

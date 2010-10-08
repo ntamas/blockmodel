@@ -43,7 +43,7 @@ int test_setType() {
 }
 
 int test_getLogLikelihood() {
-    /* Disjoint union of two full graphs with loops */
+    /* Disjoint union of two full graphs */
     Graph graph = Graph::Full(5) + Graph::Full(5);
     UndirectedBlockmodel model(&graph, 2);
 
