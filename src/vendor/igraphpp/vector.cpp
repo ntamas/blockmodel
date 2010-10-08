@@ -14,7 +14,7 @@ Vector Vector::operator*(const Matrix& matrix) const {
 }
 
 double Vector::operator*(const Vector& vector) const {
-    typename Vector::value_type result = Vector::value_type();
+    Vector::value_type result = Vector::value_type();
 
     assert(vector.size() == size());
 
