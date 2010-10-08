@@ -129,6 +129,7 @@ bool MetropolisHastingsStrategy::step() {
 bool GibbsSamplingStrategy::step() {
     Graph* graph = m_pModel->getGraph();
     int i = m_pRng->randint(graph->vcount());
+    int oldType = m_pModel->getType(i);
     long int k = m_pModel->getNumTypes();
     Vector logLs(k);
 
@@ -136,8 +137,8 @@ bool GibbsSamplingStrategy::step() {
 
     // TODO: maybe this can be calculated more efficiently?
     for (int j = 0; j < k; j++) {
-        m_pModel->setType(i, j);
-        logLs[j] = m_pModel->getLogLikelihood();
+        PointMutation mutation(i, oldType, j);
+        logLs[j] = m_pModel->getLogLikelihoodIncrease(mutation);
     }
 
     // Subtract the minimum log-likelihood from the log-likelihoods
