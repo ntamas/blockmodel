@@ -384,12 +384,14 @@ Graph DegreeCorrectedUndirectedBlockmodel::generate(
 double DegreeCorrectedUndirectedBlockmodel::getLogLikelihood() const {
     Vector degrees = m_pGraph->degree(VertexSelector::All());
     Vector logTheta = degrees;
-    Vector sumDegreesWithType(m_numTypes);
+    Vector sumThetaSqInType(m_numTypes);
+    Vector sumDegreesWithType = m_edgeCounts.colsum();
     
-    m_edgeCounts.colsum(sumDegreesWithType);
-
-    for (size_t i = 0; i < degrees.size(); i++)
-        logTheta[i] = std::log(logTheta[i] / sumDegreesWithType[m_types[i]]);
+    for (size_t i = 0; i < degrees.size(); i++) {
+        logTheta[i] /= sumDegreesWithType[m_types[i]];
+        sumThetaSqInType[m_types[i]] += logTheta[i] * logTheta[i];
+        logTheta[i] = std::log(logTheta[i]);
+    }
 
     double result = degrees * logTheta;
 
@@ -398,11 +400,15 @@ double DegreeCorrectedUndirectedBlockmodel::getLogLikelihood() const {
 
         for (int j = i+1; j < m_numTypes; j++) {
             ec = m_edgeCounts(i, j);
-            result += ec * (std::log(ec) - 1);
+            if (ec > 0)
+                result += ec * (std::log(ec) - 1);
         }
 
-        ec = m_edgeCounts(i, i);
-        result += (ec/2) * (std::log(ec) - 1);
+        ec = m_edgeCounts(i, i) / 2;
+        if (ec > 0) {
+            result += ec * std::log(2 * ec);
+            result -= ec * (1 - sumThetaSqInType[i]);
+        }
     }
 
     return result;

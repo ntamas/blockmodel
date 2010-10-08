@@ -17,7 +17,7 @@ int test_getLogLikelihood() {
     for (int i = 0; i < 8; i++)
         model.setType(i, i / 5);
 
-    if (!ALMOST_EQUALS(model.getLogLikelihood(), -13.4478, 1e-8))
+    if (!ALMOST_EQUALS(model.getLogLikelihood(), -13.4478, 1e-3))
         return 1;
 
     /* Pathological case: no edge between vertices of type 1 */
