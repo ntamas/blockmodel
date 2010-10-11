@@ -4,6 +4,7 @@
 #include <igraph/igraph_foreign.h>
 #include <igraph/igraph_games.h>
 #include <igraph/igraph_operators.h>
+#include <igraph/igraph_structural.h>
 #include <igraph/cpp/graph.h>
 #include <memory>
 
@@ -108,6 +109,12 @@ Vector Graph::getEdgelist(bool bycol) const {
     return result;
 }
 
+bool Graph::isSimple() const {
+    bool_t result;
+    IGRAPH_TRY(igraph_is_simple(m_pGraph, &result));
+    return result;
+}
+
 bool Graph::hasAttribute(const std::string& attribute) const {
     return getAttributeHolder()->hasGraphAttribute(attribute);
 }
@@ -125,6 +132,12 @@ Vector Graph::neighbors(long int vertex, NeighborMode mode) const {
 
 void Graph::setAttribute(const std::string& attribute, const any& value) {
     return getAttributeHolder()->setGraphAttribute(attribute, value);
+}
+
+void Graph::simplify(bool multiple, bool loops) {
+    // TODO: last argument (attribute combination)
+    assert(m_pGraph);
+    IGRAPH_TRY(igraph_simplify(m_pGraph, multiple, loops, 0));
 }
 
 void Graph::writeEdgelist(FILE* outstream) const {

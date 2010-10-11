@@ -170,6 +170,11 @@ public:
         if (filename != "-")
             result->setAttribute("filename", filename);
 
+        if (!result->isSimple()) {
+            info(">> simplifying graph");
+            result->simplify();
+        }
+
         return result;
     }
 

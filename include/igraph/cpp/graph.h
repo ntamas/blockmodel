@@ -125,6 +125,9 @@ public:
     /// Returns whether the graph has the given graph attribute
     bool hasAttribute(const std::string& attribute) const;
 
+    /// Checks whether the graph is a simple graph
+    bool isSimple() const;
+
     /// Returns the neighbors of a vertex
     void neighbors(Vector* result, long int vertex, NeighborMode mode = IGRAPH_OUT) const;
     /// Returns the neighbors of a vertex
@@ -132,6 +135,9 @@ public:
 
     /// Sets the value of the given graph attribute
     void setAttribute(const std::string& attribute, const any& value);
+
+    /// Removes loop and/or multiple edges from the graph
+    void simplify(bool multiple=true, bool loops=true);
 
     /// Returns the number of vertices in the graph
     integer_t vcount() const { return igraph_vcount(m_pGraph); }
