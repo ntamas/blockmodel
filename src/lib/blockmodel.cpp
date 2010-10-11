@@ -142,7 +142,7 @@ void Blockmodel::recountEdges() {
     }
 }
 
-void Blockmodel::setGraph(igraph::Graph* graph) {
+void Blockmodel::setGraph(const igraph::Graph* graph) {
     size_t oldSize = m_types.size();
 
     m_pGraph = graph;
@@ -219,10 +219,7 @@ Graph UndirectedBlockmodel::generate(MersenneTwister& rng) const {
     return graph;
 }
 
-double UndirectedBlockmodel::getLogLikelihood() const {
-    if (m_logLikelihood <= 0)
-        return m_logLikelihood;
-
+double UndirectedBlockmodel::recalculateLogLikelihood() const {
     double den, result = 0.0;
 
     for (int i = 0; i < m_numTypes; i++) {
@@ -381,19 +378,18 @@ Graph DegreeCorrectedUndirectedBlockmodel::generate(
     return Graph();
 }
 
-double DegreeCorrectedUndirectedBlockmodel::getLogLikelihood() const {
-    Vector degrees = m_pGraph->degree(VertexSelector::All());
-    Vector logTheta = degrees;
+double DegreeCorrectedUndirectedBlockmodel::recalculateLogLikelihood() const {
+    Vector logTheta = m_cachedDegrees;
     Vector sumThetaSqInType(m_numTypes);
     Vector sumDegreesWithType = m_edgeCounts.colsum();
     
-    for (size_t i = 0; i < degrees.size(); i++) {
+    for (size_t i = 0; i < logTheta.size(); i++) {
         logTheta[i] /= sumDegreesWithType[m_types[i]];
         sumThetaSqInType[m_types[i]] += logTheta[i] * logTheta[i];
         logTheta[i] = std::log(logTheta[i]);
     }
 
-    double result = degrees * logTheta;
+    double result = m_cachedDegrees * logTheta;
 
     for (int i = 0; i < m_numTypes; i++) {
         double ec;
@@ -411,6 +407,7 @@ double DegreeCorrectedUndirectedBlockmodel::getLogLikelihood() const {
         }
     }
 
+    m_logLikelihood = result;
     return result;
 }
 
@@ -441,3 +438,9 @@ Vector DegreeCorrectedUndirectedBlockmodel::getStickinesses() const {
     getStickinesses(result);
     return result;
 }
+
+void DegreeCorrectedUndirectedBlockmodel::setGraph(const igraph::Graph* graph) {
+    Blockmodel::setGraph(graph);
+    m_pGraph->degree(&m_cachedDegrees, VertexSelector::All());
+}
+

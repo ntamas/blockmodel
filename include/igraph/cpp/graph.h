@@ -103,10 +103,10 @@ public:
 
     /// Returns the degrees of some vertices
     Vector degree(const VertexSelector& vids,
-            NeighborMode mode = IGRAPH_ALL, bool loops = false);
+            NeighborMode mode = IGRAPH_ALL, bool loops = false) const;
     /// Returns the degrees of some vertices
     void degree(Vector* result, const VertexSelector& vids,
-            NeighborMode mode = IGRAPH_ALL, bool loops = false);
+            NeighborMode mode = IGRAPH_ALL, bool loops = false) const;
 
     /// Deletes some edges from the graph
     void deleteEdges(const EdgeSelector& es);

@@ -11,7 +11,7 @@ using namespace igraph;
 
 int test_setType() {
     Graph graph = Graph::GRG(100, 0.2);
-    UndirectedBlockmodel model(&graph, 5);
+    UndirectedBlockmodel model = Blockmodel::create<UndirectedBlockmodel>(&graph, 5);
 
     Vector types;
     Vector typeCounts;
@@ -45,7 +45,7 @@ int test_setType() {
 int test_getLogLikelihood() {
     /* Disjoint union of two full graphs */
     Graph graph = Graph::Full(5) + Graph::Full(5);
-    UndirectedBlockmodel model(&graph, 2);
+    UndirectedBlockmodel model = Blockmodel::create<UndirectedBlockmodel>(&graph, 2);
 
     for (int i = 0; i < 10; i++)
         model.setType(i, i / 5);
@@ -71,7 +71,7 @@ int test_getLogLikelihood() {
 int test_getProbabilities() {
     /* Disjoint union of two full graphs */
     Graph graph = Graph::Full(5) + Graph::Full(5);
-    UndirectedBlockmodel model(&graph, 2);
+    UndirectedBlockmodel model = Blockmodel::create<UndirectedBlockmodel>(&graph, 2);
 
     for (int i = 0; i < 10; i++)
         model.setType(i, i / 5);
@@ -114,7 +114,7 @@ int test_getProbabilities() {
 int test_getTotalAndActualEdgesFromAffectedGroups() {
     /* Disjoint union of two full graphs */
     Graph graph = Graph::Full(5) + Graph::Full(5);
-    UndirectedBlockmodel model(&graph, 2);
+    UndirectedBlockmodel model = Blockmodel::create<UndirectedBlockmodel>(&graph, 2);
     Vector counts0, counts1, counts2, counts3;
 
     for (int i = 0; i < 10; i++)
@@ -150,7 +150,7 @@ int test_getTotalAndActualEdgesFromAffectedGroups() {
 
     /* Try five groups, do many random mutations */
     MersenneTwister rng;
-    model = UndirectedBlockmodel(&graph, 5);
+    model = Blockmodel::create<UndirectedBlockmodel>(&graph, 5);
     for (int i = 0; i < 10; i++)
         model.setType(i, i / 2);
     for (int i = 0; i < 10000; i++) {
@@ -180,7 +180,7 @@ int test_getTotalAndActualEdgesFromAffectedGroups() {
 int test_getLogLikelihoodIncrease() {
     /* Disjoint union of two full graphs */
     Graph graph = Graph::Full(5) + Graph::Full(5);
-    UndirectedBlockmodel model(&graph, 5);
+    UndirectedBlockmodel model = Blockmodel::create<UndirectedBlockmodel>(&graph, 5);
     MersenneTwister rng;
     double predictedLogL;
 

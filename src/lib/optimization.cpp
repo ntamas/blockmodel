@@ -16,7 +16,7 @@ namespace {
 
 template<>
 bool GreedyStrategy<UndirectedBlockmodel>::step(UndirectedBlockmodel *pModel) {
-    Graph* graph = pModel->getGraph();
+    const Graph* graph = pModel->getGraph();
     long int i, n = graph->vcount();
     int k = pModel->getNumTypes();
     double logL = pModel->getLogLikelihood();

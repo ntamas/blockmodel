@@ -11,9 +11,11 @@ using namespace igraph;
 
 int test_two_rings() {
     Graph graph = Graph::Ring(5) + Graph::Ring(5);
-    UndirectedBlockmodel model(&graph, 2);
     Vector types(10);
     GreedyStrategy<UndirectedBlockmodel> greedy;
+    UndirectedBlockmodel model;
+    model.setGraph(&graph);
+    model.setNumTypes(2);
 
     /* First, set up the optimal configuration and see if we stay there */
     for (int i = 0; i < 10; i++)
@@ -36,9 +38,12 @@ int test_two_rings() {
 int test_four_almost_cliques() {
     Graph graph = Graph::Full(4) + Graph::Full(4) +
                   Graph::Full(4) + Graph::Full(4);
-    UndirectedBlockmodel model(&graph, 4);
     Vector types(16);
     GreedyStrategy<UndirectedBlockmodel> greedy;
+    UndirectedBlockmodel model;
+
+    model.setGraph(&graph);
+    model.setNumTypes(4);
 
     /* Remove one edge from each clique */
     Vector edges(8);
@@ -75,10 +80,13 @@ int test_four_almost_cliques() {
  * only, which prevents it from finding an exact match */
 int test_grg() {
     Graph graph = Graph::GRG(100, 0.2);
-    UndirectedBlockmodel model(&graph, 4);
     GreedyStrategy<UndirectedBlockmodel> greedy;
     MersenneTwister rng;
     Vector expected(graph.vcount());
+    UndirectedBlockmodel model;
+
+    model.setGraph(&graph);
+    model.setNumTypes(4);
 
     model.randomize(rng);
 

@@ -38,9 +38,12 @@ int test_getLogLikelihood() {
 int test_getLogLikelihoodIncrease() {
     /* Disjoint union of two full graphs */
     Graph graph = Graph::Full(5) + Graph::Full(3);
-    UndirectedBlockmodel model(&graph, 4);
+    UndirectedBlockmodel model;
     MersenneTwister rng;
     double predictedLogL;
+
+    model.setGraph(&graph);
+    model.setNumTypes(4);
 
     /* Try five groups, do many random mutations */
     for (int i = 0; i < 8; i++)

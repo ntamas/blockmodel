@@ -44,7 +44,7 @@ struct PointMutation {
 class Blockmodel {
 protected:
     /// Pointer to a graph to which this model will be fitted
-    igraph::Graph* m_pGraph;
+    const igraph::Graph* m_pGraph;
 
     /// The number of types in the model
     int m_numTypes;
@@ -70,6 +70,19 @@ public:
     explicit Blockmodel()
         : m_pGraph(0), m_numTypes(0), m_types(),
 		  m_typeCounts(), m_edgeCounts(), m_logLikelihood(1) {
+    }
+
+    /// Convenience function to create a blockmodel instance
+    /**
+     * This function could not have been made a constructor as it calls virtual
+     * functions, which is forbidden in constructors.
+     */
+    template <typename ModelType>
+    static ModelType create(const igraph::Graph* pGraph, int numTypes) {
+        ModelType result;
+        result.setGraph(pGraph);
+        result.setNumTypes(numTypes);
+        return result;
     }
 
     /// Generates a new graph according to the current parameters of the blockmodel
@@ -106,18 +119,17 @@ public:
         return m_edgeCounts;
     }
 
-    /// Returns a pointer to the graph associated to the model
-    igraph::Graph* getGraph() {
-        return m_pGraph;
-    }
-
     /// Returns a pointer to the graph associated to the model (const)
     const igraph::Graph* getGraph() const {
         return m_pGraph;
     }
 
     /// Returns the log-likelihood of the model
-    virtual double getLogLikelihood() const = 0;
+    double getLogLikelihood() const {
+        if (m_logLikelihood < 0)
+            return m_logLikelihood;
+        return recalculateLogLikelihood();
+    }
 
     /// Returns the increase in the log-likelihood of the model after a point mutation
     /**
@@ -189,12 +201,15 @@ public:
 	/// Randomizes the current configuration of the model
 	virtual void randomize(MersenneTwister& rng);
 
+    /// Returns the log-likelihood of the model (with forced recalculation)
+    virtual double recalculateLogLikelihood() const = 0;
+
     /// Sets the graph associated to the model
     /**
      * If the graph is not NULL, the type vector will be resized to the number
      * of vertices in the graph and the edge counts will be re-calculated.
      */
-    void setGraph(igraph::Graph* graph);
+    virtual void setGraph(const igraph::Graph* graph);
 
     /// Sets the number of types
     /**
@@ -235,17 +250,8 @@ public:
 		setNumTypes(numTypes);
 	}
 
-    /// Constructs a new undirected blockmodel to be fitted to the given graph
-    UndirectedBlockmodel(igraph::Graph* graph, int numTypes) : Blockmodel() {
-		setGraph(graph);
-		setNumTypes(numTypes);
-	}
-
     /// Generates a new graph according to the current parameters of the blockmodel
     virtual igraph::Graph generate(MersenneTwister& rng) const;
-
-    /// Returns the log-likelihood of the model
-    virtual double getLogLikelihood() const;
 
     /// Returns the increase in the log-likelihood of the model after a point mutation
     virtual double getLogLikelihoodIncrease(const PointMutation& mutation);
@@ -269,6 +275,9 @@ public:
 
     /// Returns one row of the estimated probability matrix
     void getProbabilitiesFromGroup(int type, igraph::Vector& result) const;
+
+    /// Returns the log-likelihood of the model (with forced recalculation)
+    virtual double recalculateLogLikelihood() const;
 
     /// Sets the number of types
     /**
@@ -296,13 +305,17 @@ public:
 
 /// Class representing an undirected degree-corrected blockmodel
 class DegreeCorrectedUndirectedBlockmodel : public Blockmodel {
+private:
+    /// Cached degree vector for the graph
+    igraph::Vector m_cachedDegrees;
+
 public:
     /**
      * \brief Constructs a new undirected degree-corrected blockmodel not
      *        associated with any given graph
      */
     explicit DegreeCorrectedUndirectedBlockmodel(int numTypes = 1)
-        : Blockmodel() {
+        : Blockmodel(), m_cachedDegrees() {
 		setNumTypes(numTypes);
 	}
 
@@ -318,9 +331,6 @@ public:
 
     /// Generates a new graph according to the current parameters of the blockmodel
     virtual igraph::Graph generate(MersenneTwister& rng) const;
-
-    /// Returns the log-likelihood of the model
-    virtual double getLogLikelihood() const;
 
     /// Returns the number of free parameters in this model
 	virtual int getNumParameters() const {
@@ -341,5 +351,16 @@ public:
 
     /// Returns the stickiness of all the vertices in this model
     void getStickinesses(igraph::Vector& result) const;
+
+    /// Returns the log-likelihood of the model (with forced recalculation)
+    virtual double recalculateLogLikelihood() const;
+
+    /// Sets the graph associated to the model
+    /**
+     * If the graph is not NULL, the type vector will be resized to the number
+     * of vertices in the graph and the edge counts will be re-calculated.
+     * The cached degree vector will also be re-calculated.
+     */
+    virtual void setGraph(const igraph::Graph* graph);
 };
 #endif

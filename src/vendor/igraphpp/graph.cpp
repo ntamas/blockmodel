@@ -75,14 +75,14 @@ void Graph::addVertices(long numVertices) {
     IGRAPH_TRY(igraph_add_vertices(m_pGraph, numVertices, 0));
 }
 
-Vector Graph::degree(const VertexSelector& vids, NeighborMode mode, bool loops) {
+Vector Graph::degree(const VertexSelector& vids, NeighborMode mode, bool loops) const {
     Vector result;
     degree(&result, vids, mode, loops);
     return result;
 }
 
 void Graph::degree(Vector* result, const VertexSelector& vids,
-                   NeighborMode mode, bool loops) {
+                   NeighborMode mode, bool loops) const {
     assert(m_pGraph);
     IGRAPH_TRY(igraph_degree(m_pGraph, result->c_vector(), *vids.c_vs(),
                 mode, loops));
