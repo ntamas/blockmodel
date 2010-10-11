@@ -326,5 +326,20 @@ public:
 	virtual int getNumParameters() const {
         return (m_numTypes * (m_numTypes+1) / 2.) + 2 * m_types.size() + 1;
     }
+
+    /// Returns the rate parameter between the two given types in this model
+    double getRate(int type1, int type2) const;
+
+    /// Returns the matrix of rate parameters for this model
+    igraph::Matrix getRates() const;
+
+    /// Returns the matrix of rate parameters for this model
+    void getRates(igraph::Matrix& result) const;
+
+    /// Returns the stickiness of all the vertices in this model
+    igraph::Vector getStickinesses() const;
+
+    /// Returns the stickiness of all the vertices in this model
+    void getStickinesses(igraph::Vector& result) const;
 };
 #endif

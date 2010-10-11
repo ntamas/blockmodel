@@ -12,13 +12,14 @@ using namespace SimpleOpt;
 
 enum {
     NUM_GROUPS, NUM_SAMPLES, OUT_FORMAT,
-    LOG_PERIOD, INIT_METHOD, BLOCK_SIZE
+    LOG_PERIOD, INIT_METHOD, BLOCK_SIZE, MODEL
 };
 
 CommandLineArguments::CommandLineArguments() :
     CommandLineArgumentsBase("block-fit", BLOCKMODEL_VERSION_STRING),
     numGroups(-1), numSamples(100000), outputFormat(FORMAT_PLAIN),
-    blockSize(65536), initMethod(GREEDY), logPeriod(8192) {
+    blockSize(65536), initMethod(GREEDY), logPeriod(8192),
+    modelType(UNDIRECTED_BLOCKMODEL) {
 
     /* basic options */
 
@@ -30,6 +31,7 @@ CommandLineArguments::CommandLineArguments() :
     addOption(BLOCK_SIZE,  "--block-size",  SO_REQ_SEP);
     addOption(INIT_METHOD, "--init-method", SO_REQ_SEP);
     addOption(LOG_PERIOD,  "--log-period",  SO_REQ_SEP);
+    addOption(MODEL,       "--model",       SO_REQ_SEP);
 }
 
 int CommandLineArguments::handleOption(int id, const std::string& arg) {
@@ -77,6 +79,18 @@ int CommandLineArguments::handleOption(int id, const std::string& arg) {
         case LOG_PERIOD:
             logPeriod = atoi(arg.c_str());
             break;
+
+        case MODEL:
+            if (arg == "undirected")
+                modelType = UNDIRECTED_BLOCKMODEL;
+            else if (arg == "degree")
+                modelType = DEGREE_CORRECTED_UNDIRECTED_BLOCKMODEL;
+            else {
+                cerr << "Unknown model type: " << arg << '\n';
+                return 1;
+            }
+            break;
+
     }
 
     return 0;
@@ -102,9 +116,11 @@ void CommandLineArguments::showHelp(ostream& os) const {
           "    --block-size N      sets the block size used when determining the\n"
           "                        convergence of the Markov chain to N\n"
           "    --init-method METH  use the given initialization method METH for\n"
-          "                        the Markov chain. Available methods: greedy,\n"
+          "                        the Markov chain. Available methods: greedy (default),\n"
           "                        random.\n"
           "    --log-period COUNT  shows a status message after every COUNT steps\n"
+          "    --model MODEL       selects the type of the model being fitted.\n"
+          "                        Available models: uncorrected (default), degree.\n"
           "    --seed SEED         use the given number to seed the random number\n"
           "                        generator.\n"
     ;

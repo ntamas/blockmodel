@@ -414,4 +414,30 @@ double DegreeCorrectedUndirectedBlockmodel::getLogLikelihood() const {
     return result;
 }
 
+double DegreeCorrectedUndirectedBlockmodel::getRate(int i, int j) const {
+    return m_edgeCounts(i, j);
+}
 
+void DegreeCorrectedUndirectedBlockmodel::getRates(Matrix& result) const {
+    result = m_edgeCounts;
+}
+
+Matrix DegreeCorrectedUndirectedBlockmodel::getRates() const {
+    Matrix result;
+    getRates(result);
+    return result;
+}
+
+void DegreeCorrectedUndirectedBlockmodel::getStickinesses(Vector& result) const {
+    Vector sumDegreesWithType = m_edgeCounts.colsum();
+
+    m_pGraph->degree(&result, VertexSelector::All());
+    for (size_t i = 0; i < result.size(); i++)
+        result[i] /= sumDegreesWithType[m_types[i]];
+}
+
+Vector DegreeCorrectedUndirectedBlockmodel::getStickinesses() const {
+    Vector result;
+    getStickinesses(result);
+    return result;
+}

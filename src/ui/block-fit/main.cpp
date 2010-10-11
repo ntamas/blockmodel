@@ -56,6 +56,29 @@ public:
         m_pBestModel(0), m_dumpBestStateFlag(false),
         m_pModelWriter(0) {}
 
+	/// Constructs a new model
+	std::auto_ptr<Blockmodel> constructNewModel(Graph* pGraph=0, int numTypes=0) {
+		std::auto_ptr<Blockmodel> result;
+
+		switch (m_args.modelType) {
+			case UNDIRECTED_BLOCKMODEL:
+				result.reset(new UndirectedBlockmodel());
+				break;
+
+			case DEGREE_CORRECTED_UNDIRECTED_BLOCKMODEL:
+				result.reset(new DegreeCorrectedUndirectedBlockmodel());
+				break;
+
+			default:
+				throw std::runtime_error("invalid model type given");
+		}
+
+		result->setGraph(pGraph);
+		result->setNumTypes(numTypes);
+
+		return result;
+	}
+
     /// Dumps the best state found so far and clears the dump flag
     void dumpBestState() {
         info(">> dumping best state of the chain");
@@ -72,25 +95,30 @@ public:
         bool converged = false;
         Vector samples(m_args.blockSize);
 
-        m_pModel.reset(new UndirectedBlockmodel(m_pGraph.get(), groupCount));
-        m_pBestModel.reset(new UndirectedBlockmodel(m_pGraph.get(), groupCount));
+		m_pModel = constructNewModel(m_pGraph.get(), groupCount);
+		m_pBestModel = constructNewModel(m_pGraph.get(), groupCount);
 
         m_pModel->randomize(*m_mcmc.getRNG());
 
         if (m_args.initMethod == GREEDY) {
             GreedyStrategy<UndirectedBlockmodel> greedy;
+			UndirectedBlockmodel* pModel;
 
-            info(">> running greedy initialization");
-
-            while (greedy.step(static_cast<UndirectedBlockmodel*>(m_pModel.get()))) {
-                double logL = m_pModel->getLogLikelihood();
-                if (!isQuiet()) {
-                    clog << '[' << setw(6) << greedy.getStepCount() << "] "
-                         << '(' << setw(2) << m_pModel->getNumTypes() << ") "
-                         << setw(12) << logL << "\t(" << logL << ")\n";
-                }
-            }
-			
+			pModel = dynamic_cast<UndirectedBlockmodel*>(m_pModel.get());
+			if (pModel == 0) {
+				error(">> greedy initialization not available for this model, "
+					  "using random instead");
+			} else {
+				info(">> running greedy initialization");
+				while (greedy.step(pModel)) {
+					double logL = m_pModel->getLogLikelihood();
+					if (!isQuiet()) {
+						clog << '[' << setw(6) << greedy.getStepCount() << "] "
+							 << '(' << setw(2) << m_pModel->getNumTypes() << ") "
+							 << setw(12) << logL << "\t(" << logL << ")\n";
+					}
+				}
+			}
         }
 
         *m_pBestModel = *m_pModel;
@@ -232,9 +260,7 @@ public:
         } else {
             double currentAIC, bestAIC = std::numeric_limits<double>::max();
             double currentBIC, bestBIC = std::numeric_limits<double>::max();
-			std::auto_ptr<Blockmodel> pModelWithBestTypeCount(
-					new UndirectedBlockmodel()
-			);
+			std::auto_ptr<Blockmodel> pModelWithBestTypeCount = constructNewModel();
 
             /* Find the optimal type count */
             for (int k = 2; k <= sqrt(m_pGraph->vcount()); k++) {

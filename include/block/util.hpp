@@ -71,6 +71,23 @@ struct pair_comparator<2> {
     }
 };
 
+/// Auxiliary class that maps the function call operator to the indexing operator
+template <typename Container>
+struct function_to_indexing {
+public:
+    typedef const typename std::iterator_traits<Container>::reference const_reference;
+    typedef typename std::iterator_traits<Container>::difference_type size_type;
+    typedef typename std::iterator_traits<Container>::reference       reference;
+
+public:
+    const Container& m_ref;
+
+    function_to_indexing(const Container& ref) : m_ref(ref) {}
+
+    reference operator()(size_type index) { return m_ref[index]; }
+    const_reference operator()(size_type index) const { return m_ref[index]; }
+};
+
 /// Permuted view of a container
 template <typename Container, typename Permutation>
 class PermutedContainer {

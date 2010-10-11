@@ -160,10 +160,52 @@ void PlainTextWriter<UndirectedBlockmodel>::write(
 }
 
 template<>
+void PlainTextWriter<DegreeCorrectedUndirectedBlockmodel>::write(
+        const DegreeCorrectedUndirectedBlockmodel* pModel, ostream& os) {
+    const DegreeCorrectedUndirectedBlockmodel& model = *pModel;
+    const Graph* pGraph = model.getGraph();
+    int n = pGraph->vcount();
+    int k = model.getNumTypes();
+    time_t now = time(0);
+
+    os << "INFO\n";
+    os << "date\t" << ctime(&now);
+    if (pGraph->hasAttribute("filename"))
+        os << "filename\t" << pGraph->getAttribute("filename").as<std::string>() << '\n';
+    os << "num_vertices\t" << n << '\n';
+    os << "num_types\t" << k << '\n';
+    os << "log_likelihood\t" << model.getLogLikelihood() << '\n';
+    os << "aic\t" << 2 * (model.getNumParameters() - model.getLogLikelihood()) << '\n';
+    os << '\n';
+
+    os << "TYPES\n";
+    for (int i = 0; i < n; i++)
+        os << i << '\t' << model.getType(i) << '\n';
+    os << '\n';
+
+    os << "STICKINESSES\n";
+    Vector stickiness = model.getStickinesses();
+    for (int i = 0; i < n; i++)
+        os << i << '\t' << stickiness[i] << '\n';
+    os << '\n';
+
+    os << "RATES\n";
+    for (int i = 0; i < k; i++) {
+        os << model.getRate(i, 0);
+        for (int j = 1; j < k; j++)
+            os << '\t' << model.getRate(i, j);
+        os << '\n';
+    }
+}
+
+template<>
 void PlainTextWriter<Blockmodel>::write(const Blockmodel* model, ostream& os) {
     if (typeid(*model) == typeid(UndirectedBlockmodel)) {
         PlainTextWriter<UndirectedBlockmodel> writer;
         writer.write(static_cast<const UndirectedBlockmodel*>(model), os);
+    } else if (typeid(*model) == typeid(DegreeCorrectedUndirectedBlockmodel)) {
+        PlainTextWriter<DegreeCorrectedUndirectedBlockmodel> writer;
+        writer.write(static_cast<const DegreeCorrectedUndirectedBlockmodel*>(model), os);
     } else {
         throw std::runtime_error("writer does not know the given blockmodel");
     }

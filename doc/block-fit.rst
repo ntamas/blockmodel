@@ -78,6 +78,18 @@ Advanced algorithm parameters
                       the current and best log-likelihood and several other
                       information. The default value is 8192.
 
+--model MODEL         Selects the model to be used. The following options are
+                      available:
+
+                      uncorrected
+                        Standard undirected blockmodel. This model aims to
+                        keep the expected number of edges.
+
+                      degree
+                        Degree-weighted undirected blockmodel. This model aims
+                        to keep both the expected number of edges and the
+                        expected degree of each vertex.
+
 --seed SEED           Seed the internal Mersenne Twister random generator with
                       the given *SEED* (and make the result deterministic).
 

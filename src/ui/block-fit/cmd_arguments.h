@@ -11,6 +11,11 @@ typedef enum {
     GREEDY, RANDOM
 } InitializationMethod;
 
+/// Possible blockmodel types handled by this application
+typedef enum {
+    UNDIRECTED_BLOCKMODEL, DEGREE_CORRECTED_UNDIRECTED_BLOCKMODEL
+} ModelType;
+
 /// Command line parser for block-fit
 class CommandLineArguments : public CommandLineArgumentsBase {
 public:
@@ -39,6 +44,9 @@ public:
 
     /// Number of steps after which a status message is printed
     int logPeriod;
+
+    /// Model type used by the fitting process
+    ModelType modelType;
 
 	/// Constructor
 	CommandLineArguments();
