@@ -12,7 +12,8 @@ using namespace igraph;
 int test_getLogLikelihood() {
     /* Disjoint union of two full graphs */
     Graph graph = Graph::Full(5) + Graph::Full(3);
-    DegreeCorrectedUndirectedBlockmodel model(&graph, 2);
+    DegreeCorrectedUndirectedBlockmodel model =
+        Blockmodel::create<DegreeCorrectedUndirectedBlockmodel>(&graph, 2);
 
     for (int i = 0; i < 8; i++)
         model.setType(i, i / 5);
@@ -38,14 +39,12 @@ int test_getLogLikelihood() {
 int test_getLogLikelihoodIncrease() {
     /* Disjoint union of two full graphs */
     Graph graph = Graph::Full(5) + Graph::Full(3);
-    UndirectedBlockmodel model;
+    DegreeCorrectedUndirectedBlockmodel model =
+        Blockmodel::create<DegreeCorrectedUndirectedBlockmodel>(&graph, 4);
     MersenneTwister rng;
     double predictedLogL;
 
-    model.setGraph(&graph);
-    model.setNumTypes(4);
-
-    /* Try five groups, do many random mutations */
+    /* Try four groups, do many random mutations */
     for (int i = 0; i < 8; i++)
         model.setType(i, i / 2);
     for (int i = 0; i < 10000; i++) {

@@ -170,6 +170,8 @@ void Blockmodel::setNumTypes(int numTypes) {
 void Blockmodel::setType(long index, int newType) {
     // Save the old type
     int oldType = m_types[index];
+    if (oldType == newType)
+        return;
     // Get the neighbors of the affected vertex
     Vector neighbors = m_pGraph->neighbors(index);
     // Adjust the edge counts and the type counts
@@ -381,10 +383,9 @@ Graph DegreeCorrectedUndirectedBlockmodel::generate(
 double DegreeCorrectedUndirectedBlockmodel::recalculateLogLikelihood() const {
     Vector logTheta = m_cachedDegrees;
     Vector sumThetaSqInType(m_numTypes);
-    Vector sumDegreesWithType = m_edgeCounts.colsum();
     
     for (size_t i = 0; i < logTheta.size(); i++) {
-        logTheta[i] /= sumDegreesWithType[m_types[i]];
+        logTheta[i] /= m_sumOfDegreesByType[m_types[i]];
         sumThetaSqInType[m_types[i]] += logTheta[i] * logTheta[i];
         logTheta[i] = std::log(logTheta[i]);
     }
@@ -439,8 +440,43 @@ Vector DegreeCorrectedUndirectedBlockmodel::getStickinesses() const {
     return result;
 }
 
-void DegreeCorrectedUndirectedBlockmodel::setGraph(const igraph::Graph* graph) {
-    Blockmodel::setGraph(graph);
-    m_pGraph->degree(&m_cachedDegrees, VertexSelector::All());
+void DegreeCorrectedUndirectedBlockmodel::recountEdges() {
+    if (m_pGraph == NULL)
+        return;
+
+    Blockmodel::recountEdges();
+
+    long n = m_pGraph->vcount();
+
+    m_sumOfDegreesByType.fill(0);
+    for (long i = 0; i < n; i++) {
+        m_sumOfDegreesByType[m_types[i]] += m_cachedDegrees[i];
+    }
 }
+
+void DegreeCorrectedUndirectedBlockmodel::setGraph(const igraph::Graph* graph) {
+    if (graph != NULL)
+        graph->degree(&m_cachedDegrees, VertexSelector::All());
+    else
+        m_cachedDegrees.clear();
+
+    Blockmodel::setGraph(graph);
+}
+
+void DegreeCorrectedUndirectedBlockmodel::setNumTypes(int numTypes) {
+    Blockmodel::setNumTypes(numTypes);
+    m_sumOfDegreesByType.resize(numTypes);
+}
+
+void DegreeCorrectedUndirectedBlockmodel::setType(long index, int newType) {
+    int oldType = m_types[index];
+    if (m_types[index] == newType)
+        return;
+
+    double degree = m_cachedDegrees[index];
+    m_sumOfDegreesByType[oldType] -= degree;
+    Blockmodel::setType(index, newType);
+    m_sumOfDegreesByType[m_types[index]] += degree;
+}
+
 

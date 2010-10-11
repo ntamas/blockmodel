@@ -219,14 +219,14 @@ public:
     virtual void setNumTypes(int numTypes);
 
     /// Sets the type of a single vertex
-    void setType(long index, int newType);
+    virtual void setType(long index, int newType);
 
     /// Sets the types of multiple vertices
     void setTypes(const igraph::Vector& types);
 
 protected:
     /// Recounts the edges and updates m_typeCounts and m_edgeCounts
-    void recountEdges();
+    virtual void recountEdges();
 
     /// Invalidates the cached log-likelihood value
     void invalidateCache() {
@@ -246,9 +246,7 @@ private:
 
 public:
     /// Constructs a new undirected blockmodel not associated with any given graph
-    explicit UndirectedBlockmodel(int numTypes = 1) : Blockmodel() {
-		setNumTypes(numTypes);
-	}
+    explicit UndirectedBlockmodel() : Blockmodel() {}
 
     /// Generates a new graph according to the current parameters of the blockmodel
     virtual igraph::Graph generate(MersenneTwister& rng) const;
@@ -309,25 +307,16 @@ private:
     /// Cached degree vector for the graph
     igraph::Vector m_cachedDegrees;
 
+    /// Sum of degrees for vertices in a given group
+    igraph::Vector m_sumOfDegreesByType;
+
 public:
     /**
      * \brief Constructs a new undirected degree-corrected blockmodel not
      *        associated with any given graph
      */
-    explicit DegreeCorrectedUndirectedBlockmodel(int numTypes = 1)
-        : Blockmodel(), m_cachedDegrees() {
-		setNumTypes(numTypes);
-	}
-
-    /**
-     * \brief Constructs a new undirected degree-corrected blockmodel to
-     *        be fitted to the given graph
-     */
-    DegreeCorrectedUndirectedBlockmodel(igraph::Graph* graph, int numTypes)
-        : Blockmodel() {
-		setGraph(graph);
-		setNumTypes(numTypes);
-	}
+    explicit DegreeCorrectedUndirectedBlockmodel()
+        : Blockmodel(), m_cachedDegrees(), m_sumOfDegreesByType() {}
 
     /// Generates a new graph according to the current parameters of the blockmodel
     virtual igraph::Graph generate(MersenneTwister& rng) const;
@@ -355,6 +344,9 @@ public:
     /// Returns the log-likelihood of the model (with forced recalculation)
     virtual double recalculateLogLikelihood() const;
 
+    /// Recounts the edges and updates m_typeCounts, m_edgeCounts and m_sumOfDegreesByType
+    virtual void recountEdges();
+
     /// Sets the graph associated to the model
     /**
      * If the graph is not NULL, the type vector will be resized to the number
@@ -362,5 +354,15 @@ public:
      * The cached degree vector will also be re-calculated.
      */
     virtual void setGraph(const igraph::Graph* graph);
+
+    /// Sets the number of types
+    /**
+     * This method should be called only after construction as it will
+     * re-create the edge count matrix and the type count vector
+     */
+    virtual void setNumTypes(int numTypes);
+
+    /// Sets the type of a single vertex
+    virtual void setType(long index, int newType);
 };
 #endif
