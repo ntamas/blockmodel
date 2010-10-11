@@ -6,7 +6,7 @@
 #include <memory>
 #include <block/blockmodel.h>
 #include <block/io.hpp>
-#include <block/optimization.h>
+#include <block/optimization.hpp>
 #include <block/prediction.h>
 #include <block/util.hpp>
 #include <igraph/cpp/graph.h>
@@ -199,8 +199,6 @@ public:
         debug(">> using random seed: %lu", m_args.randomSeed);
         rng->init_genrand(m_args.randomSeed);
 
-        m_mcmc.setModel(m_pModel.get());
-        
         // If we have requested only one sample, then always take the one
         // we have in the beginning
         if (m_args.sampleCount == 1)
@@ -223,7 +221,7 @@ public:
             if (m_pPredictor->getSampleCount() >= m_args.sampleCount)
                 break;
 
-            m_mcmc.step();
+            m_mcmc.step(m_pModel.get());
 
             logL = m_pModel->getLogLikelihood();
             if (bestLogL < logL)

@@ -8,6 +8,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <block/blockmodel.h>
 #include <block/io.hpp>
 #include <block/util.hpp>
 #include <igraph/cpp/graph.h>
@@ -127,7 +128,8 @@ void PlainTextReader<UndirectedBlockmodel>::read(
 
 template<>
 void PlainTextWriter<UndirectedBlockmodel>::write(
-        const UndirectedBlockmodel& model, ostream& os) {
+        const UndirectedBlockmodel* pModel, ostream& os) {
+    const UndirectedBlockmodel& model = *pModel;
     const Graph* pGraph = model.getGraph();
     int n = pGraph->vcount();
     int k = model.getNumTypes();
@@ -156,6 +158,18 @@ void PlainTextWriter<UndirectedBlockmodel>::write(
         os << '\n';
     }
 }
+
+template<>
+void PlainTextWriter<Blockmodel>::write(const Blockmodel* model, ostream& os) {
+    if (typeid(*model) == typeid(UndirectedBlockmodel)) {
+        PlainTextWriter<UndirectedBlockmodel> writer;
+        writer.write(static_cast<const UndirectedBlockmodel*>(model), os);
+    } else {
+        throw std::runtime_error("writer does not know the given blockmodel");
+    }
+}
+
+/***************************************************************************/
 
 /// Converts a string to its JSON representation
 static std::string toJSON(const std::string& str) {
@@ -195,7 +209,8 @@ static std::string toJSON(const std::string& str) {
 
 template<>
 void JSONWriter<UndirectedBlockmodel>::write(
-        const UndirectedBlockmodel& model, ostream& os) {
+        const UndirectedBlockmodel* pModel, ostream& os) {
+    const UndirectedBlockmodel& model = *pModel;
     const Graph* pGraph = model.getGraph();
     int n = pGraph->vcount();
     int k = model.getNumTypes();
@@ -245,4 +260,15 @@ void JSONWriter<UndirectedBlockmodel>::write(
        << "    }\n"
        << "}\n";
 }
+
+template<>
+void JSONWriter<Blockmodel>::write(const Blockmodel* model, ostream& os) {
+    if (typeid(*model) == typeid(UndirectedBlockmodel)) {
+        JSONWriter<UndirectedBlockmodel> writer;
+        writer.write(static_cast<const UndirectedBlockmodel*>(model), os);
+    } else {
+        throw std::runtime_error("writer does not know the given blockmodel");
+    }
+}
+
 

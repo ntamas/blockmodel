@@ -9,7 +9,7 @@
 #include <block/blockmodel.h>
 #include <block/convergence.h>
 #include <block/io.hpp>
-#include <block/optimization.h>
+#include <block/optimization.hpp>
 #include <block/util.hpp>
 #include <igraph/cpp/graph.h>
 
@@ -28,7 +28,7 @@ private:
     std::auto_ptr<Graph> m_pGraph;
 
     /// Blockmodel being fitted to the graph
-    std::auto_ptr<UndirectedBlockmodel> m_pModel;
+    std::auto_ptr<Blockmodel> m_pModel;
 
     /// Markov chain Monte Carlo strategy to optimize the model
     MetropolisHastingsStrategy m_mcmc;
@@ -37,13 +37,13 @@ private:
     double m_bestLogL;
 
     /// Best model found so far
-    UndirectedBlockmodel m_bestModel;
+	std::auto_ptr<Blockmodel> m_pBestModel;
 
     /// Flag to note whether we have to dump the best state when possible
     bool m_dumpBestStateFlag;
 
     /// Writer object that is used to dump the best state
-    std::auto_ptr<Writer<UndirectedBlockmodel> > m_pModelWriter;
+    std::auto_ptr<Writer<Blockmodel> > m_pModelWriter;
 
 public:
     LOGGING_FUNCTION(debug, 2);
@@ -53,14 +53,14 @@ public:
     /// Constructor
     BlockmodelFittingApp() : m_pGraph(0), m_pModel(0),
         m_bestLogL(-std::numeric_limits<double>::max()),
-        m_bestModel(), m_dumpBestStateFlag(false),
+        m_pBestModel(0), m_dumpBestStateFlag(false),
         m_pModelWriter(0) {}
 
     /// Dumps the best state found so far and clears the dump flag
     void dumpBestState() {
         info(">> dumping best state of the chain");
         if (m_pModelWriter.get()) {
-            m_pModelWriter->write(m_bestModel, cout);
+            m_pModelWriter->write(m_pBestModel.get(), cout);
         } else {
             debug(">> no model writer set up, printing nothing");
         }
@@ -73,15 +73,16 @@ public:
         Vector samples(m_args.blockSize);
 
         m_pModel.reset(new UndirectedBlockmodel(m_pGraph.get(), groupCount));
+        m_pBestModel.reset(new UndirectedBlockmodel(m_pGraph.get(), groupCount));
+
         m_pModel->randomize(*m_mcmc.getRNG());
 
         if (m_args.initMethod == GREEDY) {
-            GreedyStrategy greedy;
-            greedy.setModel(m_pModel.get());
+            GreedyStrategy<UndirectedBlockmodel> greedy;
 
             info(">> running greedy initialization");
 
-            while (greedy.step()) {
+            while (greedy.step(static_cast<UndirectedBlockmodel*>(m_pModel.get()))) {
                 double logL = m_pModel->getLogLikelihood();
                 if (!isQuiet()) {
                     clog << '[' << setw(6) << greedy.getStepCount() << "] "
@@ -89,11 +90,11 @@ public:
                          << setw(12) << logL << "\t(" << logL << ")\n";
                 }
             }
+			
         }
 
-        m_bestModel = *m_pModel;
+        *m_pBestModel = *m_pModel;
         m_bestLogL = m_pModel->getLogLikelihood();
-        m_mcmc.setModel(m_pModel.get());
 
         info(">> starting Markov chain");
 
@@ -161,22 +162,23 @@ public:
      */
     void runBlock(long numSamples, Vector& samples) {
         double logL;
+		Blockmodel* pModel = m_pModel.get();
 
         samples.clear();
         while (numSamples > 0) {
-            m_mcmc.step();
+            m_mcmc.step(pModel);
 
-            logL = m_pModel->getLogLikelihood();
+            logL = pModel->getLogLikelihood();
             if (m_bestLogL < logL) {
                 // Store the best model and log-likelihood
-                m_bestModel = *m_pModel.get();
+                *m_pBestModel = *pModel;
                 m_bestLogL = logL;
             }
             samples.push_back(logL);
 
             if (m_mcmc.getStepCount() % m_args.logPeriod == 0 && !isQuiet()) {
                 clog << '[' << setw(6) << m_mcmc.getStepCount() << "] "
-                     << '(' << setw(2) << m_pModel->getNumTypes() << ") "
+                     << '(' << setw(2) << pModel->getNumTypes() << ") "
                      << setw(12) << logL << "\t(" << m_bestLogL << ")\t"
                      << (m_mcmc.wasLastProposalAccepted() ? '*' : ' ')
                      << setw(8) << m_mcmc.getAcceptanceRatio()
@@ -204,15 +206,15 @@ public:
 
         switch (m_args.outputFormat) {
             case FORMAT_JSON:
-                m_pModelWriter.reset(new JSONWriter<UndirectedBlockmodel>);
+                m_pModelWriter.reset(new JSONWriter<Blockmodel>);
                 break;
 
 			case FORMAT_NULL:
-                m_pModelWriter.reset(new NullWriter<UndirectedBlockmodel>);
+                m_pModelWriter.reset(new NullWriter<Blockmodel>);
                 break;
 
             default:
-                m_pModelWriter.reset(new PlainTextWriter<UndirectedBlockmodel>);
+                m_pModelWriter.reset(new PlainTextWriter<Blockmodel>);
         };
 
         info(">> loading graph: %s", m_args.inputFile.c_str());
@@ -230,17 +232,19 @@ public:
         } else {
             double currentAIC, bestAIC = std::numeric_limits<double>::max();
             double currentBIC, bestBIC = std::numeric_limits<double>::max();
-            UndirectedBlockmodel bestModel;
+			std::auto_ptr<Blockmodel> pModelWithBestTypeCount(
+					new UndirectedBlockmodel()
+			);
 
             /* Find the optimal type count */
             for (int k = 2; k <= sqrt(m_pGraph->vcount()); k++) {
                 info(">> trying with %d types", k);
                 fitForGivenGroupCount(k);
-                currentAIC = aic(m_bestModel);
-				currentBIC = bic(m_bestModel);
+                currentAIC = aic(*m_pBestModel);
+				currentBIC = bic(*m_pBestModel);
                 if (currentAIC < bestAIC) {
                     bestAIC = currentAIC;
-                    bestModel = m_bestModel;
+                    *pModelWithBestTypeCount = *m_pBestModel;
                 }
                 if (currentBIC < bestBIC) {
                     bestBIC = currentBIC;
@@ -249,8 +253,8 @@ public:
 						currentAIC, bestAIC, currentBIC, bestBIC);
             }
 
-            *m_pModel = bestModel;
-            m_bestModel = bestModel;
+            *m_pModel = *m_pBestModel;
+            *m_pBestModel = *m_pBestModel;
             m_bestLogL = m_pModel->getLogLikelihood();
             info(">> best type count is %d", m_pModel->getNumTypes());
         }

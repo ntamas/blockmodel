@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <igraph/cpp/graph.h>
 #include <block/blockmodel.h>
-#include <block/optimization.h>
+#include <block/optimization.hpp>
 
 #include "test_common.cpp"
 
@@ -13,22 +13,20 @@ int test_two_rings() {
     Graph graph = Graph::Ring(5) + Graph::Ring(5);
     UndirectedBlockmodel model(&graph, 2);
     Vector types(10);
-    GreedyStrategy greedy;
-
-    greedy.setModel(&model);
+    GreedyStrategy<UndirectedBlockmodel> greedy;
 
     /* First, set up the optimal configuration and see if we stay there */
     for (int i = 0; i < 10; i++)
         types[i] = i/5;
     model.setTypes(types);
 
-    greedy.optimize();
+    greedy.optimize(&model);
     if (model.getTypes() != types)
         return 1;
 
     /* Change one element and see if we converge back */
     model.setType(0, 1);
-    greedy.optimize();
+    greedy.optimize(&model);
     if (model.getTypes() != types)
         return 2;
 
@@ -40,9 +38,7 @@ int test_four_almost_cliques() {
                   Graph::Full(4) + Graph::Full(4);
     UndirectedBlockmodel model(&graph, 4);
     Vector types(16);
-    GreedyStrategy greedy;
-
-    greedy.setModel(&model);
+    GreedyStrategy<UndirectedBlockmodel> greedy;
 
     /* Remove one edge from each clique */
     Vector edges(8);
@@ -56,7 +52,7 @@ int test_four_almost_cliques() {
     model.setTypes(types);
 
     /* Check if we stay in this configuration */
-    greedy.optimize();
+    greedy.optimize(&model);
     if (model.getTypes() != types)
         return 1;
 
@@ -66,7 +62,7 @@ int test_four_almost_cliques() {
     model.setTypes(types);
 
     /* Check if we stay in this configuration */
-    greedy.optimize();
+    greedy.optimize(&model);
     if (model.getTypes() != types) {
         model.getTypes().print();
         return 2;
@@ -80,7 +76,7 @@ int test_four_almost_cliques() {
 int test_grg() {
     Graph graph = Graph::GRG(100, 0.2);
     UndirectedBlockmodel model(&graph, 4);
-    GreedyStrategy greedy;
+    GreedyStrategy<UndirectedBlockmodel> greedy;
     MersenneTwister rng;
     Vector expected(graph.vcount());
 
@@ -106,8 +102,7 @@ int test_grg() {
         model.setType(i, oldType);
     }
 
-    greedy.setModel(&model);
-    greedy.step();
+    greedy.step(&model);
 
     for (size_t i = 0; i < expected.size(); i++)
         if (expected[i] == -1)

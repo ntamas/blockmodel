@@ -1,8 +1,7 @@
 /* vim:set ts=4 sw=4 sts=4 et: */
 
-#include <algorithm>
 #include <cmath>
-#include <block/optimization.h>
+#include <block/optimization.hpp>
 #include <igraph/cpp/graph.h>
 
 using namespace igraph;
@@ -11,26 +10,21 @@ namespace {
     double log_1_minus_x(double x) {
         return std::log(1.0 - x);
     }
-
-    igraph_real_t exp_igraph(igraph_real_t x) {
-        return std::exp(x);
-    }
 }
 
 /*************************************************************************/
 
-bool GreedyStrategy::step() {
-    Graph* graph = m_pModel->getGraph();
+template<>
+bool GreedyStrategy<UndirectedBlockmodel>::step(UndirectedBlockmodel *pModel) {
+    Graph* graph = pModel->getGraph();
     long int i, n = graph->vcount();
-    int k = m_pModel->getNumTypes();
-    double logL = m_pModel->getLogLikelihood();
-    Vector oldTypeCounts(m_pModel->getTypeCounts());
+    int k = pModel->getNumTypes();
+    double logL = pModel->getLogLikelihood();
+    Vector oldTypeCounts(pModel->getTypeCounts());
     Vector newTypes(n);
 
-    m_stepCount++;
-
     // Calculate log(1-P)
-    Matrix logP_minus_log1P = m_pModel->getProbabilities();
+    Matrix logP_minus_log1P = pModel->getProbabilities();
     Matrix log1P(logP_minus_log1P);
     std::transform(logP_minus_log1P.begin(), logP_minus_log1P.end(),
             log1P.begin(), log_1_minus_x);
@@ -73,7 +67,7 @@ bool GreedyStrategy::step() {
         Vector neiCountByType(k);
         Vector neis = graph->neighbors(i);
         for (Vector::iterator it = neis.begin(); it != neis.end(); it++) {
-            neiCountByType[m_pModel->getType(*it)]++;
+            neiCountByType[pModel->getType(*it)]++;
         }
 
         // We already have logP - log1P, so all we need is two matrix-vector
@@ -86,7 +80,7 @@ bool GreedyStrategy::step() {
         // values will never be selected as maxima anyway.
 
         // Now the correction mentioned above
-        neiCountByType -= log1P.getRow(m_pModel->getType(i));
+        neiCountByType -= log1P.getRow(pModel->getType(i));
 
         // Find the maximum element
         newTypes[i] = 
@@ -94,64 +88,16 @@ bool GreedyStrategy::step() {
             neiCountByType.begin();
     }
 
+    stepDone();
+
     // TODO: rewrite the above to use a single matrix-matrix multiplication,
     // maybe that's faster?
-    if (newTypes != m_pModel->getTypes()) {
-        m_pModel->setTypes(newTypes);
-        return (m_pModel->getLogLikelihood() > logL);
+    if (newTypes != pModel->getTypes()) {
+        pModel->setTypes(newTypes);
+        return (pModel->getLogLikelihood() > logL);
     }
 
     return false;
 }
 
 /*************************************************************************/
-
-bool MetropolisHastingsStrategy::step() {
-    Graph* graph = m_pModel->getGraph();
-    int i = m_pRng->randint(graph->vcount());
-    int newType = m_pRng->randint(m_pModel->getNumTypes());
-    PointMutation mutation(i, m_pModel->getType(i), newType);
-    double logLDiff = m_pModel->getLogLikelihoodIncrease(mutation);
-
-    m_stepCount++;
-
-    m_lastProposalAccepted =
-        (logLDiff >= 0) || (m_pRng->random() <= std::exp(logLDiff));
-    if (m_lastProposalAccepted)
-        mutation.perform(*m_pModel);
-
-    m_acceptanceRatio.push_back(m_lastProposalAccepted);
-    return true;
-}
-
-/*************************************************************************/
-
-bool GibbsSamplingStrategy::step() {
-    Graph* graph = m_pModel->getGraph();
-    int i = m_pRng->randint(graph->vcount());
-    int oldType = m_pModel->getType(i);
-    long int k = m_pModel->getNumTypes();
-    Vector logLs(k);
-
-    m_stepCount++;
-
-    // TODO: maybe this can be calculated more efficiently?
-    for (int j = 0; j < k; j++) {
-        PointMutation mutation(i, oldType, j);
-        logLs[j] = m_pModel->getLogLikelihoodIncrease(mutation);
-    }
-
-    // Subtract the minimum log-likelihood from the log-likelihoods
-    logLs -= logLs.min();
-
-    // Run exp(), get cumulative sum
-    std::transform(logLs.begin(), logLs.end(), logLs.begin(), exp_igraph);
-    std::partial_sum(logLs.begin(), logLs.end(), logLs.begin());
-
-    // Select a new type based on the log-likelihood distribution
-    logLs.binsearch(m_pRng->random() * logLs.back(), &k);
-    m_pModel->setType(i, k);
-
-    return true;
-}
-

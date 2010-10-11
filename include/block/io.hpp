@@ -68,21 +68,28 @@ template <typename T>
 class Writer {
 public:
     /// Writes the given object to the given stream
-    virtual void write(const T& model, std::ostream& os) = 0;
+    virtual void write(const T& model, std::ostream& os) {
+        write(&model, os);
+    }
+
+    /// Writes the given object to the given stream
+    virtual void write(const T* model, std::ostream& os) = 0;
 };
 
 /// Null writer that does nothing
 template <typename T>
 class NullWriter : public Writer<T> {
+public:
     /// Does nothing.
-    virtual void write(const T&, std::ostream&) {}
+    virtual void write(const T*, std::ostream&) {}
 };
 
 /// Writer for objects in plain text format
 template <typename T>
 class PlainTextWriter : public Writer<T> {
+public:
     /// Writes the given object to the given stream
-    virtual void write(const T& model, std::ostream& os);
+    virtual void write(const T* model, std::ostream& os);
 };
 
 /// Writer for objects in JSON format
@@ -90,7 +97,7 @@ template <typename T>
 class JSONWriter : public Writer<T> {
 public:
     /// Writes the given object to the given stream
-    virtual void write(const T& model, std::ostream& os);
+    virtual void write(const T* model, std::ostream& os);
 };
 
 #endif
