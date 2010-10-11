@@ -132,8 +132,13 @@ public:
             FILE* f = fopen(modelReader.getOriginalFilename().c_str(), "r");
             if (f != NULL) {
                 m_pGraph.reset(new Graph(Graph::ReadEdgelist(f)));
-                model.setGraph(m_pGraph.get());
                 fclose(f);
+
+                if (!m_pGraph->isSimple()) {
+                    info(">> simplifying graph");
+                    m_pGraph->simplify();
+                }
+                model.setGraph(m_pGraph.get());
             } else {
                 warning(">> cannot load original graph `%s', continuing anyway",
                         modelReader.getOriginalFilename().c_str());
