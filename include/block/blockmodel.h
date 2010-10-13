@@ -321,6 +321,9 @@ public:
     /// Generates a new graph according to the current parameters of the blockmodel
     virtual igraph::Graph generate(MersenneTwister& rng) const;
 
+    /// Returns the increase in the log-likelihood of the model after a point mutation
+    virtual double getLogLikelihoodIncrease(const PointMutation& mutation);
+
     /// Returns the number of free parameters in this model
 	virtual int getNumParameters() const {
         return (m_numTypes * (m_numTypes+1) / 2.) + 2 * m_types.size() + 1;

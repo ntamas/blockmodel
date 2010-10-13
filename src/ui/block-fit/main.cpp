@@ -265,7 +265,8 @@ public:
         } else {
             double currentAIC, bestAIC = std::numeric_limits<double>::max();
             double currentBIC, bestBIC = std::numeric_limits<double>::max();
-			std::auto_ptr<Blockmodel> pModelWithBestTypeCount = constructNewModel();
+			std::auto_ptr<Blockmodel> pModelWithBestTypeCount =
+                constructNewModel(m_pGraph.get(), 2);
 
             /* Find the optimal type count */
             for (int k = 2; k <= sqrt(m_pGraph->vcount()); k++) {

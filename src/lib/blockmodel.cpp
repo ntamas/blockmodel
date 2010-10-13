@@ -380,10 +380,82 @@ Graph DegreeCorrectedUndirectedBlockmodel::generate(
     return Graph();
 }
 
+/* Auxiliary functions for getLogLikelihoodIncrease */
+namespace {
+	inline double b(double x) {
+		return x == 0 ? 0 : x*(std::log(x) - 1);
+	}
+}
+
+double DegreeCorrectedUndirectedBlockmodel::getLogLikelihoodIncrease(
+        const PointMutation& mutation) {
+	int r = mutation.from, s = mutation.to;
+
+	if (r == s)
+		return 0.0;
+
+	double result = 0.0, degree;
+	Vector k(m_numTypes);
+
+    // Get the neighbors of the affected vertex
+    Vector neighbors = m_pGraph->neighbors(mutation.vertex);
+
+	// Calculate k, the number of edges between the vertex and other
+	// vertices of a given type
+    for (Vector::const_iterator it = neighbors.begin();
+         it != neighbors.end(); it++)
+        k[m_types[*it]]++;
+	degree = neighbors.size();
+
+	// Calculate the difference
+	for (int t = 0; t < m_numTypes; t++) {
+		double diff = 0.0;
+		if (t == r) {
+			if (k[r] > 0) {
+				diff += b(m_edgeCounts(r, r) - 2 * k[r]);
+				diff -= b(m_edgeCounts(r, r));
+			}
+			if (k[r] != k[s]) {
+				diff += b(m_edgeCounts(r, s) + k[r] - k[s]);
+				diff -= b(m_edgeCounts(r, s));
+			}
+			diff /= 2;
+		} else if (t == s) {
+			if (k[r] != k[s]) {
+				diff += b(m_edgeCounts(r, s) + k[r] - k[s]);
+				diff -= b(m_edgeCounts(r, s));
+			}
+			if (k[s] > 0) {
+				diff += b(m_edgeCounts(s, s) + 2 * k[s]);
+				diff -= b(m_edgeCounts(s, s));
+			}
+			diff /= 2;
+		} else if (k[t] > 0) {
+			diff += b(m_edgeCounts(r, t) - k[t]);
+			diff -= b(m_edgeCounts(r, t));
+			diff += b(m_edgeCounts(s, t) + k[t]);
+			diff -= b(m_edgeCounts(s, t));
+		}
+		result += diff;
+	}
+
+	// Correction for the terms corresponding to (r, r) and (s, s)
+	// This is necessary because the log-likelihood function does not consider
+	// loop edges, therefore there is a separate correction term for each group
+	// result += (-2 * k[r]) * (m_sum
+
+	// Correction for the m_cachedDegrees * logTheta term.
+	// Affected are all the nodes in groups r and s
+	result += b(m_sumOfDegreesByType[r]) - b(m_sumOfDegreesByType[r] - degree);
+	result += b(m_sumOfDegreesByType[s]) - b(m_sumOfDegreesByType[s] + degree);
+	
+	return result;
+}
+
 double DegreeCorrectedUndirectedBlockmodel::recalculateLogLikelihood() const {
     Vector logTheta = m_cachedDegrees;
     Vector sumThetaSqInType(m_numTypes);
-    
+
     for (size_t i = 0; i < logTheta.size(); i++) {
         logTheta[i] /= m_sumOfDegreesByType[m_types[i]];
         sumThetaSqInType[m_types[i]] += logTheta[i] * logTheta[i];
@@ -395,18 +467,23 @@ double DegreeCorrectedUndirectedBlockmodel::recalculateLogLikelihood() const {
     for (int i = 0; i < m_numTypes; i++) {
         double ec;
 
+        ec = m_edgeCounts(i, i);
+        if (ec > 0)
+            result += (ec / 2) * (std::log(ec) - 1);
+
         for (int j = i+1; j < m_numTypes; j++) {
             ec = m_edgeCounts(i, j);
             if (ec > 0)
                 result += ec * (std::log(ec) - 1);
         }
-
-        ec = m_edgeCounts(i, i) / 2;
-        if (ec > 0) {
-            result += ec * std::log(2 * ec);
-            result -= ec * (1 - sumThetaSqInType[i]);
-        }
     }
+
+	// Correction because we don't consider loop edges
+	/*
+    for (int i = 0; i < m_numTypes; i++) {
+		result += m_edgeCounts(i, i) * sumThetaSqInType[i] / 2;
+	}
+	*/
 
     m_logLikelihood = result;
     return result;
@@ -464,8 +541,8 @@ void DegreeCorrectedUndirectedBlockmodel::setGraph(const igraph::Graph* graph) {
 }
 
 void DegreeCorrectedUndirectedBlockmodel::setNumTypes(int numTypes) {
-    Blockmodel::setNumTypes(numTypes);
     m_sumOfDegreesByType.resize(numTypes);
+    Blockmodel::setNumTypes(numTypes);
 }
 
 void DegreeCorrectedUndirectedBlockmodel::setType(long index, int newType) {
