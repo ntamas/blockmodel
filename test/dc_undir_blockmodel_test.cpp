@@ -18,19 +18,19 @@ int test_getLogLikelihood() {
     for (int i = 0; i < 8; i++)
         model.setType(i, i / 5);
 
-    if (!ALMOST_EQUALS(model.getLogLikelihood(), -13.4478, 1e-3))
+    if (!ALMOST_EQUALS(model.getLogLikelihood(), -16.4478, 1e-3))
         return 1;
 
     /* Pathological case: no edge between vertices of type 1 */
     for (int i = 0; i < 8; i++)
         model.setType(i, (i == 3) ? 1 : 0);
-    if (!ALMOST_EQUALS(model.getLogLikelihood(), -21.6916, 1e-3))
+    if (!ALMOST_EQUALS(model.getLogLikelihood(), -23.1048, 1e-3))
         return 2;
 
     /* Even more pathological case: no vertices of type 1 */
     for (int i = 0; i < 8; i++)
         model.setType(i, 0);
-    if (!ALMOST_EQUALS(model.getLogLikelihood(), -21.7013, 1e-3))
+    if (!ALMOST_EQUALS(model.getLogLikelihood(), -23.4705, 1e-3))
         return 3;
 
     return 0;
@@ -74,7 +74,7 @@ int test_getLogLikelihoodIncrease() {
 int main(int argc, char* argv[]) {
     srand(time(0));
 
-    // CHECK(test_getLogLikelihood);
+    CHECK(test_getLogLikelihood);
     CHECK(test_getLogLikelihoodIncrease);
 
     return 0;

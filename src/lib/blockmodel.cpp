@@ -439,11 +439,6 @@ double DegreeCorrectedUndirectedBlockmodel::getLogLikelihoodIncrease(
 		result += diff;
 	}
 
-	// Correction for the terms corresponding to (r, r) and (s, s)
-	// This is necessary because the log-likelihood function does not consider
-	// loop edges, therefore there is a separate correction term for each group
-	// result += (-2 * k[r]) * (m_sum
-
 	// Correction for the m_cachedDegrees * logTheta term.
 	// Affected are all the nodes in groups r and s
 	result += b(m_sumOfDegreesByType[r]) - b(m_sumOfDegreesByType[r] - degree);
@@ -468,8 +463,9 @@ double DegreeCorrectedUndirectedBlockmodel::recalculateLogLikelihood() const {
         double ec;
 
         ec = m_edgeCounts(i, i);
-        if (ec > 0)
-            result += (ec / 2) * (std::log(ec) - 1);
+        if (ec > 0) {
+            result += 0.5 * ec * (std::log(ec) - 1);
+		}
 
         for (int j = i+1; j < m_numTypes; j++) {
             ec = m_edgeCounts(i, j);
@@ -477,13 +473,6 @@ double DegreeCorrectedUndirectedBlockmodel::recalculateLogLikelihood() const {
                 result += ec * (std::log(ec) - 1);
         }
     }
-
-	// Correction because we don't consider loop edges
-	/*
-    for (int i = 0; i < m_numTypes; i++) {
-		result += m_edgeCounts(i, i) * sumThetaSqInType[i] / 2;
-	}
-	*/
 
     m_logLikelihood = result;
     return result;
