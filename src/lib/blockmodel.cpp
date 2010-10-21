@@ -455,11 +455,9 @@ double DegreeCorrectedUndirectedBlockmodel::getLogLikelihoodIncrease(
 
 double DegreeCorrectedUndirectedBlockmodel::recalculateLogLikelihood() const {
     Vector logTheta = m_degrees;
-    Vector sumThetaSqInType(m_numTypes);
 
     for (size_t i = 0; i < logTheta.size(); i++) {
         logTheta[i] /= m_sumOfDegreesByType[m_types[i]];
-        sumThetaSqInType[m_types[i]] += logTheta[i] * logTheta[i];
         logTheta[i] = std::log(logTheta[i]);
     }
 
