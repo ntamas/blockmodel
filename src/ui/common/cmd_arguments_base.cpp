@@ -11,14 +11,15 @@ using namespace std;
 using namespace SimpleOpt;
 
 enum {
-    HELP=30000, VERSION, VERBOSE, QUIET, USE_STDIN, OUT_FILE, SEED
+    HELP=30000, VERSION, VERBOSE, QUIET, USE_STDIN, OUT_FILE, SEED, MODEL
 };
 
 CommandLineArgumentsBase::CommandLineArgumentsBase(
         const std::string programName, const std::string version) :
     m_executableName(programName), m_versionNumber(version),
     m_options(),
-    inputFile(), verbosity(1), outputFile(), randomSeed(time(0)) {
+    inputFile(), verbosity(1), outputFile(),
+    modelType(UNDIRECTED_BLOCKMODEL), randomSeed(time(0)) {
 
     addOption(USE_STDIN, "-", SO_NONE);
 
@@ -31,7 +32,8 @@ CommandLineArgumentsBase::CommandLineArgumentsBase(
 
     addOption(OUT_FILE, "-o", SO_REQ_SEP, "--output");
 
-    addOption(SEED, "--seed", SO_REQ_SEP);
+    addOption(SEED,  "--seed",  SO_REQ_SEP);
+    addOption(MODEL, "--model", SO_REQ_SEP);
 }
 
 void CommandLineArgumentsBase::addOption(int id, const char* option,
@@ -97,8 +99,21 @@ void CommandLineArgumentsBase::parse(int argc, char** argv) {
                 outputFile = args.OptionArg();
                 break;
 
+            /* Processing advanced algorithm parameters */
             case SEED:
                 randomSeed = atol(args.OptionArg());
+                break;
+
+            case MODEL:
+                arg = args.OptionArg() ? args.OptionArg() : "";
+                if (arg == "undirected")
+                    modelType = UNDIRECTED_BLOCKMODEL;
+                else if (arg == "degree")
+                    modelType = DEGREE_CORRECTED_UNDIRECTED_BLOCKMODEL;
+                else {
+                    cerr << "Unknown model type: " << arg << '\n';
+                    ret = 1;
+                }
                 break;
 
             default:

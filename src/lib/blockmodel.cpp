@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <stdexcept>
 #include <block/blockmodel.h>
 
 using namespace igraph;
@@ -192,6 +193,11 @@ void Blockmodel::setType(long index, int newType) {
 }
 
 void Blockmodel::setTypes(const Vector& types) {
+    if (types.min() < 0)
+        throw std::runtime_error("negative type index found in type vector");
+    if (types.max() >= m_numTypes)
+        throw std::runtime_error("too large type index found in type vector");
+
     m_types = types;
     // Invalidate the log-likelihood cache
     invalidateCache();
@@ -368,7 +374,7 @@ void UndirectedBlockmodel::setNumTypes(int numTypes) {
 
 void UndirectedBlockmodel::setProbabilities(const Matrix& p) {
     if (!p.isSymmetric())
-        throw new std::runtime_error("probabilities matrix must be symmetric");
+        throw new std::runtime_error("probability matrix must be symmetric");
     m_probabilities = p;
 }
 
@@ -439,7 +445,7 @@ double DegreeCorrectedUndirectedBlockmodel::getLogLikelihoodIncrease(
 		result += diff;
 	}
 
-	// Correction for the m_cachedDegrees * logTheta term.
+	// Correction for the m_degrees * logTheta term.
 	// Affected are all the nodes in groups r and s
 	result += b(m_sumOfDegreesByType[r]) - b(m_sumOfDegreesByType[r] - degree);
 	result += b(m_sumOfDegreesByType[s]) - b(m_sumOfDegreesByType[s] + degree);
@@ -448,7 +454,7 @@ double DegreeCorrectedUndirectedBlockmodel::getLogLikelihoodIncrease(
 }
 
 double DegreeCorrectedUndirectedBlockmodel::recalculateLogLikelihood() const {
-    Vector logTheta = m_cachedDegrees;
+    Vector logTheta = m_degrees;
     Vector sumThetaSqInType(m_numTypes);
 
     for (size_t i = 0; i < logTheta.size(); i++) {
@@ -457,7 +463,7 @@ double DegreeCorrectedUndirectedBlockmodel::recalculateLogLikelihood() const {
         logTheta[i] = std::log(logTheta[i]);
     }
 
-    double result = m_cachedDegrees * logTheta;
+    double result = m_degrees * logTheta;
 
     for (int i = 0; i < m_numTypes; i++) {
         double ec;
@@ -493,11 +499,9 @@ Matrix DegreeCorrectedUndirectedBlockmodel::getRates() const {
 }
 
 void DegreeCorrectedUndirectedBlockmodel::getStickinesses(Vector& result) const {
-    Vector sumDegreesWithType = m_edgeCounts.colsum();
-
     m_pGraph->degree(&result, VertexSelector::All());
     for (size_t i = 0; i < result.size(); i++)
-        result[i] /= sumDegreesWithType[m_types[i]];
+        result[i] /= m_sumOfDegreesByType[m_types[i]];
 }
 
 Vector DegreeCorrectedUndirectedBlockmodel::getStickinesses() const {
@@ -516,15 +520,23 @@ void DegreeCorrectedUndirectedBlockmodel::recountEdges() {
 
     m_sumOfDegreesByType.fill(0);
     for (long i = 0; i < n; i++) {
-        m_sumOfDegreesByType[m_types[i]] += m_cachedDegrees[i];
+        m_sumOfDegreesByType[m_types[i]] += m_degrees[i];
     }
+}
+
+void DegreeCorrectedUndirectedBlockmodel::setStickinesses(
+        const igraph::Vector& degrees) {
+    if (m_pGraph != NULL)
+        throw std::runtime_error("cannot set stickiness values for a model "
+                "with an associated graph");
+    m_degrees = degrees;
 }
 
 void DegreeCorrectedUndirectedBlockmodel::setGraph(const igraph::Graph* graph) {
     if (graph != NULL)
-        graph->degree(&m_cachedDegrees, VertexSelector::All());
+        graph->degree(&m_degrees, VertexSelector::All());
     else
-        m_cachedDegrees.clear();
+        m_degrees.clear();
 
     Blockmodel::setGraph(graph);
 }
@@ -534,12 +546,26 @@ void DegreeCorrectedUndirectedBlockmodel::setNumTypes(int numTypes) {
     Blockmodel::setNumTypes(numTypes);
 }
 
+void DegreeCorrectedUndirectedBlockmodel::setRates(const igraph::Matrix& r) {
+    if (!r.isSymmetric())
+        throw new std::runtime_error("rate matrix must be symmetric");
+    if (m_pGraph != NULL)
+        throw new std::runtime_error("cannot set rate matrix when a graph is linked "
+                                     "to the model");
+    m_edgeCounts = r;
+
+    // Invalidate the log-likelihood cache
+    invalidateCache();
+    // Recount the edges
+    recountEdges();
+}
+
 void DegreeCorrectedUndirectedBlockmodel::setType(long index, int newType) {
     int oldType = m_types[index];
     if (m_types[index] == newType)
         return;
 
-    double degree = m_cachedDegrees[index];
+    double degree = m_degrees[index];
     m_sumOfDegreesByType[oldType] -= degree;
     Blockmodel::setType(index, newType);
     m_sumOfDegreesByType[m_types[index]] += degree;

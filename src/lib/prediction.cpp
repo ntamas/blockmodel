@@ -14,15 +14,10 @@ double AveragingPredictor::predictProbability(int v1, int v2) {
 }
 
 bool AveragingPredictor::takeSampleReal() {
-    Matrix probMat = m_pModel->getProbabilities();
-    Vector types = m_pModel->getTypes();
     size_t n = m_pModel->getVertexCount();
-
-    for (size_t v1 = 0; v1 < n; v1++) {
-        int type1 = types[v1];
+    for (size_t v1 = 0; v1 < n; v1++)
         for (size_t v2 = v1+1; v2 < n; v2++)
-            m_counts(v1, v2) += probMat(type1, types[v2]);
-    }
+            m_counts(v1, v2) += m_pModel->getEdgeProbability(v1, v2);
 
     return true;
 }

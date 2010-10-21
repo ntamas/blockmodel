@@ -3,6 +3,7 @@
 #ifndef BLOCKMODEL_BLOCKMODEL_H
 #define BLOCKMODEL_BLOCKMODEL_H
 
+#include <cmath>
 #include <stdexcept>
 #include <igraph/cpp/graph.h>
 #include <igraph/cpp/matrix.h>
@@ -118,6 +119,9 @@ public:
     igraph::Matrix getEdgeCounts() const {
         return m_edgeCounts;
     }
+
+	/// Returns the probability of the given edge in the model
+	virtual double getEdgeProbability(int v1, int v2) = 0;
 
     /// Returns a pointer to the graph associated to the model (const)
     const igraph::Graph* getGraph() const {
@@ -251,6 +255,11 @@ public:
     /// Generates a new graph according to the current parameters of the blockmodel
     virtual igraph::Graph generate(MersenneTwister& rng) const;
 
+	/// Returns the probability of the given edge in the model
+	virtual double getEdgeProbability(int v1, int v2) {
+		return getProbability(m_types[v1], m_types[v2]);
+	}
+
     /// Returns the increase in the log-likelihood of the model after a point mutation
     virtual double getLogLikelihoodIncrease(const PointMutation& mutation);
 
@@ -304,8 +313,20 @@ public:
 /// Class representing an undirected degree-corrected blockmodel
 class DegreeCorrectedUndirectedBlockmodel : public Blockmodel {
 private:
-    /// Cached degree vector for the graph
-    igraph::Vector m_cachedDegrees;
+    /// Degree vector for the graph
+	/**
+	 * This vector stores the actual degrees of the vertices in the graph if
+	 * the model is associated to a graph.
+	 */
+    igraph::Vector m_degrees;
+
+	/// Stickiness vector for the vertices
+	/**
+	 * For models without graphs, this vector must be set to the stickiness values
+	 * of each vertex. For models associated to a graph, this vector is unused and
+	 * empty.
+	 */
+	igraph::Vector m_stickinesses;
 
     /// Sum of degrees for vertices in a given group
     igraph::Vector m_sumOfDegreesByType;
@@ -316,10 +337,27 @@ public:
      *        associated with any given graph
      */
     explicit DegreeCorrectedUndirectedBlockmodel()
-        : Blockmodel(), m_cachedDegrees(), m_sumOfDegreesByType() {}
+        : Blockmodel(), m_degrees(), m_stickinesses(), m_sumOfDegreesByType() {}
 
     /// Generates a new graph according to the current parameters of the blockmodel
     virtual igraph::Graph generate(MersenneTwister& rng) const;
+
+	/// Returns the probability of the given edge in the model
+	virtual double getEdgeProbability(int v1, int v2) {
+		int type1 = m_types[v1], type2 = m_types[v2];
+		double lambda = m_edgeCounts(type1, type2);
+
+		if (m_pGraph == NULL) {
+			/* No graph associated */
+			lambda *= m_stickinesses[v1] * m_stickinesses[v2];
+		} else {
+			/* We have a graph, so we use m_degrees */
+			lambda *= m_degrees[v1] / m_sumOfDegreesByType[type1];
+			lambda *= m_degrees[v2] / m_sumOfDegreesByType[type2];
+		}
+
+		return 1 - std::exp(-lambda);
+	}
 
     /// Returns the increase in the log-likelihood of the model after a point mutation
     virtual double getLogLikelihoodIncrease(const PointMutation& mutation);
@@ -338,10 +376,10 @@ public:
     /// Returns the matrix of rate parameters for this model
     void getRates(igraph::Matrix& result) const;
 
-    /// Returns the stickiness of all the vertices in this model
+    /// Returns the stickiness values of all the vertices in this model
     igraph::Vector getStickinesses() const;
 
-    /// Returns the stickiness of all the vertices in this model
+    /// Returns the stickiness values of all the vertices in this model
     void getStickinesses(igraph::Vector& result) const;
 
     /// Returns the log-likelihood of the model (with forced recalculation)
@@ -358,12 +396,26 @@ public:
      */
     virtual void setGraph(const igraph::Graph* graph);
 
+	/// Sets the stickiness values of vertices in the model
+	/**
+	 * This method should be called only if the model is not associated to
+	 * a graph.
+	 */
+	void setStickinesses(const igraph::Vector& degrees);
+
     /// Sets the number of types
     /**
      * This method should be called only after construction as it will
      * re-create the edge count matrix and the type count vector
      */
     virtual void setNumTypes(int numTypes);
+
+    /// Sets the Poisson rates of vertex group pairs.
+    /**
+     * This method works only if there is no graph associated to the model
+     * (i.e. m_pGraph is NULL).
+     */
+    void setRates(const igraph::Matrix& r);
 
     /// Sets the type of a single vertex
     virtual void setType(long index, int newType);

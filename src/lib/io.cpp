@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <map>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -18,110 +19,211 @@ using namespace std;
 
 /***************************************************************************/
 
-void PlainTextReader<UndirectedBlockmodel>::read(
-        UndirectedBlockmodel& model, istream& is) {
-    enum { SECTION_INFO, SECTION_TYPES, SECTION_PROBABILITIES, SECTION_UNKNOWN } section;
-    bool finished = false;
-    Vector types;
-    Vector probabilities;
+typedef enum { SECTION_UNKNOWN, SECTION_INFO, SECTION_TYPES, SECTION_PROBABILITIES,
+               SECTION_STICKINESSES, SECTION_RATES
+} SectionType;
 
-    string currentHeading;
-    string line;
+template<>
+void PlainTextReader<UndirectedBlockmodel>::read(
+        UndirectedBlockmodel* pModel, istream& is) {
+    SectionType section = SECTION_UNKNOWN;
+    map<string, int> headingMap;
+    bool lookingForHeading = true;
+    string str;
     stringstream iss;
 
-    string name;
-    int type;
-    double p;
+    Vector types;
+    Vector probabilities;
+    m_filename.clear();
 
-    m_originalFilename.clear();
+    headingMap["INFO"] = SECTION_INFO;
+    headingMap["PROBABILITIES"] = SECTION_PROBABILITIES;
+    headingMap["TYPES"] = SECTION_TYPES;
 
     if (is.fail())
         throw runtime_error("error while reading stream");
 
-    section = SECTION_UNKNOWN;
-
-    while (!finished) {
-        getline(is, line);
+    while (true) {
+        getline(is, str);
         if (is.eof())
             break;
         if (is.fail())
             throw runtime_error("error while reading stream");
 
         /* Is the line empty? If so, a new heading will follow */
-        if (line.size() == 0) {
-            currentHeading = "";
+        if (str.size() == 0) {
+            lookingForHeading = true;
             continue;
         }
 
         /* Are we looking for a heading? If so, store it */
-        if (currentHeading == "") {
-            currentHeading = line;
-            if (currentHeading == "INFO")
-                section = SECTION_INFO;
-            else if (currentHeading == "PROBABILITIES")
-                section = SECTION_PROBABILITIES;
-            else if (currentHeading == "TYPES")
-                section = SECTION_TYPES;
+        if (lookingForHeading) {
+            map<string, int>::iterator it;
+            it = headingMap.find(str);
+            if (it != headingMap.end())
+                section = static_cast<SectionType>(it->second);
             else
                 section = SECTION_UNKNOWN;
+            lookingForHeading = false;
             continue;
         }
 
         /* If we are here, we have the heading and the line is not empty */
-        switch (section) {
-            case SECTION_INFO:
-                /* Store the original filename (if any) */
-                iss.str(line);
-                iss >> name;
-                if (name == "filename") {
-                    iss >> m_originalFilename;
-                }
-                iss.clear();
-                break;
-
-            case SECTION_TYPES:
-                /* Store the next type */
-                iss.str(line);
-                iss >> name >> type;
+        if (section == SECTION_INFO) {
+            /* Store the original filename (if any) */
+            string name;
+            iss.str(str);
+            iss >> name;
+            if (name == "filename") {
+                iss >> m_filename;
+            }
+        } else if (section == SECTION_TYPES) {
+            /* Store the next type */
+            int type;
+            iss.str(str);
+            iss >> str >> type;
+            if (iss.bad())
+                throw runtime_error("error while parsing type vector");
+            types.push_back(type);
+        } else if (section == SECTION_PROBABILITIES) {
+            /* Store the next row in the probability matrix */
+            double p;
+            iss.str(str);
+            while (!iss.eof()) {
+                iss >> p;
                 if (iss.bad())
                     throw runtime_error("error while parsing probability matrix");
-                types.push_back(type);
-                iss.clear();
-                break;
-
-            case SECTION_PROBABILITIES:
-                /* Store the next row in the probability matrix */
-                iss.str(line);
-                while (!iss.eof()) {
-                    iss >> p;
-                    if (iss.bad())
-                        throw runtime_error("error while parsing probability matrix");
-                    probabilities.push_back(p);
-                }
-                iss.clear();
-                break;
-
-            default:
-                break;
+                probabilities.push_back(p);
+            }
         }
+        iss.clear();
     }
 
-    // Find how many types do we have
+    // Find how many types we have
     size_t n = sqrt(probabilities.size());
     if (n * n != probabilities.size())
         throw runtime_error("probability matrix must be square");
 
-    if (types.min() < 0)
-        throw runtime_error("negative type index found");
-    if (types.max() >= n)
-        throw runtime_error("too large type index found");
-
     Matrix probMat(n, n);
     copy(probabilities.begin(), probabilities.end(), probMat.begin());
 
-    model.setNumTypes(n);
-    model.setTypes(types);
-    model.setProbabilities(probMat);
+    pModel->setNumTypes(n);
+    pModel->setTypes(types);
+    pModel->setProbabilities(probMat);
+}
+
+template<>
+void PlainTextReader<DegreeCorrectedUndirectedBlockmodel>::read(
+        DegreeCorrectedUndirectedBlockmodel* pModel, istream& is) {
+    SectionType section = SECTION_UNKNOWN;
+    map<string, int> headingMap;
+    bool lookingForHeading = true;
+    string str;
+    stringstream iss;
+
+    Vector types;
+    Vector thetas;
+    Vector rates;
+    m_filename.clear();
+
+    headingMap["INFO"] = SECTION_INFO;
+    headingMap["TYPES"] = SECTION_TYPES;
+    headingMap["STICKINESSES"] = SECTION_STICKINESSES;
+    headingMap["RATES"] = SECTION_RATES;
+
+    if (is.fail())
+        throw runtime_error("error while reading stream");
+
+    while (true) {
+        getline(is, str);
+        if (is.eof())
+            break;
+        if (is.fail())
+            throw runtime_error("error while reading stream");
+
+        /* Is the line empty? If so, a new heading will follow */
+        if (str.size() == 0) {
+            lookingForHeading = true;
+            continue;
+        }
+
+        /* Are we looking for a heading? If so, store it */
+        if (lookingForHeading) {
+            map<string, int>::iterator it;
+            it = headingMap.find(str);
+            if (it != headingMap.end())
+                section = static_cast<SectionType>(it->second);
+            else
+                section = SECTION_UNKNOWN;
+            lookingForHeading = false;
+            continue;
+        }
+
+        /* If we are here, we have the heading and the line is not empty */
+        if (section == SECTION_INFO) {
+            /* Store the original filename (if any) */
+            string name;
+            iss.str(str);
+            iss >> name;
+            if (name == "filename") {
+                iss >> m_filename;
+            }
+        } else if (section == SECTION_TYPES) {
+            /* Store the next type */
+            int type;
+            iss.str(str);
+            iss >> str >> type;
+            if (iss.bad())
+                throw runtime_error("error while parsing type vector");
+            types.push_back(type);
+        } else if (section == SECTION_STICKINESSES) {
+            /* Store the next degree */
+            double theta;
+            iss.str(str);
+            iss >> str >> theta;
+            if (iss.bad())
+                throw runtime_error("error while parsing stickiness vector");
+            thetas.push_back(theta);
+        } else if (section == SECTION_RATES) {
+            /* Store the next row in the rate matrix */
+            double p;
+            iss.str(str);
+            while (!iss.eof()) {
+                iss >> p;
+                if (iss.bad())
+                    throw runtime_error("error while parsing probability matrix");
+                rates.push_back(p);
+            }
+        }
+        iss.clear();
+    }
+
+    // Find how many types we have
+    size_t n = sqrt(rates.size());
+    if (n * n != rates.size())
+        throw runtime_error("rate matrix must be square");
+
+    Matrix rateMatrix(n, n);
+    copy(rates.begin(), rates.end(), rateMatrix.begin());
+
+    pModel->setNumTypes(n);
+    pModel->setTypes(types);
+    pModel->setStickinesses(thetas);
+    pModel->setRates(rateMatrix);
+}
+
+void PlainTextReader<Blockmodel>::read(Blockmodel* model, istream& is) {
+    if (typeid(*model) == typeid(UndirectedBlockmodel)) {
+        PlainTextReader<UndirectedBlockmodel> reader;
+        reader.read(static_cast<UndirectedBlockmodel*>(model), is);
+        m_filename = reader.getFilename();
+    } else if (typeid(*model) == typeid(DegreeCorrectedUndirectedBlockmodel)) {
+        PlainTextReader<DegreeCorrectedUndirectedBlockmodel> reader;
+        reader.read(static_cast<DegreeCorrectedUndirectedBlockmodel*>(model), is);
+        m_filename = reader.getFilename();
+    } else {
+        throw std::runtime_error("reader does not know the given blockmodel");
+    }
 }
 
 /***************************************************************************/
@@ -184,9 +286,9 @@ void PlainTextWriter<DegreeCorrectedUndirectedBlockmodel>::write(
     os << '\n';
 
     os << "STICKINESSES\n";
-    Vector stickiness = model.getStickinesses();
+    Vector thetas = model.getStickinesses();
     for (int i = 0; i < n; i++)
-        os << i << '\t' << stickiness[i] << '\n';
+        os << i << '\t' << thetas[i] << '\n';
     os << '\n';
 
     os << "RATES\n";

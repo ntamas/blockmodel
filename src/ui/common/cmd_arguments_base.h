@@ -7,6 +7,11 @@
 #include <string>
 #include "SimpleOpt.h"
 
+/// Possible blockmodel types handled by the application
+typedef enum {
+    UNDIRECTED_BLOCKMODEL, DEGREE_CORRECTED_UNDIRECTED_BLOCKMODEL
+} ModelType;
+
 /// Base class for command line argument parsers
 /**
  * This base class provides support for a few command line arguments that are
@@ -36,6 +41,9 @@ public:
 
     /// Name of the output file
     std::string outputFile;
+
+    /// Model type used by the fitting process
+    ModelType modelType;
 
     /// The random seed to be used
     unsigned long randomSeed;

@@ -63,6 +63,8 @@ void CommandLineArguments::showHelp(ostream& os) const {
           "                        output stream.\n"
           "\n"
           "Advanced algorithm parameters:\n"
+          "    --model MODEL       selects the type of the model used for prediction.\n"
+          "                        Available models: uncorrected (default), degree.\n"
           "    --seed SEED         use the given number to seed the random number\n"
           "                        generator.\n"
     ;

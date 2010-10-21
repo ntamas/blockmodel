@@ -45,6 +45,18 @@ OPTIONS
                       the manual page of ``block-fit`` for more information on
                       the supported file formats.
 
+--model MODEL         Selects the model to be used. The following options are
+                      available:
+
+                      uncorrected
+                        Standard undirected blockmodel. This model aims to
+                        keep the expected number of edges.
+
+                      degree
+                        Degree-weighted undirected blockmodel. This model aims
+                        to keep both the expected number of edges and the
+                        expected degree of each vertex.
+
 PROBLEMS
 ========
 

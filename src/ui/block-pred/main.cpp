@@ -35,8 +35,8 @@ private:
     /// Graph that was used to fit the model to
     auto_ptr<Graph> m_pGraph;
 
-    /// The model being sampled
-    auto_ptr<UndirectedBlockmodel> m_pModel;
+    /// The blockmodel being sampled
+    auto_ptr<Blockmodel> m_pModel;
 
     /// Predictor that is used to calculate the probability of new edges
     auto_ptr<Predictor> m_pPredictor;
@@ -106,21 +106,29 @@ public:
 
     /// Reads the model from the disk
     int readModel() {
-        return readModel(*m_pModel);
-    }
+		switch (m_args.modelType) {
+			case UNDIRECTED_BLOCKMODEL:
+				m_pModel.reset(new UndirectedBlockmodel());
+				break;
 
-    /// Reads the model from the disk
-    int readModel(UndirectedBlockmodel& model) {
-        PlainTextReader<UndirectedBlockmodel> modelReader;
+			case DEGREE_CORRECTED_UNDIRECTED_BLOCKMODEL:
+				m_pModel.reset(new DegreeCorrectedUndirectedBlockmodel());
+				break;
+
+			default:
+				throw std::runtime_error("invalid model type given");
+		}
 
         info(">> loading model: %s", m_args.inputFile.c_str());
 
+        PlainTextReader<Blockmodel> modelReader;
+
         try {
             if (m_args.inputFile == "-")
-                modelReader.read(model, cin);
+                modelReader.read(m_pModel.get(), cin);
             else {
                 ifstream is(m_args.inputFile.c_str());
-                modelReader.read(model, is);
+                modelReader.read(m_pModel.get(), is);
             }
         } catch (const runtime_error& ex) {
             error("Cannot read input file: %s", m_args.inputFile.c_str());
@@ -128,8 +136,8 @@ public:
             return 1;
         }
 
-        if (!modelReader.getOriginalFilename().empty()) {
-            FILE* f = fopen(modelReader.getOriginalFilename().c_str(), "r");
+        if (!modelReader.getFilename().empty()) {
+            FILE* f = fopen(modelReader.getFilename().c_str(), "r");
             if (f != NULL) {
                 m_pGraph.reset(new Graph(Graph::ReadEdgelist(f)));
                 fclose(f);
@@ -138,10 +146,10 @@ public:
                     info(">> simplifying graph");
                     m_pGraph->simplify();
                 }
-                model.setGraph(m_pGraph.get());
+                m_pModel->setGraph(m_pGraph.get());
             } else {
                 warning(">> cannot load original graph `%s', continuing anyway",
-                        modelReader.getOriginalFilename().c_str());
+                        modelReader.getFilename().c_str());
             }
         }
 

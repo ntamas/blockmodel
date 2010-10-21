@@ -12,14 +12,13 @@ using namespace SimpleOpt;
 
 enum {
     NUM_GROUPS, NUM_SAMPLES, OUT_FORMAT,
-    LOG_PERIOD, INIT_METHOD, BLOCK_SIZE, MODEL
+    LOG_PERIOD, INIT_METHOD, BLOCK_SIZE
 };
 
 CommandLineArguments::CommandLineArguments() :
     CommandLineArgumentsBase("block-fit", BLOCKMODEL_VERSION_STRING),
     numGroups(-1), numSamples(100000), outputFormat(FORMAT_PLAIN),
-    blockSize(65536), initMethod(GREEDY), logPeriod(8192),
-    modelType(UNDIRECTED_BLOCKMODEL) {
+    blockSize(65536), initMethod(GREEDY), logPeriod(8192) {
 
     /* basic options */
 
@@ -31,7 +30,6 @@ CommandLineArguments::CommandLineArguments() :
     addOption(BLOCK_SIZE,  "--block-size",  SO_REQ_SEP);
     addOption(INIT_METHOD, "--init-method", SO_REQ_SEP);
     addOption(LOG_PERIOD,  "--log-period",  SO_REQ_SEP);
-    addOption(MODEL,       "--model",       SO_REQ_SEP);
 }
 
 int CommandLineArguments::handleOption(int id, const std::string& arg) {
@@ -78,17 +76,6 @@ int CommandLineArguments::handleOption(int id, const std::string& arg) {
 
         case LOG_PERIOD:
             logPeriod = atoi(arg.c_str());
-            break;
-
-        case MODEL:
-            if (arg == "undirected")
-                modelType = UNDIRECTED_BLOCKMODEL;
-            else if (arg == "degree")
-                modelType = DEGREE_CORRECTED_UNDIRECTED_BLOCKMODEL;
-            else {
-                cerr << "Unknown model type: " << arg << '\n';
-                return 1;
-            }
             break;
 
     }

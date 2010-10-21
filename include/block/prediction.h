@@ -18,14 +18,14 @@
 class Predictor {
 protected:
     /// The model sampled by the predictor
-    UndirectedBlockmodel* m_pModel;
+    Blockmodel* m_pModel;
 
     /// The number of samples taken
     unsigned long m_numSamples;
 
 public:
     /// Constructor
-    explicit Predictor(UndirectedBlockmodel* model) :
+    explicit Predictor(Blockmodel* model) :
         m_pModel(model), m_numSamples(0) {}
 
     /// Virtual destructor that does nothing
@@ -71,7 +71,7 @@ private:
 
 public:
     /// Constructor
-    explicit AveragingPredictor(UndirectedBlockmodel* model) :
+    explicit AveragingPredictor(Blockmodel* model) :
         Predictor(model),
         m_counts(model->getVertexCount(), model->getVertexCount()) {
         m_counts.fill(0);

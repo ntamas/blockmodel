@@ -95,6 +95,8 @@ void CommandLineArguments::showHelp(ostream& os) const {
           "\n"
           "Advanced algorithm parameters:\n"
           "    --log-period COUNT  shows a status message after every COUNT steps\n"
+          "    --model MODEL       selects the type of the model used for prediction.\n"
+          "                        Available models: uncorrected (default), degree.\n"
           "    --name-mapping FILE\n"
           "                        reads vertex names from the given FILE and uses\n"
           "                        these names instead of indices in the output.\n"

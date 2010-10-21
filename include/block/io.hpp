@@ -21,40 +21,39 @@ typedef enum {
  */
 template <typename T>
 class Reader {
+protected:
+    /// The name of the file the reader read from the last time (if known)
+    std::string m_filename;
+
 public:
+    /// Returns the name of the file the reader read from the last time
+    const std::string getFilename() const {
+        return m_filename;
+    }
+
     /// Reads into the given object from the given stream
-    virtual void read(T& model, std::istream& is) = 0;
+    virtual void read(T& model, std::istream& is) {
+        read(&model, is);
+    }
+
+    /// Reads into the given object from the given stream
+    virtual void read(T* model, std::istream& is) = 0;
 };
 
 /// Reader for objects in plain text format
 template <typename T>
 class PlainTextReader : public Reader<T> {
 public:
-    /// Reads into the given object from the given stream
-    virtual void read(T& model, std::istream& is);
+    /// Writes the given object to the given stream
+    virtual void read(T* model, std::istream& is);
 };
 
-/// Reader for objects in plain text format
+/// Reader for blockmodels in plain text format
 template <>
-class PlainTextReader<UndirectedBlockmodel> :
-    public Reader<UndirectedBlockmodel> {
-private:
-    /// The name of the graph to which the model last read was fitted
-    /**
-     * The plain text formatted version of a model may store the filename
-     * of a graph to which the model was fitted. This string will store
-     * the name of the file if known; otherwise it will be empty.
-     */
-    std::string m_originalFilename;
-
+class PlainTextReader<Blockmodel> : public Reader<Blockmodel> {
 public:
-    /// Returns the name of the graph to which the model last read was fitted
-    const std::string getOriginalFilename() const {
-        return m_originalFilename;
-    }
-
-    /// Reads into the given object from the given stream
-    virtual void read(UndirectedBlockmodel& model, std::istream& is);
+    /// Initializes the given blockmodel from the given stream
+    virtual void read(Blockmodel* model, std::istream& is);
 };
 
 /***************************************************************************/
