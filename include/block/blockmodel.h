@@ -72,6 +72,27 @@ public:
         : m_pGraph(0), m_numTypes(0), m_types(),
 		  m_typeCounts(), m_edgeCounts(), m_logLikelihood(1) {
     }
+	
+	/// Copies a blockmodel to another one
+	/**
+	 * This method is implemented explicitly instead of by the means of a
+	 * copy constructor or assignment operator to avoid the temptation of
+	 * assigning dereferenced \ref Blockmodel pointers to each other, which
+	 * would copy the members of the \em base class (i.e. \ref Blockmodel)
+	 * but not necessarily the members of the actual \ref Blockmodel
+	 * subclass.
+	 */
+	virtual void assignFrom(const Blockmodel* other) {
+		*this = *other;
+	}
+
+	/// Copies a blockmodel to another one (auto_ptr variant)
+	/**
+	 * \see assignFrom(const Blockmodel*)
+	 */
+	void assignFrom(const std::auto_ptr<Blockmodel>& other) {
+		assignFrom(other.get());
+	}
 
     /// Convenience function to create a blockmodel instance
     /**
@@ -252,6 +273,10 @@ public:
     /// Constructs a new undirected blockmodel not associated with any given graph
     explicit UndirectedBlockmodel() : Blockmodel() {}
 
+	virtual void assignFrom(const Blockmodel* other) {
+		*this = dynamic_cast<const UndirectedBlockmodel&>(*other);
+	}
+
     /// Generates a new graph according to the current parameters of the blockmodel
     virtual igraph::Graph generate(MersenneTwister& rng) const;
 
@@ -338,6 +363,10 @@ public:
      */
     explicit DegreeCorrectedUndirectedBlockmodel()
         : Blockmodel(), m_degrees(), m_stickinesses(), m_sumOfDegreesByType() {}
+
+	virtual void assignFrom(const Blockmodel* other) {
+		*this = dynamic_cast<const DegreeCorrectedUndirectedBlockmodel&>(*other);
+	}
 
     /// Generates a new graph according to the current parameters of the blockmodel
     virtual igraph::Graph generate(MersenneTwister& rng) const;

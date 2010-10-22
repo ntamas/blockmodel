@@ -406,10 +406,78 @@ void JSONWriter<UndirectedBlockmodel>::write(
 }
 
 template<>
+void JSONWriter<DegreeCorrectedUndirectedBlockmodel>::write(
+        const DegreeCorrectedUndirectedBlockmodel* pModel, ostream& os) {
+    const DegreeCorrectedUndirectedBlockmodel& model = *pModel;
+    const Graph* pGraph = model.getGraph();
+    int n = pGraph->vcount();
+    int k = model.getNumTypes();
+    time_t timestamp = time(0);
+    char* formatted_date = ctime(&timestamp);
+
+    // Trim the newline from the formatted date
+    formatted_date[strlen(formatted_date)-1] = 0;
+
+    os << "{\n"
+       << "    \"info\": {\n"
+       << "        \"date\": " << toJSON(formatted_date) << ",\n";
+
+    if (pGraph->hasAttribute("filename"))
+        os << "        \"filename\": "
+           << toJSON(pGraph->getAttribute("filename").as<std::string>()) << ",\n";
+
+    os << "        \"timestamp\": " << timestamp << ",\n"
+       << "        \"num_vertices\": " << n << ",\n"
+       << "        \"num_types\": " << k << ",\n"
+       << "        \"log_likelihood\": " << model.getLogLikelihood() << ",\n"
+       << "        \"aic\": " << aic(model) << "\n"
+       << "    },\n"
+       << "    \"parameters\": {\n"
+       << "        \"types\": [";
+    for (int i = 0; i < n-1; i++) {
+        if (i % 15 == 0)
+            os << "\n                  ";
+        os << model.getType(i) << ", ";
+    }
+    if (n > 0)
+        os << model.getType(n-1);
+    os << "\n        ],\n"
+       << "        \"stickinesses\": [";
+
+    Vector stickinesses(model.getStickinesses());
+    for (int i = 0; i < n-1; i++) {
+        if (i % 15 == 0)
+            os << "\n                  ";
+        os << stickinesses[i] << ", ";
+    }
+    if (n > 0)
+        os << stickinesses[n-1];
+    os << "\n        ],\n";
+    os << "        \"rates\": [";
+    if (k > 0) {
+        for (int i = 0; i < k; i++) {
+            os << "\n              [";
+            for (int j = 0; j < k-1; j++) {
+                os << model.getRate(i, j) << ", ";
+            }
+            os << model.getRate(i, k-1) << "]";
+            if (i < k-1)
+                os << ", ";
+        }
+    }
+    os << "\n        ]\n"
+       << "    }\n"
+       << "}\n";
+}
+
+template<>
 void JSONWriter<Blockmodel>::write(const Blockmodel* model, ostream& os) {
     if (typeid(*model) == typeid(UndirectedBlockmodel)) {
         JSONWriter<UndirectedBlockmodel> writer;
         writer.write(static_cast<const UndirectedBlockmodel*>(model), os);
+    } else if (typeid(*model) == typeid(DegreeCorrectedUndirectedBlockmodel)) {
+        JSONWriter<DegreeCorrectedUndirectedBlockmodel> writer;
+        writer.write(static_cast<const DegreeCorrectedUndirectedBlockmodel*>(model), os);
     } else {
         throw std::runtime_error("writer does not know the given blockmodel");
     }

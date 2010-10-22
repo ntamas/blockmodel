@@ -566,7 +566,7 @@ void DegreeCorrectedUndirectedBlockmodel::setType(long index, int newType) {
     double degree = m_degrees[index];
     m_sumOfDegreesByType[oldType] -= degree;
     Blockmodel::setType(index, newType);
-    m_sumOfDegreesByType[m_types[index]] += degree;
+    m_sumOfDegreesByType[newType] += degree;
 }
 
 

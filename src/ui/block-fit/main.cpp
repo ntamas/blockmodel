@@ -121,7 +121,7 @@ public:
 			}
         }
 
-        *m_pBestModel = *m_pModel;
+        m_pBestModel->assignFrom(m_pModel);
         m_bestLogL = m_pModel->getLogLikelihood();
 
         info(">> starting Markov chain");
@@ -204,7 +204,7 @@ public:
             logL = pModel->getLogLikelihood();
             if (m_bestLogL < logL) {
                 // Store the best model and log-likelihood
-                *m_pBestModel = *pModel;
+                m_pBestModel->assignFrom(m_pModel);
                 m_bestLogL = logL;
             }
             samples.push_back(logL);
@@ -276,7 +276,7 @@ public:
 				currentBIC = bic(*m_pBestModel);
                 if (currentAIC < bestAIC) {
                     bestAIC = currentAIC;
-                    *pModelWithBestTypeCount = *m_pBestModel;
+                    pModelWithBestTypeCount->assignFrom(m_pBestModel);
                 }
                 if (currentBIC < bestBIC) {
                     bestBIC = currentBIC;
@@ -285,8 +285,9 @@ public:
 						currentAIC, bestAIC, currentBIC, bestBIC);
             }
 
-            *m_pModel = *m_pBestModel;
-            *m_pBestModel = *m_pBestModel;
+            m_pModel->assignFrom(pModelWithBestTypeCount);
+            m_pBestModel->assignFrom(pModelWithBestTypeCount);
+
             m_bestLogL = m_pModel->getLogLikelihood();
             info(">> best type count is %d", m_pModel->getNumTypes());
         }
