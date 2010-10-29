@@ -55,7 +55,7 @@ int test_getLogLikelihoodIncrease() {
 
 		predictedDiff = model.getLogLikelihoodIncrease(mutation);
         predictedLogL = model.getLogLikelihood() + predictedDiff;
-        mutation.perform(model);
+        model.performMutation(mutation);
 
         if (!ALMOST_EQUALS(model.getLogLikelihood(), predictedLogL, 1e-3)) {
             std::cout << "Step #" << (i+1) << '\n'

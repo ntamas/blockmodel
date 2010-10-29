@@ -4,6 +4,7 @@
 #define IGRAPHPP_ATTRIBUTES_H
 
 #include <map>
+#include <vector>
 #include <igraph/cpp/any.hpp>
 
 namespace igraph {
@@ -16,11 +17,20 @@ private:
     /// Typedef for the graph attribute storage
     typedef std::map<std::string, any> GraphAttributeMap;
 
+    /// Typedef for the vertex attribute storage
+    typedef std::map<std::string, std::vector<any> > VertexAttributeMap;
+
+    /// Typedef for the edge attribute storage
+    typedef std::map<std::string, std::vector<any> > EdgeAttributeMap;
+
     /// Storage for the graph attributes
     GraphAttributeMap m_graphAttributes;
+    
+    /// Storage for the vertex attributes
+    VertexAttributeMap m_vertexAttributes;
 
-    int m_vertexAttributes;
-    int m_edgeAttributes;
+    /// Storage for the edge attributes
+    EdgeAttributeMap m_edgeAttributes;
 
 public:
     /// Returns a reference to the value of the given graph attribute

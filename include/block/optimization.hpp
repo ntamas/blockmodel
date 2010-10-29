@@ -141,7 +141,7 @@ public:
         m_lastProposalAccepted =
             (logLDiff >= 0) || (m_pRng->random() <= std::exp(logLDiff));
         if (m_lastProposalAccepted)
-            mutation.perform(*pModel);
+            pModel->performMutation(mutation);
 
         m_acceptanceRatio.push_back(m_lastProposalAccepted);
 

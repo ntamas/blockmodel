@@ -16,7 +16,10 @@ class Blockmodel;
 /**
  * A point mutation is a step that moves vertex i from group k to group l
  */
-struct PointMutation {
+class PointMutation {
+	friend class Blockmodel;
+
+public:
 	/// The index of the vertex being moved
 	int vertex;
 	/// The group in which the vertex is before the move
@@ -28,14 +31,15 @@ struct PointMutation {
 	PointMutation(int vertex, int from, int to) :
 		vertex(vertex), from(from), to(to) {}
 
-    /// Performs the mutation on the given model
-    void perform(Blockmodel& model) const;
-
     /// Reverses the mutation
     void reverse();
 
     /// Returns a reversed copy of the mutation
     PointMutation reversed() const;
+
+private:
+    /// Performs the mutation on the given model
+    void perform(Blockmodel& model) const;
 
     /// Undoes the mutation on the given model
     void undo(Blockmodel& model) const;
@@ -222,6 +226,11 @@ public:
     size_t getVertexCount() const {
         return m_types.size();
     }
+
+    /// Performs the mutation on the given model
+    virtual void performMutation(const PointMutation& mutation) {
+		mutation.perform(*this);
+	}
 
 	/// Randomizes the current configuration of the model
 	virtual void randomize(MersenneTwister& rng);

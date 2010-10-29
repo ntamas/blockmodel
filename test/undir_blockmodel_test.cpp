@@ -158,7 +158,7 @@ int test_getTotalAndActualEdgesFromAffectedGroups() {
         PointMutation mutation(from, model.getType(from), rng.randint(5));
         model.getTotalEdgesFromAffectedGroupsAfter(mutation, counts0, counts1);
         model.getEdgeCountsFromAffectedGroupsAfter(mutation, counts2, counts3);
-        mutation.perform(model);
+        model.performMutation(mutation);
 
         for (int j = 0; j < 5; j++) {
             if (model.getTotalEdgesBetweenGroups(j, mutation.from) !=
@@ -195,7 +195,7 @@ int test_getLogLikelihoodIncrease() {
 
         predictedLogL = model.getLogLikelihood() +
             model.getLogLikelihoodIncrease(mutation);
-        mutation.perform(model);
+        model.performMutation(mutation);
 
         if (!ALMOST_EQUALS(model.getLogLikelihood(), predictedLogL, 1e-3)) {
             std::cout << "Step #" << (i+1) << '\n'
