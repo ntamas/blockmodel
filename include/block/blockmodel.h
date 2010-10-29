@@ -227,7 +227,7 @@ public:
         return m_types.size();
     }
 
-    /// Performs the mutation on the given model
+    /// Performs the given mutation on the model
     virtual void performMutation(const PointMutation& mutation) {
 		mutation.perform(*this);
 	}
@@ -354,6 +354,9 @@ private:
 	 */
     igraph::Vector m_degrees;
 
+	/// Drift counter for the iterative re-calculation of log-likelihood
+	double m_driftCounter;
+
 	/// Stickiness vector for the vertices
 	/**
 	 * For models without graphs, this vector must be set to the stickiness values
@@ -371,7 +374,8 @@ public:
      *        associated with any given graph
      */
     explicit DegreeCorrectedUndirectedBlockmodel()
-        : Blockmodel(), m_degrees(), m_stickinesses(), m_sumOfDegreesByType() {}
+        : Blockmodel(), m_degrees(), m_driftCounter(0), m_stickinesses(),
+		m_sumOfDegreesByType() {}
 
 	virtual void assignFrom(const Blockmodel* other) {
 		*this = dynamic_cast<const DegreeCorrectedUndirectedBlockmodel&>(*other);
@@ -419,6 +423,28 @@ public:
 
     /// Returns the stickiness values of all the vertices in this model
     void getStickinesses(igraph::Vector& result) const;
+
+    /// Performs the given mutation on the model
+	/**
+	 * This method is overridden from the parent because it is more efficient
+	 * to calculate the new log-likelihood using \ref getLogLikelihoodIncrease
+	 * instead of re-calculating it completely.
+	 *
+	 * However, after every 8192 steps, we re-calculate the log-likelihood
+	 * completely to avoid the accumulation of numerical errors.
+	 */
+    virtual void performMutation(const PointMutation& mutation) {
+		if (m_driftCounter < 8192) {
+			double oldLogLikelihood = m_logLikelihood;
+			double increase = getLogLikelihoodIncrease(mutation);
+			Blockmodel::performMutation(mutation);
+			m_logLikelihood = oldLogLikelihood + increase;
+			m_driftCounter++;
+		} else {
+			Blockmodel::performMutation(mutation);
+			m_driftCounter = 0;
+		}
+	}
 
     /// Returns the log-likelihood of the model (with forced recalculation)
     virtual double recalculateLogLikelihood() const;
