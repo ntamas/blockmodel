@@ -75,6 +75,14 @@ public:
     static Graph ReadEdgelist(FILE* instream, integer_t n=0,
             bool directed=false);
 
+    /// Reads a graph from an NCOL file
+    /**
+     * \todo  handle the predefnames argument
+     */
+    static Graph ReadNCOL(FILE* instream, bool names=true,
+            AddWeights weights = IGRAPH_ADD_WEIGHTS_IF_PRESENT,
+            bool directed=true);
+
     /// Constructs a ring graph
     static Graph Ring(integer_t n, bool directed=false, bool mutual=true,
             bool circular=true);

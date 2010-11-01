@@ -167,6 +167,7 @@ public:
         }
 
         result.reset(new Graph(Graph::ReadEdgelist(fptr)));
+        // result.reset(new Graph(Graph::ReadNCOL(fptr)));
         if (filename != "-")
             result->setAttribute("filename", filename);
 

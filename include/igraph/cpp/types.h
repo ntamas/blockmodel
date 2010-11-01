@@ -12,6 +12,7 @@ typedef igraph_integer_t integer_t;
 typedef igraph_real_t real_t;
 typedef igraph_bool_t bool_t;
 
+typedef igraph_add_weights_t AddWeights;
 typedef igraph_edgeorder_type_t EdgeOrderType;
 typedef igraph_neimode_t NeighborMode;
 

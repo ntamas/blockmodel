@@ -97,11 +97,6 @@ public:
         return &(VECTOR(m_vector)[0]);
     }
 
-    /// Returns a const pointer to the internal igraph_vector_t
-    const igraph_vector_t* c_vector() const {
-        return &m_vector;
-    }
-
     /// Returns the last element of the vector
     igraph_real_t& back() {
         return VECTOR(m_vector)[size()-1];
@@ -140,6 +135,11 @@ public:
 
     /// Returns a pointer to the internal igraph_vector_t
     igraph_vector_t* c_vector() {
+        return &m_vector;
+    }
+
+    /// Returns a const pointer to the internal igraph_vector_t
+    const igraph_vector_t* c_vector() const {
         return &m_vector;
     }
 

@@ -1,8 +1,12 @@
 /* vim:set ts=4 sw=4 sts=4 et: */
 
 #include <igraph/igraph_attributes.h>
+#include <igraph/igraph_interface.h>
 #include <igraph/cpp/attributes.h>
 #include <igraph/cpp/error.h>
+#include <igraph/cpp/ptr_vector.h>
+#include <igraph/cpp/str_vector.h>
+#include <igraph/cpp/vector.h>
 
 namespace igraph {
 
@@ -31,8 +35,16 @@ any& AttributeHolder::getGraphAttributeReference(const std::string& attribute) {
     return m_graphAttributes[attribute];
 }
 
+bool AttributeHolder::hasEdgeAttribute(const std::string& attribute) const {
+    return m_edgeAttributes.find(attribute) != m_edgeAttributes.end();
+}
+
 bool AttributeHolder::hasGraphAttribute(const std::string& attribute) const {
     return m_graphAttributes.find(attribute) != m_graphAttributes.end();
+}
+
+bool AttributeHolder::hasVertexAttribute(const std::string& attribute) const {
+    return m_vertexAttributes.find(attribute) != m_vertexAttributes.end();
 }
 
 void AttributeHolder::setGraphAttribute(const std::string& attribute,
@@ -77,7 +89,59 @@ struct AttributeHandlerImpl {
     /***********************************************************************/
 
     static int add_vertices(igraph_t *graph, long int nv, igraph_vector_ptr_t *attr) {
-        // TODO
+        AttributeHolder& holder = *(static_cast<AttributeHolder*>(graph->attr));
+        AttributeHolder::VertexAttributeMap& m_attrs = holder.m_vertexAttributes;
+        long int vcount = igraph_vcount(graph);
+
+        // Extend the vertex attribute vectors by nv new elements
+        for (AttributeHolder::VertexAttributeMap::iterator it = m_attrs.begin();
+                it != m_attrs.end(); it++) {
+            it->second.resize(vcount + nv);
+        }
+
+        // Do we have attributes with the newly added vertices? If not, return.
+        if (attr == 0)
+            return IGRAPH_SUCCESS;
+
+        PtrVector<igraph_attribute_record_t*> attrRecords(attr);
+        long int i, j, k, numAttrs = attrRecords.size();
+
+        // For each attribute record...
+        for (i = 0; i < numAttrs; i++) {
+            igraph_attribute_record_t* record = attrRecords.get(i);
+
+            // Do we have an attribute with this name? If not, add it.
+            if (m_attrs.find(record->name) == m_attrs.end())
+                m_attrs[record->name].resize(vcount + nv);
+
+            AttributeHolder::AttributeValueVector& vec = m_attrs[record->name];
+            switch (record->type) {
+                case IGRAPH_ATTRIBUTE_NUMERIC:
+                    {
+                        Vector values(static_cast<igraph_vector_t*>(
+                                    const_cast<void*>(record->value)
+                        ), false);
+                        for (j = 0, k = vcount; j < nv; j++, k++)
+                            vec[k] = values[j];
+                    }
+                    break;
+
+                case IGRAPH_ATTRIBUTE_STRING:
+                    {
+                        StrVector values(static_cast<igraph_strvector_t*>(
+                                    const_cast<void*>(record->value)), false);
+                        for (j = 0, k = vcount; j < nv; j++, k++)
+                            vec[k] = std::string(values[j]);
+                    }
+                    break;
+
+                default:
+                    // Unsupported attribute type, just continue
+                    // TODO: show a warning?
+                    break;
+            }
+        }
+
         return IGRAPH_SUCCESS;
     }
 

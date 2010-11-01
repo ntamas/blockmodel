@@ -14,14 +14,20 @@ struct AttributeHandlerImpl;
 /// Attribute holder class for graphs
 class AttributeHolder {
 private:
+    /// Typedef for attribute values
+    typedef any AttributeValue;
+
+    /// Typedef for a vector that stores attributes
+    typedef std::vector<AttributeValue> AttributeValueVector;
+
     /// Typedef for the graph attribute storage
-    typedef std::map<std::string, any> GraphAttributeMap;
+    typedef std::map<std::string, AttributeValue> GraphAttributeMap;
 
     /// Typedef for the vertex attribute storage
-    typedef std::map<std::string, std::vector<any> > VertexAttributeMap;
+    typedef std::map<std::string, AttributeValueVector> VertexAttributeMap;
 
     /// Typedef for the edge attribute storage
-    typedef std::map<std::string, std::vector<any> > EdgeAttributeMap;
+    typedef std::map<std::string, AttributeValueVector> EdgeAttributeMap;
 
     /// Storage for the graph attributes
     GraphAttributeMap m_graphAttributes;
@@ -39,8 +45,14 @@ public:
     /// Returns a copy of the value of the given graph attribute
     any getGraphAttribute(const std::string& attribute) const;
 
+    /// Checks whether a given edge attribute exists
+    bool hasEdgeAttribute(const std::string& attribute) const;
+
     /// Checks whether a given graph attribute exists
     bool hasGraphAttribute(const std::string& attribute) const;
+
+    /// Checks whether a given vertex attribute exists
+    bool hasVertexAttribute(const std::string& attribute) const;
 
     /// Sets the value of a given graph attribute
     void setGraphAttribute(const std::string& attribute, const any& value);
