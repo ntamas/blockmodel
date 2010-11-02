@@ -13,6 +13,7 @@
 #include <block/util.hpp>
 #include <igraph/cpp/graph.h>
 
+#include "../common/graph_util.h"
 #include "../common/logging.h"
 #include "cmd_arguments.h"
 
@@ -155,21 +156,13 @@ public:
      */
     std::auto_ptr<Graph> loadGraph(const std::string& filename) {
         std::auto_ptr<Graph> result;
-        FILE* fptr = stdin;
 
-        if (filename != "-") {
-            fptr = fopen(filename.c_str(), "r");
-            if (fptr == NULL) {
-                std::ostringstream oss;
-                oss << "File not found: " << filename;
-                throw std::runtime_error(oss.str());
-            }
-        }
-
-        result.reset(new Graph(Graph::ReadEdgelist(fptr)));
-        // result.reset(new Graph(Graph::ReadNCOL(fptr)));
-        if (filename != "-")
+        if (filename == "-") {
+            result.reset(new Graph(GraphUtil::readGraph(stdin, GRAPH_FORMAT_EDGELIST)));
+        } else {
+            result.reset(new Graph(GraphUtil::readGraph(filename)));
             result->setAttribute("filename", filename);
+        }
 
         if (!result->isSimple()) {
             info(">> simplifying graph");

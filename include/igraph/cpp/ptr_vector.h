@@ -66,12 +66,12 @@ public:
 
     /// Returns an iterator pointing to the first element of the vector
     iterator begin() {
-        return &(VECTOR(m_vector_ptr)[0]);
+        return reinterpret_cast<iterator>(&VECTOR(m_vector_ptr)[0]);
     }
 
     /// Returns an iterator pointing to the first element of the vector
     const_iterator begin() const {
-        return &(VECTOR(m_vector_ptr)[0]);
+        return reinterpret_cast<iterator>(&VECTOR(m_vector_ptr)[0]);
     }
 
     /// Returns the last element of the pointer vector
@@ -106,12 +106,12 @@ public:
 
     /// Returns an iterator pointing after the last element of the vector
     iterator end() {
-        return &(VECTOR(m_vector_ptr)[size()]);
+        return begin() + size();
     }
 
     /// Returns an iterator pointing after the last element of the vector (const)
     const_iterator end() const {
-        return &(VECTOR(m_vector_ptr)[size()]);
+        return begin() + size();
     }
 
     /// Returns the first element of the vector

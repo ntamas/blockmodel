@@ -18,7 +18,7 @@ enum {
 CommandLineArguments::CommandLineArguments() :
     CommandLineArgumentsBase("block-pred", BLOCKMODEL_VERSION_STRING),
     sampleCount(1), inputFormat(FORMAT_PLAIN), sort(false),
-    burnin(true), logPeriod(8192), nameMappingFile(), samplingFreq(0.1)
+    burnin(true), logPeriod(1024), nameMappingFile(), samplingFreq(0.1)
 {
 
     /* basic options */

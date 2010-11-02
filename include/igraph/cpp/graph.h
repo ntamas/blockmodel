@@ -73,7 +73,7 @@ public:
 
     /// Reads a graph from an edge list file
     static Graph ReadEdgelist(FILE* instream, integer_t n=0,
-            bool directed=false);
+            bool directed=true);
 
     /// Reads a graph from an NCOL file
     /**

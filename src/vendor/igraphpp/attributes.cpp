@@ -88,41 +88,40 @@ struct AttributeHandlerImpl {
 
     /***********************************************************************/
 
-    static int add_vertices(igraph_t *graph, long int nv, igraph_vector_ptr_t *attr) {
-        AttributeHolder& holder = *(static_cast<AttributeHolder*>(graph->attr));
-        AttributeHolder::VertexAttributeMap& m_attrs = holder.m_vertexAttributes;
-        long int vcount = igraph_vcount(graph);
-
-        // Extend the vertex attribute vectors by nv new elements
-        for (AttributeHolder::VertexAttributeMap::iterator it = m_attrs.begin();
-                it != m_attrs.end(); it++) {
-            it->second.resize(vcount + nv);
+    template <typename AttrMapType>
+    static int add_vertices_edges_helper(AttrMapType& attrs, long int lastIndex,
+            long int numNewEntries, igraph_vector_ptr_t* attr_vector_ptr) {
+        // Extend the vertex attribute vectors by numNewEntries new elements
+        for (AttributeHolder::VertexAttributeMap::iterator it = attrs.begin();
+                it != attrs.end(); it++) {
+            it->second.resize(lastIndex + numNewEntries);
         }
 
         // Do we have attributes with the newly added vertices? If not, return.
-        if (attr == 0)
+        if (attr_vector_ptr == 0)
             return IGRAPH_SUCCESS;
 
-        PtrVector<igraph_attribute_record_t*> attrRecords(attr);
-        long int i, j, k, numAttrs = attrRecords.size();
+        PtrVector<igraph_attribute_record_t*> attrRecords(attr_vector_ptr);
+        long int i, j;
 
         // For each attribute record...
-        for (i = 0; i < numAttrs; i++) {
-            igraph_attribute_record_t* record = attrRecords.get(i);
+        for (PtrVector<igraph_attribute_record_t*>::iterator it = attrRecords.begin();
+                it != attrRecords.end(); it++) {
+           igraph_attribute_record_t* record = (*it);
 
             // Do we have an attribute with this name? If not, add it.
-            if (m_attrs.find(record->name) == m_attrs.end())
-                m_attrs[record->name].resize(vcount + nv);
+            if (attrs.find(record->name) == attrs.end())
+                attrs[record->name].resize(lastIndex + numNewEntries);
 
-            AttributeHolder::AttributeValueVector& vec = m_attrs[record->name];
+            AttributeHolder::AttributeValueVector& vec = attrs[record->name];
             switch (record->type) {
                 case IGRAPH_ATTRIBUTE_NUMERIC:
                     {
                         Vector values(static_cast<igraph_vector_t*>(
                                     const_cast<void*>(record->value)
                         ), false);
-                        for (j = 0, k = vcount; j < nv; j++, k++)
-                            vec[k] = values[j];
+                        for (i = 0, j = lastIndex; i < numNewEntries; i++, j++)
+                            vec[j] = values[i];
                     }
                     break;
 
@@ -130,8 +129,8 @@ struct AttributeHandlerImpl {
                     {
                         StrVector values(static_cast<igraph_strvector_t*>(
                                     const_cast<void*>(record->value)), false);
-                        for (j = 0, k = vcount; j < nv; j++, k++)
-                            vec[k] = std::string(values[j]);
+                        for (i = 0, j = lastIndex; i < numNewEntries; i++, j++)
+                            vec[j] = std::string(values[i]);
                     }
                     break;
 
@@ -145,12 +144,20 @@ struct AttributeHandlerImpl {
         return IGRAPH_SUCCESS;
     }
 
+    static int add_vertices(igraph_t *graph, long int nv, igraph_vector_ptr_t *attr) {
+        AttributeHolder& holder = *(static_cast<AttributeHolder*>(graph->attr));
+        AttributeHolder::VertexAttributeMap& attrs = holder.m_vertexAttributes;
+        return add_vertices_edges_helper(attrs, igraph_vcount(graph), nv, attr);
+    }
+
     /***********************************************************************/
 
     static int add_edges(igraph_t *graph, const igraph_vector_t *edges,
                   igraph_vector_ptr_t *attr) {
-        // TODO
-        return IGRAPH_SUCCESS;
+        AttributeHolder& holder = *(static_cast<AttributeHolder*>(graph->attr));
+        AttributeHolder::EdgeAttributeMap& attrs = holder.m_edgeAttributes;
+        return add_vertices_edges_helper(attrs, igraph_ecount(graph),
+                igraph_vector_size(edges), attr);
     }
 };
 
