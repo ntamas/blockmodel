@@ -5,7 +5,9 @@
 #include <igraph/igraph_games.h>
 #include <igraph/igraph_operators.h>
 #include <igraph/igraph_structural.h>
+#include <igraph/cpp/edge_selector.h>
 #include <igraph/cpp/graph.h>
+#include <igraph/cpp/vertex_selector.h>
 #include <memory>
 
 namespace igraph {

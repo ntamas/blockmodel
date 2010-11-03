@@ -9,17 +9,17 @@
 
 namespace igraph {
 
+/// Typedef for attribute values
+typedef any AttributeValue;
+
+/// Typedef for a vector that stores attributes
+typedef std::vector<AttributeValue> AttributeValueVector;
+
 struct AttributeHandlerImpl;
 
 /// Attribute holder class for graphs
 class AttributeHolder {
 private:
-    /// Typedef for attribute values
-    typedef any AttributeValue;
-
-    /// Typedef for a vector that stores attributes
-    typedef std::vector<AttributeValue> AttributeValueVector;
-
     /// Typedef for the graph attribute storage
     typedef std::map<std::string, AttributeValue> GraphAttributeMap;
 
@@ -39,11 +39,31 @@ private:
     EdgeAttributeMap m_edgeAttributes;
 
 public:
+    /// Returns a reference to the value of the given edge attribute
+    AttributeValueVector& getEdgeAttributeReference(const std::string& attribute);
+
+    /// Returns a copy of the value of the given edge attribute
+    AttributeValueVector getEdgeAttribute(const std::string& attribute) const;
+
     /// Returns a reference to the value of the given graph attribute
-    any& getGraphAttributeReference(const std::string& attribute);
+    AttributeValue& getGraphAttributeReference(const std::string& attribute) {
+        return m_graphAttributes[attribute];
+    }
 
     /// Returns a copy of the value of the given graph attribute
-    any getGraphAttribute(const std::string& attribute) const;
+    AttributeValue getGraphAttribute(const std::string& attribute) const;
+
+    /// Returns a reference to the value of the given vertex attribute
+    AttributeValueVector& getVertexAttributeReference(const std::string& attribute) {
+        return m_vertexAttributes[attribute];
+    }
+
+    /// Returns a copy of the value of the given vertex attribute
+    AttributeValueVector getVertexAttribute(const std::string& attribute) const;
+
+    /// Returns the value of the given vertex attribute for a given vertex index
+    AttributeValue getVertexAttribute(const std::string& attribute,
+        long int index) const;
 
     /// Checks whether a given edge attribute exists
     bool hasEdgeAttribute(const std::string& attribute) const;

@@ -24,15 +24,33 @@ void AttributeHolder::copyEdgeAttributesFrom(const AttributeHolder& other) {
     m_edgeAttributes = other.m_edgeAttributes;
 }
 
-any AttributeHolder::getGraphAttribute(const std::string& attribute) const {
-    GraphAttributeMap::const_iterator it = m_graphAttributes.find(attribute);
-    if (it == m_graphAttributes.end())
-        return any();
+AttributeValueVector AttributeHolder::getEdgeAttribute(const std::string& attribute) const {
+    EdgeAttributeMap::const_iterator it = m_edgeAttributes.find(attribute);
+    if (it == m_edgeAttributes.end())
+        return AttributeValueVector();
     return it->second;
 }
 
-any& AttributeHolder::getGraphAttributeReference(const std::string& attribute) {
-    return m_graphAttributes[attribute];
+AttributeValue AttributeHolder::getGraphAttribute(const std::string& attribute) const {
+    GraphAttributeMap::const_iterator it = m_graphAttributes.find(attribute);
+    if (it == m_graphAttributes.end())
+        return AttributeValue();
+    return it->second;
+}
+
+AttributeValueVector AttributeHolder::getVertexAttribute(const std::string& attribute) const {
+    VertexAttributeMap::const_iterator it = m_vertexAttributes.find(attribute);
+    if (it == m_vertexAttributes.end())
+        return AttributeValueVector();
+    return it->second;
+}
+
+AttributeValue AttributeHolder::getVertexAttribute(const std::string& attribute,
+        long int index) const {
+    VertexAttributeMap::const_iterator it = m_vertexAttributes.find(attribute);
+    if (it == m_vertexAttributes.end())
+        return AttributeValueVector();
+    return it->second[index];
 }
 
 bool AttributeHolder::hasEdgeAttribute(const std::string& attribute) const {
@@ -48,7 +66,7 @@ bool AttributeHolder::hasVertexAttribute(const std::string& attribute) const {
 }
 
 void AttributeHolder::setGraphAttribute(const std::string& attribute,
-        const any& value) {
+        const AttributeValue& value) {
     m_graphAttributes[attribute] = value;
 }
 
@@ -113,7 +131,7 @@ struct AttributeHandlerImpl {
             if (attrs.find(record->name) == attrs.end())
                 attrs[record->name].resize(lastIndex + numNewEntries);
 
-            AttributeHolder::AttributeValueVector& vec = attrs[record->name];
+            AttributeValueVector& vec = attrs[record->name];
             switch (record->type) {
                 case IGRAPH_ATTRIBUTE_NUMERIC:
                     {

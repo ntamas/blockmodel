@@ -3,6 +3,7 @@
 #ifndef IGRAPHPP_EDGE_SELECTOR_H
 #define IGRAPHPP_EDGE_SELECTOR_H
 
+#include <igraph/cpp/graph.h>
 #include <igraph/cpp/types.h>
 #include <igraph/cpp/vector.h>
 
@@ -13,6 +14,9 @@ class EdgeSelector {
 private:
     /// The igraph_es_t instance encapsulated by the wrapper
     igraph_es_t m_es;
+
+    /// The graph the edge selector refers to
+    const Graph* m_pGraph;
 
 public:
     /*****************************/

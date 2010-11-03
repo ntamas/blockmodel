@@ -5,6 +5,7 @@
 #include <cmath>
 #include <stdexcept>
 #include <block/blockmodel.h>
+#include <igraph/cpp/vertex_selector.h>
 
 using namespace igraph;
 
@@ -497,7 +498,7 @@ Matrix DegreeCorrectedUndirectedBlockmodel::getRates() const {
 }
 
 void DegreeCorrectedUndirectedBlockmodel::getStickinesses(Vector& result) const {
-    m_pGraph->degree(&result, VertexSelector::All());
+    m_pGraph->degree(&result, V(m_pGraph));
     for (size_t i = 0; i < result.size(); i++)
         result[i] /= m_sumOfDegreesByType[m_types[i]];
 }

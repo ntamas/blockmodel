@@ -10,8 +10,6 @@
 #include <igraph/igraph_foreign.h>
 #include <igraph/igraph_interface.h>
 #include <igraph/cpp/attributes.h>
-#include <igraph/cpp/edge_selector.h>
-#include <igraph/cpp/vertex_selector.h>
 #include <stdexcept>
 #include <vector>
 
@@ -20,6 +18,9 @@
 #include <igraph/cpp/vector.h>
 
 namespace igraph {
+
+class VertexSelector;
+class EdgeSelector;
 
 /// C++-style wrapper around an igraph_t object
 class Graph {
@@ -123,7 +124,7 @@ public:
     integer_t ecount() const { return igraph_ecount(m_pGraph); }
 
     /// Returns a copy of the value of the given graph attribute
-    any getAttribute(const std::string& attribute) const;
+    AttributeValue getAttribute(const std::string& attribute) const;
 
     /// Returns the edge list of the graph
     Vector getEdgelist(bool bycol=false) const;
@@ -142,7 +143,7 @@ public:
     Vector neighbors(long int vertex, NeighborMode mode = IGRAPH_OUT) const;
 
     /// Sets the value of the given graph attribute
-    void setAttribute(const std::string& attribute, const any& value);
+    void setAttribute(const std::string& attribute, const AttributeValue& value);
 
     /// Removes loop and/or multiple edges from the graph
     void simplify(bool multiple=true, bool loops=true);
@@ -182,19 +183,21 @@ public:
     /**
      * This method works similar to \c std::map<>.operator[]: if the attribute
      * is found, its value is returned; if the attribute is not found, a new
-     * attribute will be created with the default constructor of \c igraph::any
+     * attribute will be created with the default constructor of \c igraph::AttributeValue
      * and this will be returned. Therefore, this operator won't work on const
      * graphs.
      */
-    any& operator[](const std::string& attribute);
+    AttributeValue& operator[](const std::string& attribute);
 
 private:
     /// Returns a pointer to the attribute holder of the graph
-    inline AttributeHolder* getAttributeHolder();
+    AttributeHolder* getAttributeHolder();
 
     /// Returns a pointer to the attribute holder of the graph (const)
-    const inline AttributeHolder* getAttributeHolder() const;
+    const AttributeHolder* getAttributeHolder() const;
 
+    friend class VertexSelector;
+    friend class EdgeSelector;
 };
 
 }       // end of namespaces

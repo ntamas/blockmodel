@@ -45,7 +45,7 @@ void PlainTextReader<UndirectedBlockmodel>::read(
 
     while (!is.eof()) {
         getline(is, str);
-        if (is.fail())
+        if (is.fail() && !is.eof())
             throw runtime_error("error while reading stream");
 
         /* Is the line empty? If so, a new heading will follow */
@@ -134,7 +134,7 @@ void PlainTextReader<DegreeCorrectedUndirectedBlockmodel>::read(
 
     while (!is.eof()) {
         getline(is, str);
-        if (is.fail())
+        if (is.fail() && !is.eof())
             throw runtime_error("error while reading stream");
 
         /* Is the line empty? If so, a new heading will follow */

@@ -11,6 +11,7 @@
 #include <block/util.hpp>
 #include <igraph/cpp/graph.h>
 
+#include "../common/graph_util.h"
 #include "../common/logging.h"
 #include "../common/string_util.h"
 #include "cmd_arguments.h"
@@ -137,17 +138,14 @@ public:
         }
 
         if (!modelReader.getFilename().empty()) {
-            FILE* f = fopen(modelReader.getFilename().c_str(), "r");
-            if (f != NULL) {
-                m_pGraph.reset(new Graph(Graph::ReadEdgelist(f)));
-                fclose(f);
-
+            try {
+                m_pGraph.reset(new Graph(GraphUtil::readGraph(modelReader.getFilename())));
                 if (!m_pGraph->isSimple()) {
                     info(">> simplifying graph");
                     m_pGraph->simplify();
                 }
                 m_pModel->setGraph(m_pGraph.get());
-            } else {
+            } catch (const runtime_error& ex) {
                 warning(">> cannot load original graph `%s', continuing anyway",
                         modelReader.getFilename().c_str());
             }

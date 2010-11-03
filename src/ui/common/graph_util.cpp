@@ -7,17 +7,6 @@
 using namespace std;
 using namespace igraph;
 
-UnknownGraphFormatException::UnknownGraphFormatException(const string& filename) 
-    : m_msg() {
-    if (filename.empty())
-        m_msg = "cannot detect the format of the graph";
-    else {
-        ostringstream oss;
-        oss << "cannot detect the format of the graph in: " << filename;
-        m_msg = oss.str();
-    }
-}
-
 GraphFormat GraphUtil::detectFormat(const string& filename) {
     string::size_type idx = filename.rfind('.');
 

@@ -1,6 +1,7 @@
 /* vim:set ts=4 sw=4 sts=4 et: */
 
 #include <cstdlib>
+#include <igraph/cpp/edge_selector.h>
 #include <igraph/cpp/graph.h>
 #include <block/blockmodel.h>
 #include <block/optimization.hpp>

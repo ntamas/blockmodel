@@ -14,16 +14,14 @@ typedef enum {
 } GraphFormat;
 
 /// Exception thrown when the format of a graph is unknown
-class UnknownGraphFormatException : public std::exception {
+class UnknownGraphFormatException : public std::runtime_error {
 private:
-    std::string m_msg;
+    std::string m_filename;
 
 public:
-    UnknownGraphFormatException(const std::string& filename = "");
+    explicit UnknownGraphFormatException(const std::string& filename = "") :
+        std::runtime_error("unknown graph format"), m_filename(filename) {}
     ~UnknownGraphFormatException() throw() {}
-    const char* what() const throw() {
-        return m_msg.c_str();
-    }
 };
 
 class GraphUtil {
