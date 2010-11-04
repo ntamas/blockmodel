@@ -102,23 +102,11 @@ public:
         m_pModel->randomize(*m_mcmc.getRNG());
 
         if (m_args.initMethod == GREEDY) {
-            GreedyStrategy<UndirectedBlockmodel> greedy;
-			UndirectedBlockmodel* pModel;
-
-			pModel = dynamic_cast<UndirectedBlockmodel*>(m_pModel.get());
-			if (pModel == 0) {
+            Blockmodel* pModel = m_pModel.get();
+            if (!greedyOptimization<UndirectedBlockmodel>(pModel) &&
+                !greedyOptimization<DegreeCorrectedUndirectedBlockmodel>(pModel)) {
 				error(">> greedy initialization not available for this model, "
 					  "using random instead");
-			} else {
-				info(">> running greedy initialization");
-				while (greedy.step(pModel)) {
-					double logL = m_pModel->getLogLikelihood();
-					if (!isQuiet()) {
-						clog << '[' << setw(6) << greedy.getStepCount() << "] "
-							 << '(' << setw(2) << m_pModel->getNumTypes() << ") "
-							 << setw(12) << logL << "\t(" << logL << ")\n";
-					}
-				}
 			}
         }
 
@@ -137,6 +125,30 @@ public:
 			if (report.size() > 0)
 				debug(">> %s", report.c_str());
         }
+    }
+
+    /// Runs the greedy optimization process for a given blockmodel.
+    /**
+     * \returns  \c false if the greedy optimization is not supported for the blockmodel,
+     *           \c true otherwise (after having run the process to completion)
+     */
+    template <typename T>
+    bool greedyOptimization(Blockmodel* pGenericModel) {
+        T* pModel = dynamic_cast<T*>(pGenericModel);
+        if (pModel == 0)
+            return false;
+
+        GreedyStrategy<T> greedy;
+        info(">> running greedy initialization");
+        while (greedy.step(pModel)) {
+            double logL = pModel->getLogLikelihood();
+            if (!isQuiet()) {
+                clog << '[' << setw(6) << greedy.getStepCount() << "] "
+                     << '(' << setw(2) << pModel->getNumTypes() << ") "
+                     << setw(12) << logL << "\t(" << logL << ")\n";
+            }
+        }
+        return true;
     }
 
     /// Returns whether we are running in quiet mode
