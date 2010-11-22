@@ -11,16 +11,17 @@ using namespace std;
 using namespace SimpleOpt;
 
 enum {
-    COUNT, IN_FORMAT
+    COUNT, IN_FORMAT, OUT_FORMAT
 };
 
 CommandLineArguments::CommandLineArguments() :
     CommandLineArgumentsBase("block-gen", BLOCKMODEL_VERSION_STRING),
-    count(1), inputFormat(FORMAT_PLAIN) {
+    count(1), inputFormat(FORMAT_PLAIN), outputFormat(FORMAT_EDGELIST) {
 
     /* basic options */
-    addOption(COUNT,     "-c", SO_REQ_SEP, "--count");
-    addOption(IN_FORMAT, "-f", SO_REQ_SEP, "--input-format");
+    addOption(COUNT,      "-c", SO_REQ_SEP, "--count");
+    addOption(IN_FORMAT,  "-f", SO_REQ_SEP, "--input-format");
+    addOption(OUT_FORMAT, "-F", SO_REQ_SEP, "--output-format");
 }
 
 int CommandLineArguments::handleOption(int id, const std::string& arg) {
@@ -41,6 +42,17 @@ int CommandLineArguments::handleOption(int id, const std::string& arg) {
                 return 1;
             }
             break;
+
+        case OUT_FORMAT:
+            if (arg == "edgelist")
+                outputFormat = FORMAT_EDGELIST;
+            else if (arg == "leda")
+                outputFormat = FORMAT_LEDA;
+            else {
+                cerr << "Unknown output format: " << arg << "\n";
+                return 1;
+            }
+            break;
     }
 
     return 0;
@@ -57,6 +69,11 @@ void CommandLineArguments::showHelp(ostream& os) const {
           "                        sets the format of the input file. The default value\n"
           "                        is plain, which is a simple plain text format. Known\n"
           "                        formats are: json, plain.\n"
+          "    -F format, --output-format FORMAT\n"
+          "                        sets the format of the output file. The default value\n"
+          "                        is edgelist, which dumps the edges of the graph (where\n"
+          "                        each edge is identified by a non-negative number).\n"
+          "                        Known formats are: edgelist, leda.\n"
           "    -o FILE, --output FILE\n"
           "                        sets the name of the output file where the results\n"
           "                        will be written. The default is the standard\n"

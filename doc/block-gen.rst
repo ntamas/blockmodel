@@ -45,6 +45,12 @@ OPTIONS
                       the manual page of ``block-fit`` for more information on
                       the supported file formats.
 
+-F FORMAT, --output-format FORMAT
+                      Sets the format of the output file. The default value is
+                      **edgelist**, which simply dumps the edge list to the
+                      output file. See the section on `Output formats`_ for
+                      more details.
+
 --model MODEL         Selects the model to be used. The following options are
                       available:
 
@@ -56,6 +62,20 @@ OPTIONS
                         Degree-weighted undirected blockmodel. This model aims
                         to keep both the expected number of edges and the
                         expected degree of each vertex.
+
+OUTPUT FORMATS
+==============
+
+This section lists all the output formats supported by the ``-F`` option.
+
+edgelist
+    Simple numeric edge list format. Each line encodes an edge of the graph,
+    the first column being the source vertex of the edge, the second column
+    being the target vertex. Vertices are referred to by numbers from 0 to
+    *n*-1, where *n* is the number of vertices.
+
+leda
+    The LEDA native format, supported by LEDA and GraphWin.
 
 PROBLEMS
 ========

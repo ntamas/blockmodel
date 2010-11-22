@@ -149,6 +149,17 @@ void Graph::simplify(bool multiple, bool loops) {
     IGRAPH_TRY(igraph_simplify(m_pGraph, multiple, loops, 0));
 }
 
+void Graph::writeLEDA(FILE* outstream, const std::string& vertex_attr_name,
+        const std::string& edge_attr_name) const {
+    const char *vattr, *eattr;
+
+    assert(m_pGraph);
+    vattr = vertex_attr_name.length() ? vertex_attr_name.c_str() : 0;
+    eattr = edge_attr_name.length() ? edge_attr_name.c_str() : 0;
+
+    IGRAPH_TRY(igraph_write_graph_leda(m_pGraph, outstream, vattr, eattr));
+}
+
 void Graph::writeEdgelist(FILE* outstream) const {
     assert(m_pGraph);
     IGRAPH_TRY(igraph_write_graph_edgelist(m_pGraph, outstream));

@@ -20,6 +20,9 @@ private:
     /// Parsed command line arguments
     CommandLineArguments m_args;
 
+    /// The blockmodel being generated
+    auto_ptr<Blockmodel> m_pModel;
+
 public:
     LOGGING_FUNCTION(debug, 2);
     LOGGING_FUNCTION(info, 1);
@@ -44,24 +47,30 @@ public:
     }
 
     /// Reads the model from the disk
-    template <typename MT>
-    int readModel(MT& model) {
-        auto_ptr<Reader<MT> > pModelReader;
+    int readModel() {
+		switch (m_args.modelType) {
+			case UNDIRECTED_BLOCKMODEL:
+				m_pModel.reset(new UndirectedBlockmodel());
+				break;
+
+			case DEGREE_CORRECTED_UNDIRECTED_BLOCKMODEL:
+				m_pModel.reset(new DegreeCorrectedUndirectedBlockmodel());
+				break;
+
+			default:
+				throw std::runtime_error("invalid model type given");
+		}
 
         info(">> loading model: %s", m_args.inputFile.c_str());
 
-        switch (m_args.inputFormat) {
-            default:
-                pModelReader.reset(new PlainTextReader<MT>);
-                break;
-        };
+        PlainTextReader<Blockmodel> modelReader;
 
         try {
             if (m_args.inputFile == "-")
-                pModelReader->read(model, cin);
+                modelReader.read(m_pModel.get(), cin);
             else {
                 ifstream is(m_args.inputFile.c_str());
-                pModelReader->read(model, is);
+                modelReader.read(m_pModel.get(), is);
             }
         } catch (const runtime_error& ex) {
             error("Cannot read input file: %s", m_args.inputFile.c_str());
@@ -74,7 +83,6 @@ public:
 
     /// Runs the user interface
     int run(int argc, char** argv) {
-        UndirectedBlockmodel model;
         MersenneTwister rng;
         FILE* out = NULL;
 
@@ -83,7 +91,7 @@ public:
         if (m_args.count <= 0)
             return 0;
 
-        if (readModel(model))
+        if (readModel())
             return 1;
 
         if (m_args.outputFile == "-")
@@ -93,24 +101,41 @@ public:
         rng.init_genrand(m_args.randomSeed);
 
         for (long int i = 0; i < m_args.count; i++) {
-            Graph graph = model.generate(rng);
+            Graph graph = m_pModel->generate(rng);
 
             if (out != stdout) {
                 string outputFile = generateOutputFilename(i);
                 out = fopen(outputFile.c_str(), "w");
                 if (out) {
-                    graph.writeEdgelist(out);
+                    writeGraph(graph, out);
                     fclose(out);
                 } else {
                     error("Cannot open output file: %s", outputFile.c_str());
                     return 4;
                 }
             } else {
-                graph.writeEdgelist(out);
+                writeGraph(graph, out);
             }
         }
 
         return 0;
+    }
+
+    /// Writes the given graph to the given stream
+    void writeGraph(const Graph& graph, FILE* out) {
+        switch (m_args.outputFormat) {
+            case FORMAT_EDGELIST:
+                graph.writeEdgelist(out);
+                break;
+
+            case FORMAT_LEDA:
+                graph.writeLEDA(out);
+                break;
+
+            default:
+                error("Invalid output format specifier. This should not happen.");
+                break;
+        }
     }
 };
 

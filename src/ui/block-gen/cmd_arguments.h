@@ -6,6 +6,11 @@
 #include <block/io.hpp>
 #include "../common/cmd_arguments_base.h"
 
+/// Accepted output formats
+typedef enum {
+    FORMAT_EDGELIST, FORMAT_LEDA
+} GraphFormat;
+
 /// Command line parser for block-gen
 class CommandLineArguments : public CommandLineArgumentsBase {
 public:
@@ -18,6 +23,9 @@ public:
 
     /// Format of the input file
     Format inputFormat;
+
+    /// Format of the output file
+    GraphFormat outputFormat;
 
     /***********************/
     /* Advanced parameters */
