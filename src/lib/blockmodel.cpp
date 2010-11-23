@@ -381,10 +381,44 @@ void UndirectedBlockmodel::setProbabilities(const Matrix& p) {
 
 /***************************************************************************/
 
+namespace {
+    /* Auxiliary function to generate Poisson-distributed random numbers */
+    double poisson(MersenneTwister& rng, double lambda) {
+        double p0 = std::exp(-lambda), p = 1;
+        int k = 0;
+        do {
+            k++;
+            p *= rng.random();
+        } while (p > p0);
+        return k-1;
+    }
+}
+
 Graph DegreeCorrectedUndirectedBlockmodel::generate(
         MersenneTwister& rng) const {
-    // TODO
-    return Graph();
+    long int n = m_types.size();
+    const Matrix rates = getRates();
+    const Vector stickinesses = getStickinesses();
+
+    Graph graph(n);
+    Vector edges;
+
+    for (long int v1 = 0; v1 < n; v1++) {
+        double s1 = stickinesses[v1];
+        int type1 = m_types[v1];
+        for (long int v2 = v1+1; v2 < n; v2++) {
+            double s2 = stickinesses[v2];
+            double rate = s1 * s2 * rates(type1, m_types[v2]);
+            int numEdges = poisson(rng, rate);
+            for (int i = 0; i < numEdges; i++) {
+                edges.push_back(v1);
+                edges.push_back(v2);
+            }
+        }
+    }
+
+    graph.addEdges(edges);
+    return graph;
 }
 
 /* Auxiliary functions for getLogLikelihoodIncrease */
@@ -498,9 +532,15 @@ Matrix DegreeCorrectedUndirectedBlockmodel::getRates() const {
 }
 
 void DegreeCorrectedUndirectedBlockmodel::getStickinesses(Vector& result) const {
-    m_pGraph->degree(&result, V(m_pGraph));
-    for (size_t i = 0; i < result.size(); i++)
-        result[i] /= m_sumOfDegreesByType[m_types[i]];
+    if (m_pGraph) {
+        /* If we have a graph, estimate stickinesses from degrees */
+        m_pGraph->degree(&result, V(m_pGraph));
+        for (size_t i = 0; i < result.size(); i++)
+            result[i] /= m_sumOfDegreesByType[m_types[i]];
+    } else {
+        /* Use pre-defined stickiness values */
+        result = m_stickinesses;
+    }
 }
 
 Vector DegreeCorrectedUndirectedBlockmodel::getStickinesses() const {
@@ -524,11 +564,11 @@ void DegreeCorrectedUndirectedBlockmodel::recountEdges() {
 }
 
 void DegreeCorrectedUndirectedBlockmodel::setStickinesses(
-        const igraph::Vector& degrees) {
+        const igraph::Vector& stickinesses) {
     if (m_pGraph != NULL)
         throw std::runtime_error("cannot set stickiness values for a model "
                 "with an associated graph");
-    m_degrees = degrees;
+    m_stickinesses = stickinesses;
 }
 
 void DegreeCorrectedUndirectedBlockmodel::setGraph(const igraph::Graph* graph) {
