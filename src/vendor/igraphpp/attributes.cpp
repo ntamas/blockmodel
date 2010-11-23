@@ -177,6 +177,117 @@ struct AttributeHandlerImpl {
         return add_vertices_edges_helper(attrs, igraph_ecount(graph),
                 igraph_vector_size(edges), attr);
     }
+
+    /***********************************************************************/
+
+    static int get_numeric_graph_attr(const igraph_t *graph, const char *name,
+            igraph_vector_t *value) {
+        AttributeHolder& holder = *(static_cast<AttributeHolder*>(graph->attr));
+        AttributeHolder::GraphAttributeMap& attrs = holder.m_graphAttributes;
+        AttributeHolder::GraphAttributeMap::const_iterator it;
+
+        it = attrs.find(name);
+        if (it == attrs.end())
+            IGRAPH_ERROR("Unknown attribute", IGRAPH_EINVAL);
+
+        IGRAPH_CHECK(igraph_vector_resize(value, 1));
+        VECTOR(*value)[0] = *it->second.as<igraph_real_t>();
+
+        return IGRAPH_SUCCESS;
+    }
+
+    /***********************************************************************/
+
+    static int get_string_graph_attr(const igraph_t *graph, const char *name,
+            igraph_strvector_t *value) {
+        AttributeHolder& holder = *(static_cast<AttributeHolder*>(graph->attr));
+        AttributeHolder::GraphAttributeMap& attrs = holder.m_graphAttributes;
+        AttributeHolder::GraphAttributeMap::const_iterator it;
+
+        it = attrs.find(name);
+        if (it == attrs.end())
+            IGRAPH_ERROR("Unknown attribute", IGRAPH_EINVAL);
+
+        IGRAPH_CHECK(igraph_strvector_resize(value, 1));
+        IGRAPH_CHECK(igraph_strvector_set(value, 0, *it->second.as<const char*>()));
+
+        return IGRAPH_SUCCESS;
+    }
+
+    /***********************************************************************/
+
+    template <typename T>
+    static int gettype_helper(const igraph_t *graph, igraph_attribute_type_t *type,
+            const char* name, const T& map) {
+        typename T::const_iterator it = map.find(name);
+
+        if (it == map.end())
+            IGRAPH_ERROR("Unknown attribute", IGRAPH_EINVAL);
+
+        const typename T::mapped_type& values = it->second;
+        igraph_attribute_type_t result = IGRAPH_ATTRIBUTE_DEFAULT;
+
+        /* Infer the attribute type by evaluating the types of the items */
+        for (typename T::mapped_type::const_iterator it = values.begin();
+                it != values.end(); it++) {
+            // const any& item = *it;
+            // const std::type_info& type_info = item.type();
+
+            // TODO
+        }
+
+        if (result == IGRAPH_ATTRIBUTE_DEFAULT)
+            result = IGRAPH_ATTRIBUTE_NUMERIC;
+
+        *type = result;
+        return IGRAPH_SUCCESS;
+    }
+
+    static int gettype(const igraph_t *graph, igraph_attribute_type_t *type,
+            igraph_attribute_elemtype_t elemtype, const char *name) {
+        AttributeHolder& holder = *(static_cast<AttributeHolder*>(graph->attr));
+        switch (elemtype) {
+        case IGRAPH_ATTRIBUTE_GRAPH:
+            // TODO
+            *type = IGRAPH_ATTRIBUTE_NUMERIC;
+            return IGRAPH_SUCCESS;
+
+        case IGRAPH_ATTRIBUTE_VERTEX:
+            return gettype_helper(graph, type, name, holder.m_vertexAttributes);
+
+        case IGRAPH_ATTRIBUTE_EDGE:
+            return gettype_helper(graph, type, name, holder.m_edgeAttributes);
+
+        default:
+            IGRAPH_ERROR("Unknown attribute element type", IGRAPH_EINVAL);
+        }
+    }
+
+    /***********************************************************************/
+
+    template <typename T>
+    static igraph_bool_t has_attr_helper(const T& map, const char* name) {
+        return map.find(name) != map.end();
+    }
+
+    static igraph_bool_t has_attr(const igraph_t *graph,
+            igraph_attribute_elemtype_t type, const char *name) {
+        AttributeHolder& holder = *(static_cast<AttributeHolder*>(graph->attr));
+
+        switch (type) {
+            case IGRAPH_ATTRIBUTE_GRAPH:
+                return has_attr_helper(holder.m_graphAttributes, name);
+
+            case IGRAPH_ATTRIBUTE_VERTEX:
+                return has_attr_helper(holder.m_vertexAttributes, name);
+
+            case IGRAPH_ATTRIBUTE_EDGE:
+                return has_attr_helper(holder.m_edgeAttributes, name);
+
+            default:
+                IGRAPH_ERROR("Unknown attribute element type", IGRAPH_EINVAL);
+        }
+    }
 };
 
 
@@ -193,10 +304,10 @@ static igraph_attribute_table_t cpp_attribute_handler = {
     /* permute_edges = */ 0,
     /* combine_edges = */ 0,
     /* get_info = */ 0,
-    /* has_attr = */ 0,
-    /* gettype = */ 0,
-    /* get_numeric_graph_attr= */ 0,
-    /* get_string_graph_attr= */ 0,
+    &AttributeHandlerImpl::has_attr,
+    &AttributeHandlerImpl::gettype,
+    &AttributeHandlerImpl::get_numeric_graph_attr,
+    &AttributeHandlerImpl::get_string_graph_attr,
     /* get_numeric_vertex_attr= */ 0,
     /* get_string_vertex_attr= */ 0,
     /* get_numeric_edge_attr= */ 0,
