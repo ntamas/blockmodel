@@ -99,6 +99,11 @@ public:
 		m_pModel = constructNewModel(m_pGraph.get(), groupCount);
 		m_pBestModel = constructNewModel(m_pGraph.get(), groupCount);
 
+        if (groupCount < 2) {
+            m_pBestModel->assignFrom(m_pModel);
+            return;
+        }
+
         m_pModel->randomize(*m_mcmc.getRNG());
 
         if (m_args.initMethod == GREEDY) {
@@ -267,28 +272,28 @@ public:
         if (m_args.numGroups > 0) {
             /* Run the Markov chain until it converges */
             fitForGivenGroupCount(m_args.numGroups);
-            info(">> AIC = %.4f, BIC = %.4f", aic(*m_pModel), bic(*m_pModel));
+            info(">> AIC = %.4f", aic(*m_pModel));
         } else {
-            double currentAIC, bestAIC = std::numeric_limits<double>::max();
-            double currentBIC, bestBIC = std::numeric_limits<double>::max();
 			std::auto_ptr<Blockmodel> pModelWithBestTypeCount =
-                constructNewModel(m_pGraph.get(), 2);
+                constructNewModel(m_pGraph.get(), 1);
+            double currentAIC, bestAIC = std::numeric_limits<double>::infinity();
 
             /* Find the optimal type count */
-            for (int k = 2; k <= sqrt(m_pGraph->vcount()); k++) {
-                info(">> trying with %d types", k);
+            int kMax = floor(sqrt(m_pGraph->vcount()));
+            if (kMax < 1)
+                kMax = 1;
+            for (int k = 1; k <= kMax; k++) {
+                if (k == 1)
+                    info(">> trying with 1 type");
+                else
+                    info(">> trying with %d types", k);
                 fitForGivenGroupCount(k);
                 currentAIC = aic(*m_pBestModel);
-				currentBIC = bic(*m_pBestModel);
                 if (currentAIC < bestAIC) {
                     bestAIC = currentAIC;
                     pModelWithBestTypeCount->assignFrom(m_pBestModel);
                 }
-                if (currentBIC < bestBIC) {
-                    bestBIC = currentBIC;
-                }
-                debug(">> AIC = %.4f (%.4f), BIC = %.4f (%.4f)",
-						currentAIC, bestAIC, currentBIC, bestBIC);
+                debug(">> AIC = %.4f (%.4f)", currentAIC, bestAIC);
             }
 
             m_pModel->assignFrom(pModelWithBestTypeCount);

@@ -465,7 +465,7 @@ public:
 	 * This method should be called only if the model is not associated to
 	 * a graph.
 	 */
-	void setStickinesses(const igraph::Vector& degrees);
+	void setStickinesses(const igraph::Vector& stickinesses);
 
     /// Sets the number of types
     /**
