@@ -106,7 +106,7 @@ void CommandLineArgumentsBase::parse(int argc, char** argv) {
 
             case MODEL:
                 arg = args.OptionArg() ? args.OptionArg() : "";
-                if (arg == "undirected")
+                if (arg == "uncorrected")
                     modelType = UNDIRECTED_BLOCKMODEL;
                 else if (arg == "degree")
                     modelType = DEGREE_CORRECTED_UNDIRECTED_BLOCKMODEL;
