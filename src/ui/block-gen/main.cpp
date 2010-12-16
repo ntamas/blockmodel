@@ -100,7 +100,7 @@ public:
         debug(">> using random seed: %lu", m_args.randomSeed);
         rng.init_genrand(m_args.randomSeed);
 
-        for (long int i = 0; i < m_args.count; i++) {
+        for (size_t i = 0; i < m_args.count; i++) {
             Graph graph = m_pModel->generate(rng);
 
             if (out != stdout) {
