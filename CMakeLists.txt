@@ -20,13 +20,19 @@ set(BLOCKMODEL_VERSION_MAJOR 0)
 set(BLOCKMODEL_VERSION_MINOR 1)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/block/version.h.in
-	           ${CMAKE_CURRENT_BINARY_DIR}/include/block/version.h)
+               ${CMAKE_CURRENT_BINARY_DIR}/include/block/version.h)
 
 #####################################################################
 # Tweaking CMake
 #####################################################################
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/etc/cmake;${CMAKE_MODULE_PATH})
+
+#####################################################################
+# Find dependencies
+#####################################################################
+
+find_package(igraph REQUIRED)
 
 #####################################################################
 # Compiler flags for different build configurations
@@ -41,8 +47,9 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_ARCH_FLAGS} -O3 -DNDEBUG -Wall -s")
 set(CMAKE_C_FLAGS_PROFILING "${CMAKE_ARCH_FLAGS} -pg")
 set(CMAKE_CXX_FLAGS_PROFILING "${CMAKE_ARCH_FLAGS} -pg")
 
-include_directories(include/ ~/include ${CMAKE_CURRENT_BINARY_DIR}/include)
-link_directories(~/lib)
+include_directories(${igraph_INCLUDE_DIRS}
+                    ${CMAKE_CURRENT_SOURCE_DIR}/include
+                    ${CMAKE_CURRENT_BINARY_DIR}/include)
 
 #####################################################################
 # Process subdirectories
