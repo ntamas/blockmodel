@@ -1,0 +1,3 @@
+[submodule "vendor/igraphpp"]
+	path = vendor/igraphpp
+	url = http://github.com/ntamas/igraphpp.git

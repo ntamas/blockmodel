@@ -26,7 +26,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/block/version.h.in
 # Tweaking CMake
 #####################################################################
 
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/etc/cmake;${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/etc/cmake;${CMAKE_CURRENT_SOURCE_DIR}/vendor/igraphpp/etc/cmake;${CMAKE_MODULE_PATH})
 
 #####################################################################
 # Find dependencies
@@ -49,7 +49,8 @@ set(CMAKE_CXX_FLAGS_PROFILING "${CMAKE_ARCH_FLAGS} -pg")
 
 include_directories(${igraph_INCLUDE_DIRS}
                     ${CMAKE_CURRENT_SOURCE_DIR}/include
-                    ${CMAKE_CURRENT_BINARY_DIR}/include)
+                    ${CMAKE_CURRENT_BINARY_DIR}/include
+                    ${CMAKE_CURRENT_SOURCE_DIR}/vendor/igraphpp/include)
 
 #####################################################################
 # Process subdirectories
@@ -57,3 +58,4 @@ include_directories(${igraph_INCLUDE_DIRS}
 
 add_subdirectory(src)
 add_subdirectory(test)
+add_subdirectory(vendor)

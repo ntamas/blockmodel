@@ -1,2 +1,0 @@
-add_subdirectory(igraphpp)
-add_subdirectory(mtwister)
