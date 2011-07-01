@@ -10,7 +10,8 @@ typedef enum {
     GRAPH_FORMAT_AUTO,
     GRAPH_FORMAT_UNKNOWN,
     GRAPH_FORMAT_EDGELIST,
-    GRAPH_FORMAT_NCOL
+    GRAPH_FORMAT_NCOL,
+    GRAPH_FORMAT_GRAPHML
 } GraphFormat;
 
 /// Exception thrown when the format of a graph is unknown
