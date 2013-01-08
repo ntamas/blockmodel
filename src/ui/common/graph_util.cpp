@@ -26,6 +26,8 @@ GraphFormat GraphUtil::detectFormat(const string& filename) {
         return GRAPH_FORMAT_NCOL;
     if (extension == "txt")
         return GRAPH_FORMAT_EDGELIST;
+    if (extension == "graphml")
+        return GRAPH_FORMAT_GRAPHML;
 
     return GRAPH_FORMAT_UNKNOWN;
 }
@@ -71,6 +73,9 @@ Graph GraphUtil::readGraph(FILE* fptr, GraphFormat format) {
         case GRAPH_FORMAT_NCOL:
             result = read_ncol(fptr, true,
                     IGRAPH_ADD_WEIGHTS_IF_PRESENT, directed);
+
+        case GRAPH_FORMAT_GRAPHML:
+            result = read_graphml(fptr);
             break;
 
         default:
