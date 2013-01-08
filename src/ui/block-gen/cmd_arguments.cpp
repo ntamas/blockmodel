@@ -19,9 +19,9 @@ CommandLineArguments::CommandLineArguments() :
     count(1), inputFormat(FORMAT_PLAIN), outputFormat(FORMAT_EDGELIST) {
 
     /* basic options */
-    addOption(COUNT,      "-c", SO_REQ_SEP, "--count");
-    addOption(IN_FORMAT,  "-f", SO_REQ_SEP, "--input-format");
-    addOption(OUT_FORMAT, "-F", SO_REQ_SEP, "--output-format");
+    addOption(COUNT,       "-c", SO_REQ_SEP, "--count");
+    addOption(IN_FORMAT,   "-f", SO_REQ_SEP, "--input-format");
+    addOption(OUT_FORMAT,  "-F", SO_REQ_SEP, "--output-format");
 }
 
 int CommandLineArguments::handleOption(int id, const std::string& arg) {
@@ -35,8 +35,8 @@ int CommandLineArguments::handleOption(int id, const std::string& arg) {
         case IN_FORMAT:
             if (arg == "plain")
                 inputFormat = FORMAT_PLAIN;
-            else if (arg == "json")
-                inputFormat = FORMAT_JSON;
+            // else if (arg == "json")
+            //     inputFormat = FORMAT_JSON;
             else {
                 cerr << "Unknown input format: " << arg << "\n";
                 return 1;
@@ -72,7 +72,7 @@ void CommandLineArguments::showHelp(ostream& os) const {
           "    -f FORMAT, --input-format FORMAT\n"
           "                        sets the format of the input file. The default value\n"
           "                        is plain, which is a simple plain text format. Known\n"
-          "                        formats are: json, plain.\n"
+          "                        formats are: plain.\n"
           "    -F format, --output-format FORMAT\n"
           "                        sets the format of the output file. The default value\n"
           "                        is edgelist, which dumps the edges of the graph (where\n"
@@ -84,7 +84,7 @@ void CommandLineArguments::showHelp(ostream& os) const {
           "                        output stream.\n"
           "\n"
           "Advanced algorithm parameters:\n"
-          "    --model MODEL       selects the type of the model used for prediction.\n"
+          "    --model MODEL       selects the type of the model used for generation.\n"
           "                        Available models: uncorrected (default), degree.\n"
           "    --seed SEED         use the given number to seed the random number\n"
           "                        generator.\n"

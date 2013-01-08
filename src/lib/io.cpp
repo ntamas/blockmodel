@@ -79,7 +79,7 @@ void PlainTextReader<UndirectedBlockmodel>::read(
             /* Store the next type */
             int type;
             iss.str(str);
-            iss >> str >> type;
+            iss >> type;
             if (iss.bad())
                 throw runtime_error("error while parsing type vector");
             types.push_back(type);
@@ -168,7 +168,7 @@ void PlainTextReader<DegreeCorrectedUndirectedBlockmodel>::read(
             /* Store the next type */
             int type;
             iss.str(str);
-            iss >> str >> type;
+            iss >> type;
             if (iss.bad())
                 throw runtime_error("error while parsing type vector");
             types.push_back(type);
@@ -176,7 +176,7 @@ void PlainTextReader<DegreeCorrectedUndirectedBlockmodel>::read(
             /* Store the next degree */
             double theta;
             iss.str(str);
-            iss >> str >> theta;
+            iss >> theta;
             if (iss.bad())
                 throw runtime_error("error while parsing stickiness vector");
             thetas.push_back(theta);
@@ -278,13 +278,13 @@ void PlainTextWriter<DegreeCorrectedUndirectedBlockmodel>::write(
 
     os << "TYPES\n";
     for (int i = 0; i < n; i++)
-        os << i << '\t' << model.getType(i) << '\n';
+        os << model.getType(i) << '\n';
     os << '\n';
 
     os << "STICKINESSES\n";
     Vector thetas = model.getStickinesses();
     for (int i = 0; i < n; i++)
-        os << i << '\t' << thetas[i] << '\n';
+        os << thetas[i] << '\n';
     os << '\n';
 
     os << "RATES\n";

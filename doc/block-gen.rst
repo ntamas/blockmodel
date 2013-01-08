@@ -41,9 +41,8 @@ OPTIONS
 
 -f FORMAT, --input-format FORMAT
                       Sets the format of the input file. The default value is
-                      **plain**, which is a simple plain text format. See
-                      the manual page of ``block-fit`` for more information on
-                      the supported file formats.
+                      **plain**, which is a simple plain text format. The JSON
+                      format is currently not supported.
 
 -F FORMAT, --output-format FORMAT
                       Sets the format of the output file. The default value is
@@ -73,6 +72,14 @@ edgelist
     the first column being the source vertex of the edge, the second column
     being the target vertex. Vertices are referred to by numbers from 0 to
     *n*-1, where *n* is the number of vertices.
+
+graphml
+    The GraphML format, supported by many network analysis tools, e.g.,
+    Cytoscape or Gephi.
+
+gml
+    The GML format, supported by many network analysis tools, e.g.,
+    Cytoscape or Gephi.
 
 leda
     The LEDA native format, supported by LEDA and GraphWin.

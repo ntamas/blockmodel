@@ -110,17 +110,25 @@ plain
     dump was created, the number of vertices, the number of types, the
     log-likelihood and the AIC of the model, ``TYPES``, which contains the name
     and type of each vertex in a tabular format, one vertex per line, and
-    ``PROBABILITIES``, which contains the *k* by *k* probability matrix.
+    ``PROBABILITIES``, which contains the *k* by *k* probability matrix. For
+    degree-corrected blockmodels, ``PROBABILITIES`` is replaced by ``RATES``,
+    which contains the *k* by *k* rate matrix, and there is also
+    a ``STICKINESSES`` section, which contains the "stickiness" value for each
+    vertex.
 
 json
     The result is presented as a JSON dictionary with keys similar to the
     section names in the plain format (but in lowercase). The info section is
-    presented as a JSON dictionary associated to the ``info`` key, the types
-    ``key`` refers to the list of vertex types (no vertex names are reported
-    here) and the ``probabilities`` key stores a list of lists that encode the
-    matrix. There is an extra entry in the JSON dictionary named ``names``,
-    this contains the list of vertex names if you need to match them with the
-    types.
+    presented as a JSON dictionary associated to the ``info`` key. The
+    remaining sections are presented in JSON dictionaries associated to the
+    ``parameters`` key. Within the ``parameters`` key, the types
+    subkey refers to the list of vertex types (no vertex names are reported
+    here), the ``probabilities`` subkey stores a list of lists that encode the
+    matrix, and the ``names`` subkey contains the list of vertex names from the
+    input file if you need to match them back to the type vector.
+    For degree-corrected blockmodels, the ``probabilities`` subkey is replaced by
+    ``rates`` (as in the plain format) and there is also a ``stickiness`` key,
+    whose value reports the stickiness value of each vertex.
 
 PROBLEMS
 ========
