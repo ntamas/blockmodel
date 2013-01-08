@@ -32,11 +32,6 @@ public:
     }
 
     /// Reads into the given object from the given stream
-    virtual void read(T& model, std::istream& is) {
-        read(&model, is);
-    }
-
-    /// Reads into the given object from the given stream
     virtual void read(T* model, std::istream& is) = 0;
 };
 

@@ -8,7 +8,7 @@
 
 /// Accepted output formats
 typedef enum {
-    FORMAT_EDGELIST, FORMAT_LEDA
+    FORMAT_EDGELIST, FORMAT_GRAPHML, FORMAT_GML, FORMAT_LEDA
 } GraphFormat;
 
 /// Command line parser for block-gen

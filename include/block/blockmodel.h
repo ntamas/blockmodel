@@ -49,7 +49,7 @@ private:
 class Blockmodel {
 protected:
     /// Pointer to a graph to which this model will be fitted
-    const igraph::Graph* m_pGraph;
+    igraph::Graph* m_pGraph;
 
     /// The number of types in the model
     int m_numTypes;
@@ -104,7 +104,7 @@ public:
      * functions, which is forbidden in constructors.
      */
     template <typename ModelType>
-    static ModelType create(const igraph::Graph* pGraph, int numTypes) {
+    static ModelType create(igraph::Graph* pGraph, int numTypes) {
         ModelType result;
         result.setGraph(pGraph);
         result.setNumTypes(numTypes);
@@ -243,7 +243,7 @@ public:
      * If the graph is not NULL, the type vector will be resized to the number
      * of vertices in the graph and the edge counts will be re-calculated.
      */
-    virtual void setGraph(const igraph::Graph* graph);
+    virtual void setGraph(igraph::Graph* graph);
 
     /// Sets the number of types
     /**
@@ -458,7 +458,7 @@ public:
      * of vertices in the graph and the edge counts will be re-calculated.
      * The cached degree vector will also be re-calculated.
      */
-    virtual void setGraph(const igraph::Graph* graph);
+    virtual void setGraph(igraph::Graph* graph);
 
 	/// Sets the stickiness values of vertices in the model
 	/**

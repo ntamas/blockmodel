@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <sstream>
+#include <igraph/cpp/io.h>
 #include "graph_util.h"
 
 using namespace std;
@@ -15,6 +16,12 @@ GraphFormat GraphUtil::detectFormat(const string& filename) {
     
     string extension = filename.substr(idx + 1);
     transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
+    if (extension == "graphml" || extension == "xml")
+        return GRAPH_FORMAT_GRAPHML;
+    if (extension == "gml")
+        return GRAPH_FORMAT_GML;
+    if (extension == "lgl")
+        return GRAPH_FORMAT_LGL;
     if (extension == "ncol")
         return GRAPH_FORMAT_NCOL;
     if (extension == "txt")
@@ -49,11 +56,20 @@ Graph GraphUtil::readGraph(FILE* fptr, GraphFormat format) {
 
     switch (format) {
         case GRAPH_FORMAT_EDGELIST:
-            result = Graph::ReadEdgelist(fptr, 0, directed);
+            result = read_edgelist(fptr, 0, directed);
+            break;
+
+        case GRAPH_FORMAT_GML:
+            result = read_gml(fptr);
+            break;
+
+        case GRAPH_FORMAT_LGL:
+            result = read_lgl(fptr, true,
+                    IGRAPH_ADD_WEIGHTS_IF_PRESENT, directed);
             break;
 
         case GRAPH_FORMAT_NCOL:
-            result = Graph::ReadNCOL(fptr, true,
+            result = read_ncol(fptr, true,
                     IGRAPH_ADD_WEIGHTS_IF_PRESENT, directed);
             break;
 

@@ -144,7 +144,7 @@ void Blockmodel::recountEdges() {
     }
 }
 
-void Blockmodel::setGraph(const igraph::Graph* graph) {
+void Blockmodel::setGraph(igraph::Graph* graph) {
     size_t oldSize = m_types.size();
 
     m_pGraph = graph;
@@ -571,7 +571,7 @@ void DegreeCorrectedUndirectedBlockmodel::setStickinesses(
     m_stickinesses = stickinesses;
 }
 
-void DegreeCorrectedUndirectedBlockmodel::setGraph(const igraph::Graph* graph) {
+void DegreeCorrectedUndirectedBlockmodel::setGraph(igraph::Graph* graph) {
     if (graph != NULL)
         graph->degree(&m_degrees, VertexSelector::All());
     else

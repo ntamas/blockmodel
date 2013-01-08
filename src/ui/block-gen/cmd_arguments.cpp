@@ -46,6 +46,10 @@ int CommandLineArguments::handleOption(int id, const std::string& arg) {
         case OUT_FORMAT:
             if (arg == "edgelist")
                 outputFormat = FORMAT_EDGELIST;
+            else if (arg == "graphml")
+                outputFormat = FORMAT_GRAPHML;
+            else if (arg == "gml")
+                outputFormat = FORMAT_GML;
             else if (arg == "leda")
                 outputFormat = FORMAT_LEDA;
             else {
@@ -73,7 +77,7 @@ void CommandLineArguments::showHelp(ostream& os) const {
           "                        sets the format of the output file. The default value\n"
           "                        is edgelist, which dumps the edges of the graph (where\n"
           "                        each edge is identified by a non-negative number).\n"
-          "                        Known formats are: edgelist, leda.\n"
+          "                        Known formats are: edgelist, graphml, gml, leda.\n"
           "    -o FILE, --output FILE\n"
           "                        sets the name of the output file where the results\n"
           "                        will be written. The default is the standard\n"

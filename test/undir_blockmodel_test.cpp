@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <block/blockmodel.h>
 #include <igraph/cpp/graph.h>
+#include <igraph/cpp/generators/full.h>
+#include <igraph/cpp/generators/grg.h>
 #include <mtwister/mt.h>
 
 #include "test_common.cpp"
@@ -10,7 +12,7 @@
 using namespace igraph;
 
 int test_setType() {
-    Graph graph = Graph::GRG(100, 0.2);
+    Graph graph = *grg_game(100, 0.2);
     UndirectedBlockmodel model = Blockmodel::create<UndirectedBlockmodel>(&graph, 5);
 
     Vector types;
@@ -44,7 +46,7 @@ int test_setType() {
 
 int test_getLogLikelihood() {
     /* Disjoint union of two full graphs */
-    Graph graph = Graph::Full(5) + Graph::Full(5);
+    Graph graph = *full(5) + *full(5);
     UndirectedBlockmodel model = Blockmodel::create<UndirectedBlockmodel>(&graph, 2);
 
     for (int i = 0; i < 10; i++)
@@ -70,7 +72,7 @@ int test_getLogLikelihood() {
 
 int test_getProbabilities() {
     /* Disjoint union of two full graphs */
-    Graph graph = Graph::Full(5) + Graph::Full(5);
+    Graph graph = *full(5) + *full(5);
     UndirectedBlockmodel model = Blockmodel::create<UndirectedBlockmodel>(&graph, 2);
 
     for (int i = 0; i < 10; i++)
@@ -113,7 +115,7 @@ int test_getProbabilities() {
 
 int test_getTotalAndActualEdgesFromAffectedGroups() {
     /* Disjoint union of two full graphs */
-    Graph graph = Graph::Full(5) + Graph::Full(5);
+    Graph graph = *full(5) + *full(5);
     UndirectedBlockmodel model = Blockmodel::create<UndirectedBlockmodel>(&graph, 2);
     Vector counts0, counts1, counts2, counts3;
 
@@ -179,7 +181,7 @@ int test_getTotalAndActualEdgesFromAffectedGroups() {
 
 int test_getLogLikelihoodIncrease() {
     /* Disjoint union of two full graphs */
-    Graph graph = Graph::Full(5) + Graph::Full(5);
+    Graph graph = *full(5) + *full(5);
     UndirectedBlockmodel model = Blockmodel::create<UndirectedBlockmodel>(&graph, 5);
     MersenneTwister rng;
     double predictedLogL;

@@ -3,6 +3,9 @@
 #include <cstdlib>
 #include <igraph/cpp/edge_selector.h>
 #include <igraph/cpp/graph.h>
+#include <igraph/cpp/generators/full.h>
+#include <igraph/cpp/generators/grg.h>
+#include <igraph/cpp/generators/ring.h>
 #include <block/blockmodel.h>
 #include <block/optimization.hpp>
 
@@ -11,7 +14,7 @@
 using namespace igraph;
 
 int test_two_rings() {
-    Graph graph = Graph::Ring(5) + Graph::Ring(5);
+    Graph graph = *ring(5) + *ring(5);
     Vector types(10);
     GreedyStrategy<UndirectedBlockmodel> greedy;
     UndirectedBlockmodel model;
@@ -37,8 +40,7 @@ int test_two_rings() {
 }
 
 int test_four_almost_cliques() {
-    Graph graph = Graph::Full(4) + Graph::Full(4) +
-                  Graph::Full(4) + Graph::Full(4);
+    Graph graph = *full(4) + *full(4) + *full(4) + *full(4);
     Vector types(16);
     GreedyStrategy<UndirectedBlockmodel> greedy;
     UndirectedBlockmodel model;
@@ -80,7 +82,7 @@ int test_four_almost_cliques() {
 /* This test is skipped currently as the greedy strategy uses an *approximation*
  * only, which prevents it from finding an exact match */
 int test_grg() {
-    Graph graph = Graph::GRG(100, 0.2);
+    Graph graph = *grg_game(100, 0.2);
     GreedyStrategy<UndirectedBlockmodel> greedy;
     MersenneTwister rng;
     Vector expected(graph.vcount());

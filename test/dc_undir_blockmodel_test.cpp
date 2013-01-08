@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <block/blockmodel.h>
 #include <igraph/cpp/graph.h>
+#include <igraph/cpp/generators/full.h>
 #include <mtwister/mt.h>
 
 #include "test_common.cpp"
@@ -11,7 +12,7 @@ using namespace igraph;
 
 int test_getLogLikelihood() {
     /* Disjoint union of two full graphs */
-    Graph graph = Graph::Full(5) + Graph::Full(3);
+    Graph graph = *full(5) + *full(3);
     DegreeCorrectedUndirectedBlockmodel model =
         Blockmodel::create<DegreeCorrectedUndirectedBlockmodel>(&graph, 2);
 
@@ -38,7 +39,7 @@ int test_getLogLikelihood() {
 
 int test_getLogLikelihoodIncrease() {
     /* Disjoint union of two full graphs */
-    Graph graph = Graph::Full(5) + Graph::Full(3);
+    Graph graph = *full(5) + *full(3);
     DegreeCorrectedUndirectedBlockmodel model =
         Blockmodel::create<DegreeCorrectedUndirectedBlockmodel>(&graph, 4);
     MersenneTwister rng;

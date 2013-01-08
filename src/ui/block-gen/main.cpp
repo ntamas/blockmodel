@@ -7,6 +7,7 @@
 #include <block/io.hpp>
 #include <block/util.hpp>
 #include <igraph/cpp/graph.h>
+#include <igraph/cpp/io.h>
 
 #include "../common/logging.h"
 #include "../common/string_util.h"
@@ -125,11 +126,19 @@ public:
     void writeGraph(const Graph& graph, FILE* out) {
         switch (m_args.outputFormat) {
             case FORMAT_EDGELIST:
-                graph.writeEdgelist(out);
+                write_edgelist(graph, out);
+                break;
+
+            case FORMAT_GML:
+                write_gml(graph, out);
+                break;
+
+            case FORMAT_GRAPHML:
+                write_graphml(graph, out);
                 break;
 
             case FORMAT_LEDA:
-                graph.writeLEDA(out);
+                write_leda(graph, out);
                 break;
 
             default:
