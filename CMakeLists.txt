@@ -16,8 +16,8 @@ enable_testing()
 # Version information
 #####################################################################
 
-set(BLOCKMODEL_VERSION_MAJOR 0)
-set(BLOCKMODEL_VERSION_MINOR 1)
+set(BLOCKMODEL_VERSION_MAJOR 1)
+set(BLOCKMODEL_VERSION_MINOR 0)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/block/version.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/include/block/version.h)
