@@ -70,3 +70,11 @@ add_custom_target(dist
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
+#####################################################################
+# Add 'release' target to make a release automatically
+#####################################################################
+
+add_custom_target(release
+	COMMAND etc/scripts/release.sh
+	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
