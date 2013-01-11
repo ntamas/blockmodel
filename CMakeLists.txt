@@ -59,3 +59,14 @@ include_directories(${igraph_INCLUDE_DIRS}
 add_subdirectory(src)
 add_subdirectory(test)
 add_subdirectory(vendor)
+
+#####################################################################
+# Add 'dist' target to archive everything with git
+#####################################################################
+
+set(ARCHIVE_NAME ${CMAKE_PROJECT_NAME}-${BLOCKMODEL_VERSION_MAJOR}.${BLOCKMODEL_VERSION_MINOR})
+add_custom_target(dist
+	COMMAND git archive --prefix=${ARCHIVE_NAME}/ HEAD | gzip >${CMAKE_BINARY_DIR}/${ARCHIVE_NAME}.tar.gz
+	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
