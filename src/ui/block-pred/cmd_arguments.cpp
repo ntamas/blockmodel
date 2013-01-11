@@ -44,8 +44,6 @@ int CommandLineArguments::handleOption(int id, const std::string& arg) {
         case IN_FORMAT:
             if (arg == "plain")
                 inputFormat = FORMAT_PLAIN;
-            else if (arg == "json")
-                inputFormat = FORMAT_JSON;
             else {
                 cerr << "Unknown input format: " << arg << "\n";
                 return 1;
@@ -87,7 +85,7 @@ void CommandLineArguments::showHelp(ostream& os) const {
           "    -f FORMAT, --input-format FORMAT\n"
           "                        sets the format of the input file. The default value\n"
           "                        is plain, which is a simple plain text format. Known\n"
-          "                        formats are: json, plain.\n"
+          "                        formats are: plain.\n"
           "    -o FILE, --output FILE\n"
           "                        sets the name of the output file where the results\n"
           "                        will be written. The default is the standard\n"
@@ -103,8 +101,6 @@ void CommandLineArguments::showHelp(ostream& os) const {
           "    --name-mapping FILE\n"
           "                        reads vertex names from the given FILE and uses\n"
           "                        these names instead of indices in the output.\n"
-          "    --no-burnin         don't burn in the Markov chain, start sampling\n"
-          "                        immediately.\n"
           "    --sampling-freq P   take a sample from the Markov chain at every step\n"
           "                        with probability P. Smaller P values decorrelate the\n"
           "                        Markov chain at the expense of longer sampling time.\n"

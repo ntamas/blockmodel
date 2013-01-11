@@ -21,6 +21,13 @@ SYNOPSIS
 DESCRIPTION
 ===========
 
+block-fit fits a stochastic blockmodel (uncorrected or degree-corrected) to
+a network given in an input file. The fitted stochastic model is then printed
+to the standard output or a given output file. block-fit supports simple edge
+lists (also known as NCOL files), LGL, GML and GraphML graphs and detects the
+input format from the extension of the file (``graphml``, ``gml``, ``lgl``,
+``ncol`` or ``txt``).
+
 OPTIONS
 =======
 

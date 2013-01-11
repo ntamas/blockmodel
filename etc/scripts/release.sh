@@ -2,6 +2,7 @@
 
 VERSION=$1
 HOST=$2
+DATE=`date +%Y-%m-%d`
 
 if [ x$VERSION = x -o x$HOST = x ]; then
 	echo "Usage: $0 version username@host"
@@ -24,7 +25,7 @@ make dist
 cd ..
 mv build/blockmodel-*.tar.gz .
 for i in ../doc/*.rst; do
-	rst2html $i >`basename $i .rst`-$VERSION.html
+	cat $i | sed -e "s/@DATE@/${DATE}/g" | rst2html - >`basename $i .rst`-$VERSION.html
 done
 rm -rf build
 

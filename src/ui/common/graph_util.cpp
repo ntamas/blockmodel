@@ -26,8 +26,6 @@ GraphFormat GraphUtil::detectFormat(const string& filename) {
         return GRAPH_FORMAT_NCOL;
     if (extension == "txt")
         return GRAPH_FORMAT_EDGELIST;
-    if (extension == "graphml")
-        return GRAPH_FORMAT_GRAPHML;
 
     return GRAPH_FORMAT_UNKNOWN;
 }

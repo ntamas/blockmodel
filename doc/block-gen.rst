@@ -21,6 +21,11 @@ SYNOPSIS
 DESCRIPTION
 ===========
 
+block-gen generates a graph from a stochastic blockmodel and prints it to the
+standard output or a given output file. The input of block-gen is a model file
+produced by block-fit in plain text format. See the documentation of
+block-fit(1) for more details on the input format.
+
 OPTIONS
 =======
 
