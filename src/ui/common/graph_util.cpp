@@ -71,6 +71,7 @@ Graph GraphUtil::readGraph(FILE* fptr, GraphFormat format) {
         case GRAPH_FORMAT_NCOL:
             result = read_ncol(fptr, true,
                     IGRAPH_ADD_WEIGHTS_IF_PRESENT, directed);
+            break;
 
         case GRAPH_FORMAT_GRAPHML:
             result = read_graphml(fptr);
