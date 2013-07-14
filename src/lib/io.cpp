@@ -245,7 +245,7 @@ void PlainTextWriter<UndirectedBlockmodel>::write(
 
     os << "TYPES\n";
     for (int i = 0; i < n; i++)
-        os << i << '\t' << model.getType(i) << '\n';
+        os << model.getType(i) << '\n';
     os << '\n';
 
     os << "PROBABILITIES\n";
