@@ -34,7 +34,7 @@ public:
 
     /// Generates the output filename for the given index
     string generateOutputFilename(int index) {
-        return StringUtil::format(m_args.outputFile, index);
+        return StringUtil::format(m_args.outputFile.c_str(), index);
     }
 
     /// Returns whether we are running in quiet mode

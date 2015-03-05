@@ -8,9 +8,6 @@
 class StringUtil {
 public:
     /// Safer, string-based version of sprintf
-    static std::string format(const std::string& fmt, ...);
-
-    /// Safer, string-based version of sprintf
     static std::string format(const char* fmt, ...);
 
     /// Safer, string-based version of vsprintf

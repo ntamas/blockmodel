@@ -6,14 +6,6 @@
 
 using namespace std;
 
-string StringUtil::format(const string& fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    string buf = vformat(fmt.c_str(), ap);
-    va_end(ap);
-    return buf;
-}
-
 string StringUtil::format(const char* fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
