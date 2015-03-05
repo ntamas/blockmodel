@@ -31,12 +31,12 @@ Compiling from source code
 Requirements
 ------------
 
-- igraph_ 0.6. This is the library that we use to work with graphs.
+- igraph_ 0.7.1 or later. This is the library that we use to work with graphs.
 
 - CMake_ to generate the makefiles (or the project file if you are using
   Visual Studio).
 
-.. _igraph: http://igraph.sourceforge.net
+.. _igraph: http://igraph.org
 .. _CMake: http://www.cmake.org
 
 Compiling using ``cmake`` and ``make``
