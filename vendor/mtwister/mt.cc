@@ -99,7 +99,7 @@ void MersenneTwister::initialize() {
  */
 MersenneTwister::~MersenneTwister(void)
 {
-    if (mt_ != NULL); {
+    if (mt_ != NULL) {
         delete[] mt_;
         mt_ = NULL;
     }
